@@ -1,0 +1,17 @@
+.DS_Store
+.idea
+.vscode
+venv
+venv-test
+tmp_cat.log
+__pycache__
+.mypy_cache
+*.pyc 
+.pyc
+# skip the models directory
+models/*
+!models/*.sh
+
+# tmp folder
+tmp/*
+

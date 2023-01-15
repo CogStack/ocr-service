@@ -1,0 +1,7 @@
+unoserver==1.2
+pdf2image==1.16.2
+pytesseract==0.3.10
+filetype==1.2.0
+opencv-python==4.7.0.68
+Pillow==9.4.0
+html2image==2.0.1
