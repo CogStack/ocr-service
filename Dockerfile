@@ -76,9 +76,9 @@ RUN apt-get install -y libreoffice libreoffice-script-provider-python
 RUN rm -rf /var/lib/apt/lists/*
 
 # python3 packages
-RUN pip3 install --upgrade pip
-RUN pip3 install numpy matplotlib scikit-image
-RUN pip3 install setuptools wheel virtualenv cython
+RUN python3.11 -m pip install --upgrade pip
+RUN python3.11 -m pip install numpy matplotlib scikit-image
+RUN python3.11 -m pip install setuptools wheel virtualenv cython
 
 # create and copy the app  
 RUN mkdir /ocr_service
@@ -86,15 +86,7 @@ COPY ./ /ocr_service
 WORKDIR /ocr_service
 
 # Install requirements for the app
-RUN pip3 install -r ./requirements.txt
+RUN python3.11 -m pip install -r ./requirements.txt
 
-# LibreOffice stuff
-#RUN export PYTHONPATH="${PYTHONPATH}:/Applications/LibreOffice.app/Contents/Frameworks/LibreOfficePython.framework/Versions/3.8/lib/site-packages /Applications/LibreOffice.app/Contents/Frameworks/LibreOfficePython.framework/Versions/3.8/LibreOfficePython"
-
-#RUN export PYTHONPATH=$PYTHONPATH:/Applications/LibreOffice.app/Contents/Frameworks/LibreOfficePython.framework/Versions/3.8/lib/site-packages /Applications/LibreOffice.app/Contents/Frameworks/LibreOfficePython.framework/Versions/3.8/bin/python3
-
-
-# RUN export PYTHONPATH="${PYTHONPATH}:/Applications/LibreOffice.app/Contents/Resources/python"
-
-# RUN export libreoffice="/Applications/LibreOffice.app/Contents/MacOS/soffice"
-
+# Now run the simple api
+CMD ["/bin/bash", "start_service_production.sh"]
