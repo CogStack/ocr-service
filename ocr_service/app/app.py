@@ -13,7 +13,7 @@ sys.path.append("..")
 
 def setup_logging():
     """
-    Configure and setup a default logging handler to print messages to stdout
+        :description: Configure and setup a default logging handler to print messages to stdout
     """
     root_logger = logging.getLogger()
     log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
@@ -42,8 +42,8 @@ def start_office_converter_server():
 
 def create_app():
     """
-    Creates the Flask application using the factory method
-    :return: Flask application
+        :description: Creates the Flask application using the factory method
+        :return: Flask application
     """
 
     setup_logging()
