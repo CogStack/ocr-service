@@ -5,3 +5,7 @@ filetype==1.2.0
 opencv-python==4.7.0.68
 Pillow==9.4.0
 html2image==2.0.1
+Flask==2.2.2
+Werkzeug==2.2.2
+injector==0.20.1
+gunicorn==65.5.0
