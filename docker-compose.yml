@@ -6,6 +6,7 @@ services:
     platform: linux
     build: .
     restart: always
+    cpus: 1.0
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
