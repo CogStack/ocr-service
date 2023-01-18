@@ -12,4 +12,4 @@ sys.path.append("..")
 application = create_app()
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0', port=SERVICE_PORT)
+    application.run(host='0.0.0.0', port=OCR_SERVICE_PORT)

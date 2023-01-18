@@ -7,16 +7,16 @@ ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
 
 # basic app settings
-SERVICE_PORT = os.environ.get("SERVICE_PORT", 8090)
+OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
 # Integer or Float - duration in seconds for the OCR processing, after which, pytesseract will terminate and raise RuntimeError
-TESSERACT_TIMEOUT = 30
+TESSERACT_TIMEOUT = 120
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
 TESSERACT_LANGUAGE = "eng"
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
-TESSERACT_NICE = 0
+TESSERACT_NICE = -20
 
 # Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = ""
@@ -36,7 +36,7 @@ OCR_IMAGE_DPI = 200
 # used internally for LibreOffice doc conversion
 LIBRE_OFFICE_LISTENER_PORT = "9999"
 
-LIBRE_OFFICE_NETWORK_INTERFACE="localhost"
+LIBRE_OFFICE_NETWORK_INTERFACE = "localhost"
 
 
 # DO NOT CHANGE THIS UNLESS YOU ARE DEVELOPING OR RUNNING THIS APP LOCALLY
