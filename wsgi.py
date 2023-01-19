@@ -8,7 +8,6 @@ from ocr_service.app import create_app
 
 sys.path.append("..")
 
-
 application = create_app()
 
 if __name__ == '__main__':

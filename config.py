@@ -1,7 +1,10 @@
 import os
 import multiprocessing
+import logging
 
 from sys import platform
+
+LOG_LEVEL = logging.INFO
 
 ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
@@ -16,7 +19,7 @@ TESSERACT_TIMEOUT = 120
 TESSERACT_LANGUAGE = "eng"
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
-TESSERACT_NICE = -20
+TESSERACT_NICE = 0
 
 # Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = ""
