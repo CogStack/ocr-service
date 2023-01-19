@@ -7,6 +7,9 @@ services:
     build: .
     restart: always
     cpus: 1.0
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY

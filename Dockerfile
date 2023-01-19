@@ -17,6 +17,11 @@ ENV no_proxy=$NO_PROXY
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_PRIORITY=critical
 
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE 1
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED 1
+
 # default user
 USER root
 
@@ -63,9 +68,10 @@ RUN fc-cache -f -v
 
 RUN apt-get install -y libimage-exiftool-perl libtika-java libtomcat9-java libtomcat9-embed-java libtcnative-1 && \
     apt-get install -y ttf-mscorefonts-installer fontconfig && \
-    apt-get install -y ffmpeg gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
+    apt-get install -y libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
     apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 && \
     apt-get install -y --fix-missing imagemagick tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu && \
+    apt-get install -y libpcre3 libpcre3-dev && \
 	apt-get clean autoclean && \
     apt-get autoremove --purge -y
 
@@ -78,7 +84,8 @@ RUN rm -rf /var/lib/apt/lists/*
 # python3 packages
 RUN python3.11 -m pip install --upgrade pip
 RUN python3.11 -m pip install numpy matplotlib scikit-image
-RUN python3.11 -m pip install setuptools wheel virtualenv cython
+RUN python3.11 -m pip install setuptools wheel virtualenv cython uwsgi
+RUN python3.11 -m pip install opencv-python-headless
 
 # create and copy the app  
 RUN mkdir /ocr_service
@@ -86,7 +93,7 @@ COPY ./ /ocr_service
 WORKDIR /ocr_service
 
 # Install requirements for the app
-RUN python3.11 -m pip install -r ./requirements.txt
+RUN python3.11 -m pip install --no-cache-dir -r ./requirements.txt
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
