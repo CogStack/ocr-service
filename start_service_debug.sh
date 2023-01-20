@@ -12,4 +12,4 @@ if [ -z ${OCR_SERVICE_PORT+x} ]; then
   echo "OCR_SERVICE_PORT is unset -- setting to default: $OCR_SERVICE_PORT"
 fi
 
-python3.11 -m flask run --no-debugger --no-reload -p ${OCR_SERVICE_PORT}
+python3.11 -m flask run --no-debugger --no-reload -p ${OCR_SERVICE_PORT} -h ${OCR_SERVICE_HOST}
