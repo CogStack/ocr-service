@@ -2,6 +2,7 @@ import logging
 import os
 import json
 import uuid
+import sys
 
 from flask import Blueprint, Response, request
 
@@ -9,8 +10,12 @@ from ocr_service.utils.utils import get_app_info
 
 from ..processor import Processor
 
+from config import *
+
+sys.path.append("..")
+
 log = logging.getLogger("API")
-log.setLevel(level=os.getenv("APP_LOG_LEVEL", logging.INFO))
+log.setLevel(level=os.getenv("APP_LOG_LEVEL", LOG_LEVEL))
 
 api = Blueprint(name="api", import_name="api", url_prefix="/api")
 

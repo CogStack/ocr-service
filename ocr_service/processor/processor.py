@@ -10,12 +10,11 @@ import injector
 import traceback
 import time
 
-from PIL import Image
-from typing import List, TypeVar
-from multiprocessing.dummy import Pool
-
 import filetype
 import pytesseract
+
+from PIL import Image
+from typing import List, TypeVar
 
 from filetype.types import archive,image,document,IMAGE,DOCUMENT
 from config import *
@@ -25,14 +24,13 @@ from ocr_service.utils import *
 
 sys.path.append("..")
 
-
 PILImage = TypeVar('PILImage', bound=Image)
 
 class Processor:
 
     @injector.inject
     def __init__(self):
-        app_log_level = os.getenv("LOG_LEVEL", logging.INFO)
+        app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(level=app_log_level)
         self.log.debug("Processor log level set to : ", str(app_log_level))
@@ -40,7 +38,6 @@ class Processor:
     def detect_file_type(self, stream:bytes) -> filetype:
         file_type = filetype.guess(stream)
         return file_type
-
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
 
@@ -160,6 +157,8 @@ class Processor:
             self.log.info("A total of " + str(image_count) + " images have been generated from " + file_name)
             ocr_start_time = time.time()
             proc_results = list()
+
+            from multiprocessing.dummy import Pool
 
             with Pool(CPU_THREADS) as process_pool:
                 count = 0

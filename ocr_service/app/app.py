@@ -17,7 +17,7 @@ def setup_logging():
     """
     root_logger = logging.getLogger()
     log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
-    app_log_level = os.getenv("LOG_LEVEL", logging.INFO)
+    app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
     log_handler = logging.StreamHandler(sys.stdout)
     log_handler.setFormatter(logging.Formatter(fmt=log_format))
     log_handler.setLevel(level=app_log_level)
@@ -58,4 +58,5 @@ def create_app():
 def exit_handler():
     loffice_process.kill()
 
-atexit.register(exit_handler)
+if __name__ == '__main__':
+    atexit.register(exit_handler)

@@ -1,6 +1,11 @@
 from typing import List
 
+import sys
 import os
+
+import config
+
+sys.path.append("..")
 
 def get_app_info():
     """
@@ -9,7 +14,8 @@ def get_app_info():
     """
     return {"service_app_name": "ocr-service",
             "service_version": "0.0.1",
-            "service_model": "None"}
+            "service_model": "None",
+            "config": ""}
 
 def build_response(text, success=True, elapsed_time=0):
     return {"text": text,
