@@ -19,7 +19,7 @@ TESSERACT_TIMEOUT = 120
 TESSERACT_LANGUAGE = "eng"
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
-TESSERACT_NICE = 0
+TESSERACT_NICE = -19
 
 # Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = ""
