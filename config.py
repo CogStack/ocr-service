@@ -66,7 +66,6 @@ if platform == "linux" or platform == "linux2":
     LIBRE_OFFICE_PYTHON_PATH = "/usr/bin/python3.11"
 elif platform == "win32":
     LIBRE_OFFICE_EXEC_PATH = "%ProgramFiles%/LibreOffice/Program/soffice"
-    #
     LIBRE_OFFICE_PYTHON_PATH = "C:/Windows/py.exe"
 
 

@@ -35,7 +35,7 @@ class Processor:
         self.log.setLevel(level=app_log_level)
         self.log.debug("Processor log level set to : ", str(app_log_level))
 
-    def detect_file_type(self, stream:bytes) -> filetype:
+    def detect_file_type(self, stream: bytes) -> filetype:
         file_type = filetype.guess(stream)
         return file_type
 
@@ -93,7 +93,9 @@ class Processor:
         with open(file=doc_file_path, mode="wb") as tmp_doc_file:
             tmp_doc_file.write(stream)
 
-        subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path, "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"], capture_output=False, check=True, cwd=TMP_FILE_DIR)
+        subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
+            "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
+            capture_output=False, check=True, cwd=TMP_FILE_DIR)
 
         pdf_stream = None
         with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
@@ -114,7 +116,8 @@ class Processor:
             :rtype: str
         """
 
-        output_str = pytesseract.image_to_string(img, lang=TESSERACT_LANGUAGE, timeout=TESSERACT_TIMEOUT, nice=TESSERACT_NICE, config=TESSERACT_CUSTOM_CONFIG_FLAGS)
+        output_str = pytesseract.image_to_string(img, lang=TESSERACT_LANGUAGE, timeout=TESSERACT_TIMEOUT,
+                    nice=TESSERACT_NICE, config=TESSERACT_CUSTOM_CONFIG_FLAGS)
         self.log.info("finished processing img: " + str(img_id))
 
         return (output_str, img_id)
@@ -178,7 +181,7 @@ class Processor:
 
         return output_text
 
-    def process_stream(self, stream: bytes, file_name : str = None) -> json:
+    def process_stream(self, stream: bytes, file_name: str = None) -> json:
         """
             :description: sends the stream of bytes to the `_process` function
                 that will do all the pre-processing + ocr-ing work
