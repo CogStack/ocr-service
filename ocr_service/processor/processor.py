@@ -65,7 +65,7 @@ class Processor:
         """
 
         self.log.info("pre-processing pdf...")
-        pdf_image_pages = convert_from_bytes(stream, OCR_IMAGE_DPI, thread_count=CPU_THREADS, grayscale=OCR_CONVERT_GRAYSCALE_IMAGES, timeout=TESSERACT_TIMEOUT)
+        pdf_image_pages = convert_from_bytes(stream, OCR_IMAGE_DPI, thread_count=CPU_THREADS, use_pdftocairo=CONVERTER_USE_PDF_CAIRO, grayscale=OCR_CONVERT_GRAYSCALE_IMAGES, timeout=TESSERACT_TIMEOUT)
         
         return pdf_image_pages
     

@@ -68,3 +68,9 @@ elif platform == "win32":
     LIBRE_OFFICE_EXEC_PATH = "%ProgramFiles%/LibreOffice/Program/soffice"
     #
     LIBRE_OFFICE_PYTHON_PATH = "C:/Windows/py.exe"
+
+
+# Other settings for image or format conversions
+
+# might speed up pdf to img conversion, normally ppm is used
+CONVERTER_USE_PDF_CAIRO = True
