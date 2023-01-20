@@ -10,7 +10,7 @@ services:
       resources:
         limits:
           cpus: "16"
-          memory: "12gb"
+          memory: "16gb"
     mem_swappiness: 0
     shm_size : 1024mb
     privileged: true
