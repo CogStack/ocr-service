@@ -11,14 +11,16 @@ import traceback
 import time
 
 import filetype
-import pytesseract
+import pypdfium2 as pdfium
+
+import tesserocr
 
 from PIL import Image
 from typing import List, TypeVar
 
-from filetype.types import archive,image,document,IMAGE,DOCUMENT
+from filetype.types import archive, image, document, IMAGE, DOCUMENT
 from config import *
-from pdf2image import convert_from_bytes
+
 from html2image import Html2Image
 from ocr_service.utils import *
 
@@ -51,7 +53,6 @@ class Processor:
         hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
 
         return [Image.open(png_img_file_path)]
-
     
     def _preprocess_pdf_to_img(self, stream: bytes) -> List[PILImage]:
         """
@@ -65,9 +66,26 @@ class Processor:
         """
 
         self.log.info("pre-processing pdf...")
-        pdf_image_pages = convert_from_bytes(stream, OCR_IMAGE_DPI, thread_count=CPU_THREADS, use_pdftocairo=CONVERTER_USE_PDF_CAIRO, grayscale=OCR_CONVERT_GRAYSCALE_IMAGES, timeout=TESSERACT_TIMEOUT)
-        
-        return pdf_image_pages
+
+        pdf = pdfium.PdfDocument(stream)
+        doc_metadata = {}
+
+        pdf_conversion_start_time = time.time()
+        renderer = pdf.render_to(
+                pdfium.BitmapConv.pil_image,
+                page_indices = range(len(pdf)),
+                scale = OCR_IMAGE_DPI/72,
+                n_processes=CPU_THREADS
+                )
+
+        pdf_image_pages = list(renderer)
+        pdf_conversion_end_time = time.time()
+
+        self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+
+        doc_metadata.update({"pages" : len(pdf_image_pages)})
+
+        return pdf_image_pages, doc_metadata
     
     def _preprocess_doc(self, stream: bytes, file_name: str) -> List[PILImage]:
         """
@@ -103,7 +121,7 @@ class Processor:
 
         delete_tmp_files([pdf_file_path, doc_file_path])
 
-        return self._preprocess_pdf_to_img(pdf_stream)
+        return pdf_stream
 
     def _process_image(self, img: Image, img_id: int) -> str:
         """
@@ -116,8 +134,8 @@ class Processor:
             :rtype: str
         """
 
-        output_str = pytesseract.image_to_string(img, lang=TESSERACT_LANGUAGE, timeout=TESSERACT_TIMEOUT,
-                    nice=TESSERACT_NICE, config=TESSERACT_CUSTOM_CONFIG_FLAGS)
+        output_str = tesserocr.image_to_text(img)
+         
         self.log.info("finished processing img: " + str(img_id))
 
         return (output_str, img_id)
@@ -146,11 +164,13 @@ class Processor:
         file_type = self.detect_file_type(stream)
         output_text = ""
         images = []
+        doc_metadata = {}
 
         if type(file_type) == archive.Pdf:
-            images = self._preprocess_pdf_to_img(stream)
+            images, doc_metadata = self._preprocess_pdf_to_img(stream)
         elif file_type in DOCUMENT:
-            images = self._preprocess_doc(stream, file_name=file_name)
+            pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+            images, doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
         elif file_type in IMAGE:
             images = [Image.open(stream)]
 
@@ -167,8 +187,8 @@ class Processor:
                 count = 0
                 for img in images:
                     count += 1
-                    proc_results.append(process_pool.starmap_async(self._process_image, [(img, count)], chunksize=1))
-            
+                    proc_results.append(process_pool.starmap_async(self._process_image,[(img, count)], chunksize=1))
+
                 try:
                     for result in proc_results:
                         output_text += str((result.get(timeout=TESSERACT_TIMEOUT))[0])
