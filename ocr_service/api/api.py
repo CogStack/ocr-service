@@ -11,6 +11,7 @@ from ocr_service.utils.utils import get_app_info
 from ..processor import Processor
 
 from config import *
+from ..utils import build_response
 
 sys.path.append("..")
 
@@ -44,8 +45,10 @@ def process_file() -> Response:
         log.info("Generated file name:" + file_name)
         stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
 
-    output_text = processor.process_stream(stream=stream, file_name=file_name)
-    return Response(response=json.dumps({"response" : output_text}), status=200, mimetype="application/json")
+    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+
+    response = build_response(output_text, metadata=doc_metadata)
+    return Response(response=json.dumps({"response" : response}), status=200, mimetype="application/json")
 
 @api.route("/process_bulk", methods=["POST"])
 def process_bulk() -> Response:

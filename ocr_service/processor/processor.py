@@ -83,8 +83,6 @@ class Processor:
 
         self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
 
-        doc_metadata.update({"pages" : len(pdf_image_pages)})
-
         return pdf_image_pages, doc_metadata
     
     def _preprocess_doc(self, stream: bytes, file_name: str) -> List[PILImage]:
@@ -197,9 +195,11 @@ class Processor:
             
             ocr_end_time = time.time()
 
-            self.log.info("OCR processing finished | Elapsed : " + str(ocr_end_time - ocr_start_time) + " seconds")
+            self.log.info("OCR processing finished | Elapsed : " + str("{:.4f}".format(ocr_end_time - ocr_start_time)) + " seconds")
 
-        return output_text
+        doc_metadata["pages"] = image_count
+
+        return output_text, doc_metadata
 
     def process_stream(self, stream: bytes, file_name: str = None) -> json:
         """
@@ -217,16 +217,25 @@ class Processor:
 
             :returns: output_text, the resulting text post-ocr
             :rtype: str
+
+            :returns: doc_metadata containing doc info like number of pages, author etc
+            :rtype: dict
         """
 
         output_text = ""
+        doc_metadata = {}
+        elapsed_time = 0
+
         try:
             self.log.info("Processing file name:" + file_name)
             start_time = time.time()
-            output_text = self._process(stream, file_name=file_name)
+            output_text, doc_metadata = self._process(stream, file_name=file_name)
             end_time = time.time()
-            self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(end_time - start_time) + " seconds")
+            elapsed_time = str("{:.4f}".format(end_time - start_time))
+            doc_metadata["elapsed_time"] = elapsed_time
+
+            self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + elapsed_time + " seconds")
         except Exception as exception:
             traceback.print_exc(file=sys.stdout)
 
-        return output_text
+        return output_text, doc_metadata
