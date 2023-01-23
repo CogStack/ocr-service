@@ -70,7 +70,7 @@ RUN apt-get install -y libimage-exiftool-perl libtcnative-1 && \
     apt-get install -y ttf-mscorefonts-installer fontconfig && \
     apt-get install -y libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
     apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 && \
-    apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract5 libtesseract-dev libleptonica-dev liblept5 && \
+    apt-get install -y --fix-missing imagemagick pkg-config libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract5 libtesseract-dev libleptonica-dev liblept5 && \
     apt-get install -y libpcre3 libpcre3-dev && \
 	apt-get clean autoclean && \
     apt-get autoremove --purge -y
