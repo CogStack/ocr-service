@@ -13,7 +13,7 @@ TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
 # Integer or Float - duration in seconds for the OCR processing, after which, pytesseract will terminate and raise RuntimeError
-TESSERACT_TIMEOUT = 120
+TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 120)
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
 TESSERACT_LANGUAGE = "eng"
@@ -22,9 +22,10 @@ TESSERACT_LANGUAGE = "eng"
 TESSERACT_NICE = -19
 
 # Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
-TESSERACT_CUSTOM_CONFIG_FLAGS = ""
+TESSERACT_CUSTOM_CONFIG_FLAGS = os.environ.get("OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS", "")
 
-CPU_THREADS = multiprocessing.cpu_count()
+# controls both threads and cpus
+CPU_THREADS = os.environ.get("OCR_SERVICE_CPU_THREADS",  multiprocessing.cpu_count())
 
 # should we convert detected images to greyscale before OCR-ing
 OCR_CONVERT_GRAYSCALE_IMAGES = True
