@@ -18,7 +18,7 @@ if [ -z ${OCR_SERVICE_WORKERS+x} ]; then
 fi
 
 if [ -z ${OCR_SERVICE_THREADS+x} ]; then
-  OCR_SERVICE_THREADS=16
+  OCR_SERVICE_THREADS=2
   echo "OCR_SERVICE_THREADS is unset -- setting to default: $OCR_SERVICE_THREADS"
 fi
 
@@ -32,8 +32,6 @@ OCR_SERVICE_ACCESS_LOG_FORMAT="%(t)s [ACCESSS] %(h)s \"%(r)s\" %(s)s \"%(f)s\" \
 # start the OCR_SERVICE
 #
 echo "Starting up Flask app using gunicorn OCR_SERVICE ..."
-#gunicorn --bind $OCR_SERVICE_HOST:$OCR_SERVICE_PORT -w $OCR_SERVICE_WORKERS --threads=$OCR_SERVICE_THREADS --timeout=$OCR_SERVICE_WORKER_TIMEOUT \
-#  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=- --log-file=- --log-level info --worker-class=gthread \
-#  wsgi
-
-uwsgi --http :$OCR_SERVICE_PORT --wsgi-file wsgi.py --enable-threads --processes $OCR_SERVICE_WORKERS --threads $OCR_SERVICE_THREADS --uid root --gid root --master --close-on-exec --die-on-term --vacuum
+python3.11 -m gunicorn --bind $OCR_SERVICE_HOST:$OCR_SERVICE_PORT -w $OCR_SERVICE_WORKERS --threads=$OCR_SERVICE_THREADS --timeout=$OCR_SERVICE_WORKER_TIMEOUT \
+  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=- --log-file=- --log-level info --worker-class=gthread \
+  wsgi
