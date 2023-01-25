@@ -9,11 +9,14 @@ import time
 import injector
 import traceback
 import time
+import uuid
+import queue
 
 import filetype
 import pypdfium2 as pdfium
 
 import tesserocr
+
 
 from PIL import Image
 from typing import List, TypeVar
@@ -69,19 +72,21 @@ class Processor:
 
         pdf = pdfium.PdfDocument(stream)
         doc_metadata = {}
+        try:
+            pdf_conversion_start_time = time.time()
+            renderer = pdf.render_to(
+                    pdfium.BitmapConv.pil_image,
+                    page_indices = range(len(pdf)),
+                    scale = OCR_IMAGE_DPI/72,
+                    n_processes=CPU_THREADS
+                    )
 
-        pdf_conversion_start_time = time.time()
-        renderer = pdf.render_to(
-                pdfium.BitmapConv.pil_image,
-                page_indices = range(len(pdf)),
-                scale = OCR_IMAGE_DPI/72,
-                n_processes=CPU_THREADS
-                )
+            pdf_image_pages = list(renderer)
+            pdf_conversion_end_time = time.time()
 
-        pdf_image_pages = list(renderer)
-        pdf_conversion_end_time = time.time()
-
-        self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+            self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+        except Exception:
+            raise Exception("preprocessing_pdf exception: " + str(traceback.format_exc()))
 
         return pdf_image_pages, doc_metadata
     
@@ -103,21 +108,28 @@ class Processor:
             :returns: list of PIL images
             :rtype: List[PILImage]
         """
-        doc_file_path = os.path.join(TMP_FILE_DIR, file_name)
-        pdf_file_path = doc_file_path + ".pdf"
-
-        with open(file=doc_file_path, mode="wb") as tmp_doc_file:
-            tmp_doc_file.write(stream)
-
-        subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
-            "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
-            capture_output=False, check=True, cwd=TMP_FILE_DIR)
-
+        
         pdf_stream = None
-        with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
-            pdf_stream = tmp_pdf_file.read()
 
-        delete_tmp_files([pdf_file_path, doc_file_path])
+        try:
+            # generate unique id
+            uid = uuid.uuid4().hex
+
+            doc_file_path = os.path.join(TMP_FILE_DIR, file_name + "_" + str(uid))
+            pdf_file_path = doc_file_path + ".pdf"
+
+            with open(file=doc_file_path, mode="wb") as tmp_doc_file:
+                tmp_doc_file.write(stream)
+            
+            subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
+                "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
+                capture_output=False, check=True, cwd=TMP_FILE_DIR, timeout=LIBRE_OFFICE_PROCESS_TIMEOUT, close_fds=True)
+
+            with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                pdf_stream = tmp_pdf_file.read()
+                delete_tmp_files([pdf_file_path, doc_file_path])
+        except Exception:
+            raise Exception("preprocessing_doc exception: " + str(traceback.format_exc()))
 
         return pdf_stream
 
