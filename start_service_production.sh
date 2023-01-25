@@ -18,7 +18,7 @@ if [ -z ${OCR_SERVICE_WORKERS+x} ]; then
 fi
 
 if [ -z ${OCR_SERVICE_THREADS+x} ]; then
-  OCR_SERVICE_THREADS=2
+  OCR_SERVICE_THREADS=1
   echo "OCR_SERVICE_THREADS is unset -- setting to default: $OCR_SERVICE_THREADS"
 fi
 
