@@ -23,7 +23,7 @@ if [ -z ${OCR_SERVICE_THREADS+x} ]; then
 fi
 
 if [ -z ${OCR_SERVICE_WORKER_TIMEOUT+x} ]; then
-  OCR_SERVICE_WORKER_TIMEOUT=300
+  OCR_SERVICE_WORKER_TIMEOUT=1800
   echo "OCR_SERVICE_WORKER_TIMEOUT is unset -- setting to default (sec): $OCR_SERVICE_WORKER_TIMEOUT"
 fi
 
