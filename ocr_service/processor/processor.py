@@ -120,10 +120,16 @@ class Processor:
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
                 tmp_doc_file.write(stream)
-            
+
+            conversion_time_start = time.time()
+
             subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
                 capture_output=False, check=True, cwd=TMP_FILE_DIR, timeout=LIBRE_OFFICE_PROCESS_TIMEOUT, close_fds=True)
+            
+            conversion_time_end = time.time()
+
+            self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
 
             with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
                 pdf_stream = tmp_pdf_file.read()
