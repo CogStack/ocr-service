@@ -43,7 +43,7 @@ def process_file() -> Response:
         log.info("Processing binary as data-binary, generating temporary file name...")
         file_name = uuid.uuid4().hex
         log.info("Generated file name:" + file_name)
-
+       
         stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
 
     output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)

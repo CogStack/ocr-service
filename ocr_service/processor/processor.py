@@ -78,7 +78,7 @@ class Processor:
                     pdfium.BitmapConv.pil_image,
                     page_indices = range(len(pdf)),
                     scale = OCR_IMAGE_DPI/72,
-                    n_processes=CPU_THREADS
+                    n_processes=CONVERTER_THREAD_NUM
                     )
 
             pdf_image_pages = list(renderer)
