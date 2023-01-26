@@ -74,12 +74,10 @@ class Processor:
         doc_metadata = {}
         try:
             pdf_conversion_start_time = time.time()
-            renderer = pdf.render_to(
-                    pdfium.BitmapConv.pil_image,
+            renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
                     page_indices = range(len(pdf)),
                     scale = OCR_IMAGE_DPI/72,
-                    n_processes=CONVERTER_THREAD_NUM
-                    )
+                    n_processes=CONVERTER_THREAD_NUM)
 
             pdf_image_pages = list(renderer)
             pdf_conversion_end_time = time.time()
