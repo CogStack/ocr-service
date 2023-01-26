@@ -13,13 +13,13 @@ TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
 # Integer or Float - duration in seconds for the OCR processing, after which, pytesseract will terminate and raise RuntimeError
-TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 120)
+TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 360)
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
 TESSERACT_LANGUAGE = "eng"
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
-TESSERACT_NICE = os.environ.get("OCR_SERVICE_TESSERACT_NICE", -1)
+TESSERACT_NICE = os.environ.get("OCR_SERVICE_TESSERACT_NICE", -18)
 
 # Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = os.environ.get("OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS", "")
@@ -39,8 +39,8 @@ OCR_IMAGE_DPI = os.environ.get("OCR_SERVICE_IMAGE_DPI", 200)
 
 # LIBRE OFFICE SECTION
 
-# 15 seconds before terminating processes
-LIBRE_OFFICE_PROCESS_TIMEOUT =  os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 30)
+# 60 seconds before terminating processes
+LIBRE_OFFICE_PROCESS_TIMEOUT =  os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 60)
 
 # This is the port for the background soffice listener service that gets started with the app
 # used internally for LibreOffice doc conversion
