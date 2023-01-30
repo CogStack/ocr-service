@@ -36,9 +36,7 @@ jobs:
         run: |
           sudo apt-get install -y isort flake8
           python -m pip install --upgrade pip
-          python -m pip install virtualenv setuptools
-          python -m pip install isort flake8 mypy stubs types-Flask types-simplejson types-setuptools
-          python -m pip install -r medcat_service/requirements.txt
+          python -m pip install -r ./requirements.txt
 
       # - name: Check linting and types
       #   run: |
@@ -47,6 +45,6 @@ jobs:
       #     mypy . --ignore-missing-imports
 
       - name: Run tests
-        run: bash run_tests.sh
+        run: python3.11 -m unittest ocr_service/tests/process.py
       
      
