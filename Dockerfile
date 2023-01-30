@@ -77,9 +77,14 @@ RUN apt-get install -y libimage-exiftool-perl libtcnative-1 && \
     apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract5 libtesseract-dev libleptonica-dev liblept5 && \
     apt-get install -y --fix-missing libpcre3 libpcre3-dev && \
     apt-get install -y --fix-missing mesa-opencl-icd pocl-opencl-icd && \
-    apt-get install -y --fix-missing libvips-tools libvips libvips-dev && \
-	apt-get clean autoclean && \
+    apt-get install -y --fix-missing libvips-tools libvips libvips-dev
+
+# Pillow package requirements
+RUN apt-get install -y python3-tk tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev 
+
+RUN apt-get clean autoclean && \
     apt-get autoremove --purge -y
+
 
 # other openCL packages
 # beignet-opencl-icd
