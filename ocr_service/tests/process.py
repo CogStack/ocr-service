@@ -11,7 +11,6 @@ class TestOcrServiceProcessor(unittest.TestCase):
 
     ENDPOINT_API_INFO = '/api/info'
     ENDPOINT_PROCESS_SINGLE = '/api/process'
-    ENDPOINT_PROCESS_BULK = '/api/process_bulk'
 
     def __init__(self, *args, **kwargs) -> None:
         super(TestOcrServiceProcessor, self).__init__(*args, **kwargs)
