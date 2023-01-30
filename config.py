@@ -1,7 +1,6 @@
-import os
-import multiprocessing
 import logging
-
+import multiprocessing
+import os
 from sys import platform
 
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
