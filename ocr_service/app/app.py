@@ -1,16 +1,17 @@
+import atexit
 import logging
 import os
-import sys
-import subprocess
-import time
-import atexit
-import psutil
 import signal
+import subprocess
+import sys
 import threading
+import time
 
+import psutil
 from flask import Flask
-from ocr_service.api import api
+
 from config import *
+from ocr_service.api import api
 
 sys.path.append("..")
 

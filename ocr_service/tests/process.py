@@ -1,11 +1,12 @@
-import unittest
-import logging
 import json
+import logging
 import time
+import unittest
 
 from ocr_service.app.app import create_app
 
 from ..tests.test_utils import *
+
 
 class TestOcrServiceProcessor(unittest.TestCase):
 
@@ -72,6 +73,12 @@ class TestOcrServiceProcessor(unittest.TestCase):
     
     def test_request_api_process_png(cls):
         file = get_file("generic/pat_id_1.png")
+        response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
+        response = json.loads(response.data)
+        assert len(response["response"]["text"]) > 100
+
+    def test_request_api_process_html(cls):
+        file = get_file("generic/pat_id_1.html")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
         assert len(response["response"]["text"]) > 100

@@ -1,16 +1,15 @@
+import json
 import logging
 import os
-import json
-import uuid
 import sys
+import uuid
 
 from flask import Blueprint, Response, request
 
+from config import *
 from ocr_service.utils.utils import get_app_info
 
 from ..processor import Processor
-
-from config import *
 from ..utils import build_response
 
 sys.path.append("..")

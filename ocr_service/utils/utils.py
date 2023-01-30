@@ -1,7 +1,6 @@
-from typing import List
-
-import sys
 import os
+import sys
+from typing import List
 
 import filetype
 

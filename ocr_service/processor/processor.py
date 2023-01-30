@@ -1,28 +1,24 @@
 from __future__ import annotations
-from io import BytesIO
 
+import json
 import logging
 import os
 import subprocess
-import json
 import sys
 import time
-import injector
 import traceback
-import time
 import uuid
-
-import pypdfium2 as pdfium
-
-import tesserocr
-
-from PIL import Image
+from io import BytesIO
 from typing import List, TypeVar
 
-from filetype.types import archive, image, document, IMAGE, DOCUMENT
-from config import *
-
+import injector
+import pypdfium2 as pdfium
+import tesserocr
+from filetype.types import DOCUMENT, IMAGE, archive, document, image
 from html2image import Html2Image
+from PIL import Image
+
+from config import *
 from ocr_service import utils
 from ocr_service.utils import *
 
