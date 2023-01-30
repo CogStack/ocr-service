@@ -4,7 +4,8 @@ import logging
 
 from sys import platform
 
-LOG_LEVEL = logging.INFO
+# 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
+LOG_LEVEL = os.environ.get("OCR_SERVICE_LOG_LEVEL", 40)
 
 ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
