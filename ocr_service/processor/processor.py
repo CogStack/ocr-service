@@ -1,4 +1,5 @@
 from __future__ import annotations
+from io import BytesIO
 
 import logging
 import os
@@ -10,13 +11,10 @@ import injector
 import traceback
 import time
 import uuid
-import queue
 
-import filetype
 import pypdfium2 as pdfium
 
 import tesserocr
-
 
 from PIL import Image
 from typing import List, TypeVar
@@ -25,6 +23,7 @@ from filetype.types import archive, image, document, IMAGE, DOCUMENT
 from config import *
 
 from html2image import Html2Image
+from ocr_service import utils
 from ocr_service.utils import *
 
 sys.path.append("..")
@@ -39,10 +38,6 @@ class Processor:
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(level=app_log_level)
         self.log.debug("Processor log level set to : ", str(app_log_level))
-
-    def detect_file_type(self, stream: bytes) -> filetype:
-        file_type = filetype.guess(stream)
-        return file_type
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
 
@@ -175,7 +170,7 @@ class Processor:
             :rtype: str
         """
 
-        file_type = self.detect_file_type(stream)
+        file_type = utils.detect_file_type(stream)
         output_text = ""
         images = []
         doc_metadata = {}
@@ -186,9 +181,13 @@ class Processor:
             pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
             images, doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
         elif file_type in IMAGE:
-            images = [Image.open(stream)]
+            images = [Image.open(BytesIO(stream))]
+        else:
+            # if the file has no type attempt to convert it to pdf anyways
+            pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+            images, doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
 
-        image_count = len(images) if images else 0
+        image_count = len(images)
 
         if image_count > 0:
             self.log.info("A total of " + str(image_count) + " images have been generated from " + file_name)

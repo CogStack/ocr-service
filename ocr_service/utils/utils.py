@@ -3,6 +3,8 @@ from typing import List
 import sys
 import os
 
+import filetype
+
 import config
 
 sys.path.append("..")
@@ -32,3 +34,8 @@ def doc_metadata(content_type, page_count):
 def delete_tmp_files(file_paths: List[str]):
     for file_path in file_paths:
         os.remove(file_path)
+
+
+def detect_file_type(stream: bytes) -> filetype:
+    file_type = filetype.guess(stream)
+    return file_type
