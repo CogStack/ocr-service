@@ -48,7 +48,7 @@ def process_file() -> Response:
     output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
 
     response = build_response(output_text, metadata=doc_metadata)
-    return Response(response=json.dumps({"response" : response}), status=200, mimetype="application/json")
+    return Response(response=json.dumps({"result" : response}), status=200, mimetype="application/json")
 
 @api.route("/process_bulk", methods=["POST"])
 def process_bulk() -> Response:

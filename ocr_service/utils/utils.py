@@ -1,6 +1,8 @@
 import os
 import sys
+
 from typing import List
+from datetime import datetime
 
 import filetype
 
@@ -18,22 +20,20 @@ def get_app_info():
             "service_model": "None",
             "config": ""}
 
-def build_response(text, success = True, elapsed_time = 0, log_message = "", metadata = {}):
+def build_response(text, success = True, log_message = "", metadata = {}):
     metadata["log_message"] = log_message
     metadata["success"] = success
-    return {"text": text,
-            "metadata" : metadata
-            }
 
-def doc_metadata(content_type, page_count):
-    return {"page-count":  page_count,
-            "content-type": content_type
-           }
+    return {
+        "text" : text,
+        "metadata": metadata,
+        "success" : str(success),
+        "timestamp" :str(datetime.now())
+    }
 
 def delete_tmp_files(file_paths: List[str]):
     for file_path in file_paths:
         os.remove(file_path)
-
 
 def detect_file_type(stream: bytes) -> filetype:
     file_type = filetype.guess(stream)

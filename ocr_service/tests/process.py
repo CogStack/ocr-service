@@ -33,55 +33,49 @@ class TestOcrServiceProcessor(unittest.TestCase):
         file = get_file("generic/pat_id_1.doc")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_docx(cls):
         file = get_file("generic/pat_id_1.docx")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_pdf(cls):
         file = get_file("generic/pat_id_1.pdf")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_odt(cls):
         file = get_file("generic/pat_id_1.odt")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_rtf(cls):
         file = get_file("generic/pat_id_1.rtf")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_txt(cls):
         file = get_file("generic/pat_id_1.txt")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        print(response)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
     
     def test_request_api_process_png(cls):
         file = get_file("generic/pat_id_1.png")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     def test_request_api_process_html(cls):
         file = get_file("generic/pat_id_1.html")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
-        assert len(response["response"]["text"]) > 100
+        assert len(response["result"]["text"]) > 100
 
     # Static initialization methods
     #

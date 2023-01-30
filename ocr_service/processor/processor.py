@@ -171,6 +171,11 @@ class Processor:
         images = []
         doc_metadata = {}
 
+        if file_type != None:
+            doc_metadata["content-type"] = str(file_type.mime)
+        else:
+            doc_metadata["content-type"] = "text/plain"
+
         if type(file_type) == archive.Pdf:
             images, doc_metadata = self._preprocess_pdf_to_img(stream)
         elif file_type in DOCUMENT:
