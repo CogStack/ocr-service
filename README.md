@@ -6,6 +6,10 @@ This is a python-replacement of the previous Tika-service in an attempt to resol
 
 Python 3.11+ <br>
 For the Python packages see [`requirements.txt`](./requirements.txt).
+Pillow package deps, see (https://pillow.readthedocs.io/en/stable/installation.html)
+
+## Local development dependencies
+Libre office 7.4+
 
 # API
 
