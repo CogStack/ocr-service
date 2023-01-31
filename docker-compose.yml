@@ -8,6 +8,7 @@ services:
     build: .
     restart: always
     mem_swappiness: 0
+    # cpuset: "0-15"
     shm_size : 1024mb
     privileged: true
     security_opt:
