@@ -18,6 +18,10 @@ from filetype.types import DOCUMENT, IMAGE, archive, document, image
 from html2image import Html2Image
 from PIL import Image
 
+from threading import Timer
+
+from multiprocessing.dummy import Pool
+
 from config import *
 from ocr_service import utils
 from ocr_service.utils import *
@@ -46,7 +50,9 @@ class Processor:
 
         hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
 
-        return [Image.open(png_img_file_path)]
+        delete_tmp_files([png_img_file_path])
+
+        return [Image.open(BytesIO(png_img_file_path))]
     
     def _preprocess_pdf_to_img(self, stream: bytes) -> List[PILImage]:
         """
@@ -61,21 +67,21 @@ class Processor:
 
         self.log.info("pre-processing pdf...")
 
-        pdf = pdfium.PdfDocument(stream)
-        doc_metadata = {}
-        try:
-            pdf_conversion_start_time = time.time()
-            renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
-                    page_indices = range(len(pdf)),
-                    scale = OCR_IMAGE_DPI/72,
-                    n_processes=CONVERTER_THREAD_NUM)
+        with pdfium.PdfDocument(stream) as pdf:
+            doc_metadata = {}
+            try:
+                pdf_conversion_start_time = time.time()
+                renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
+                        page_indices = range(len(pdf)),
+                        scale = OCR_IMAGE_DPI/72,
+                        n_processes=CONVERTER_THREAD_NUM)
 
-            pdf_image_pages = list(renderer)
-            pdf_conversion_end_time = time.time()
+                pdf_image_pages = list(renderer)
+                pdf_conversion_end_time = time.time()
 
-            self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
-        except Exception:
-            raise Exception("preprocessing_pdf exception: " + str(traceback.format_exc()))
+                self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+            except Exception:
+                raise Exception("preprocessing_pdf exception: " + str(traceback.format_exc()))
 
         return pdf_image_pages, doc_metadata
     
@@ -109,22 +115,29 @@ class Processor:
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
                 tmp_doc_file.write(stream)
+                os.fsync(tmp_doc_file)
 
             conversion_time_start = time.time()
 
-            subprocess.run(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
+            with subprocess.Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
-                capture_output=False, check=True, cwd=TMP_FILE_DIR, timeout=LIBRE_OFFICE_PROCESS_TIMEOUT, close_fds=True)
+                cwd=TMP_FILE_DIR, close_fds=False, shell=False) as loffice_subprocess:
+
+                timer = Timer(LIBRE_OFFICE_PROCESS_TIMEOUT, loffice_subprocess.kill)
+                try:
+                    output, stderr = loffice_subprocess.communicate()
+                    timer.start()
+                finally:
+                    timer.cancel()
             
             conversion_time_end = time.time()
-
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
-
             with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
                 pdf_stream = tmp_pdf_file.read()
-                delete_tmp_files([pdf_file_path, doc_file_path])
+
+            delete_tmp_files([pdf_file_path, doc_file_path])
         except Exception:
-            raise Exception("preprocessing_doc exception: " + str(traceback.format_exc()))
+            raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))
 
         return pdf_stream
 
@@ -194,8 +207,6 @@ class Processor:
             self.log.info("A total of " + str(image_count) + " images have been generated from " + file_name)
             ocr_start_time = time.time()
             proc_results = list()
-
-            from multiprocessing.dummy import Pool
 
             with Pool(CPU_THREADS) as process_pool:
                 count = 0

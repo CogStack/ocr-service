@@ -37,11 +37,10 @@ def setup_logging():
     if not handler_exists:
         root_logger.addHandler(log_handler)
 
-
 def start_office_converter_server():
     global loffice_process
     loffice_process = subprocess.Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.server", "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--executable", LIBRE_OFFICE_EXEC_PATH, "--port", LIBRE_OFFICE_LISTENER_PORT],
-                        cwd=TMP_FILE_DIR, close_fds=True)
+                        cwd=TMP_FILE_DIR, close_fds=True, shell=False)
 
 def create_app():
     """

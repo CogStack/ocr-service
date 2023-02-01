@@ -47,8 +47,12 @@ def process_file() -> Response:
 
     output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
 
-    response = build_response(output_text, metadata=doc_metadata)
-    return Response(response=json.dumps({"result" : response}), status=200, mimetype="application/json")
+    if len(output_text) > 0:
+        response = build_response(output_text, metadata=doc_metadata)
+        return Response(response=json.dumps({"result" : response}), status=200, mimetype="application/json")
+    else:
+        response = build_response(output_text, success=False, log_message="No text has been generated", metadata=doc_metadata)
+        return Response(response=json.dumps({"result" : response}), status=500, mimetype="application/json")
 
 @api.route("/process_bulk", methods=["POST"])
 def process_bulk() -> Response:
