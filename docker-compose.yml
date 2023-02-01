@@ -17,10 +17,15 @@ services:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
       - no_proxy=$no_proxy
+
+      # tesseract threading is disabled as the processing will take care of distribution
       - OMP_THREAD_LIMIT=1
-      #- OMP_NUM_THREADS=1
-      #- OMP_DYNAMIC=TRUE
-      #- OMP_NESTED=TRUE
+
+      # ocr service variables
+      - OCR_SERVICE_THREADS=4
+      - OCR_SERVICE_LOG_LEVEL=40
+      - OCR_SERVICE_CPU_THREADS=4
+      - OCR_SERVICE_CONVERTER_THREADS=4
     ulimits:
       memlock:
         soft: -1

@@ -97,8 +97,8 @@ RUN rm -rf /var/lib/apt/lists/*
 
 # python3 packages
 RUN python3.11 -m pip install --upgrade pip
-RUN python3.11 -m pip install numpy matplotlib scikit-image
-RUN python3.11 -m pip install setuptools wheel virtualenv cython uwsgi
+RUN python3.11 -m pip install setuptools numpy matplotlib
+RUN python3.11 -m pip install wheel virtualenv cython uwsgi
 RUN python3.11 -m pip install opencv-python-headless
 
 # create and copy the app  
