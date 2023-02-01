@@ -26,6 +26,35 @@ def info() -> Response:
     return Response(response=json.dumps(get_app_info()), status=200, mimetype="application/json")
 
 @api.route("/process", methods=["POST"])
+def process() -> Response:
+    stream = None
+    file_name = None
+
+    # if it is sent via the file parameter (file keeps its original name)
+    if len(request.files):
+        file = list(request.files.values())[0]
+        stream = file.stream.read()
+        file_name = file.filename
+        del file
+        log.info("Processing file given via 'file' parameter, file name: " + file_name)
+    else:
+        # if it is sent as a data-binary
+        log.info("Processing binary as data-binary, generating temporary file name...")
+        file_name = uuid.uuid4().hex
+        log.info("Generated file name:" + file_name)
+       
+        stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
+
+    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+
+    if len(output_text) > 0:
+        response = build_response(output_text, metadata=doc_metadata)
+        return Response(response=json.dumps({"result" : response}), status=200, mimetype="application/json")
+    else:
+        response = build_response(output_text, success=False, log_message="No text has been generated", metadata=doc_metadata)
+        return Response(response=json.dumps({"result" : response}), status=500, mimetype="application/json")
+
+@api.route("/process_file", methods=["POST"])
 def process_file() -> Response:
     stream = None
     file_name = None
