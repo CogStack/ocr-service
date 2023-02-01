@@ -22,7 +22,6 @@ def get_app_info():
 
 def build_response(text, success = True, log_message = "", metadata = {}):
     metadata["log_message"] = log_message
-    metadata["success"] = success
 
     return {
         "text" : text,
