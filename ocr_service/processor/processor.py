@@ -188,18 +188,22 @@ class Processor:
             doc_metadata["content-type"] = str(file_type.mime)
         else:
             doc_metadata["content-type"] = "text/plain"
+        
+        self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
         if type(file_type) == archive.Pdf:
-            images, doc_metadata = self._preprocess_pdf_to_img(stream)
+            images, _doc_metadata = self._preprocess_pdf_to_img(stream)
         elif file_type in DOCUMENT:
             pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-            images, doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+            images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
         elif file_type in IMAGE:
             images = [Image.open(BytesIO(stream))]
         else:
             # if the file has no type attempt to convert it to pdf anyways
             pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-            images, doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+            images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+
+        doc_metadata.update(_doc_metadata)
 
         image_count = len(images)
 
