@@ -15,3 +15,5 @@ models/*
 # tmp folder
 tmp/*
 
+# logs
+./ocr_service.log
