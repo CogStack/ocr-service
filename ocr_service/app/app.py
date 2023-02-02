@@ -40,7 +40,7 @@ def setup_logging():
 def start_office_converter_server():
     global loffice_process
     loffice_process = subprocess.Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.server", "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--executable", LIBRE_OFFICE_EXEC_PATH, "--port", LIBRE_OFFICE_LISTENER_PORT],
-                        cwd=TMP_FILE_DIR, close_fds=True, shell=False)
+                            cwd=TMP_FILE_DIR, close_fds=True, shell=False)
 
 def create_app():
     """
@@ -48,28 +48,35 @@ def create_app():
         :return: Flask application
     """
 
-    setup_logging()
-    start_office_converter_server()
+    try:
+        setup_logging()
+        start_office_converter_server()
 
-    proc_listener_thread = threading.Thread(target=process_listener, name="loffice_proc_listener")
-    proc_listener_thread.start()
+        proc_listener_thread = threading.Thread(target=process_listener, name="loffice_proc_listener")
+        proc_listener_thread.start()
 
-    app = Flask(__name__, instance_relative_config=True)
-    app.register_blueprint(api)
+        app = Flask(__name__, instance_relative_config=True)
+        app.register_blueprint(api)
+
+    except Exception:
+        raise
 
     return app
 
 def process_listener():
-    p = psutil.Process(loffice_process.pid)
 
     try:
         while True:
+            p = psutil.Process(loffice_process.pid)
             if p.is_running() is False or psutil.pid_exists(p.pid) is False:
                 print("Libreoffice unoserver is DOWN, restarting.....")
-                start_office_converter_server()
-            elif p.status() is psutil.STATUS_ZOMBIE:
                 exit_handler()
                 start_office_converter_server()
+            elif p.status() is psutil.STATUS_ZOMBIE:
+                p.kill()
+                exit_handler()
+                start_office_converter_server()
+            print("Checking loffice status, pid: " + str(loffice_process.pid))
             time.sleep(30)
     except Exception:
         raise
