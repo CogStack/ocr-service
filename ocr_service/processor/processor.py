@@ -126,8 +126,8 @@ class Processor:
             timer = Timer(LIBRE_OFFICE_PROCESS_TIMEOUT, loffice_subprocess.kill)
 
             try:
-                output, stderr = loffice_subprocess.communicate()
                 timer.start()
+                output, stderr = loffice_subprocess.communicate()
                 terminate_hanging_process(get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH))
             finally:
                 timer.cancel()
@@ -151,6 +151,9 @@ class Processor:
             
             :param img: the actual image of a page from a PDF file
             :type img: Image
+
+            :img_id: page number of the image
+            :type img_id: int
 
             :returns: text from the image, post-ocr
             :rtype: str
