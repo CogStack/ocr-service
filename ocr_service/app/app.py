@@ -76,7 +76,8 @@ def process_listener():
                 p.kill()
                 exit_handler()
                 start_office_converter_server()
-            print("Checking loffice status, pid: " + str(loffice_process.pid))
+            
+            print("Checking loffice status " + str(p.name) + ", pid: " + str(loffice_process.pid))
             time.sleep(30)
     except Exception:
         raise

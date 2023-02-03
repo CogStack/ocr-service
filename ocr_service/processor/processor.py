@@ -23,12 +23,12 @@ from threading import Timer
 from multiprocessing.dummy import Pool
 
 from config import *
-from ocr_service import utils
-from ocr_service.utils import *
+from ocr_service.utils.utils import *
 
 sys.path.append("..")
 
 PILImage = TypeVar('PILImage', bound=Image)
+
 
 class Processor:
 
@@ -128,16 +128,17 @@ class Processor:
             try:
                 output, stderr = loffice_subprocess.communicate()
                 timer.start()
+                terminate_hanging_process(get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH))
             finally:
                 timer.cancel()
                 loffice_subprocess.kill()
-                
-                conversion_time_end = time.time()
-                self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
 
-                with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
-                    pdf_stream = tmp_pdf_file.read()
-                    delete_tmp_files([pdf_file_path, doc_file_path])
+            conversion_time_end = time.time()
+            self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
+            time.sleep(50)
+            with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                pdf_stream = tmp_pdf_file.read()
+                delete_tmp_files([pdf_file_path, doc_file_path])
 
         except Exception:
             raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))
@@ -182,7 +183,7 @@ class Processor:
             :rtype: str
         """
 
-        file_type = utils.detect_file_type(stream)
+        file_type = detect_file_type(stream)
         output_text = ""
         images = []
         doc_metadata = {}
@@ -233,6 +234,8 @@ class Processor:
 
         doc_metadata["pages"] = image_count
 
+        output_text = output_text.replace('\\n', '\n').replace('\\t', '\t')
+
         return output_text, doc_metadata
 
     def process_stream(self, stream: bytes, file_name: str = None) -> json:
@@ -264,7 +267,6 @@ class Processor:
             self.log.info("Processing file name:" + file_name)
             start_time = time.time()
             output_text, doc_metadata = self._process(stream, file_name=file_name)
-            output_text = output_text.replace('\\n', '\n').replace('\\t', '\t')
 
             end_time = time.time()
             elapsed_time = str("{:.4f}".format(end_time - start_time))

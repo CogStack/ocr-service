@@ -1,4 +1,3 @@
-import logging
 import multiprocessing
 import os
 from sys import platform
@@ -40,7 +39,7 @@ OCR_IMAGE_DPI = int(os.environ.get("OCR_SERVICE_IMAGE_DPI", 200))
 # LIBRE OFFICE SECTION
 
 # 60 seconds before terminating processes
-LIBRE_OFFICE_PROCESS_TIMEOUT = int(os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 30))
+LIBRE_OFFICE_PROCESS_TIMEOUT = int(os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 10))
 
 # This is the port for the background soffice listener service that gets started with the app
 # used internally for LibreOffice doc conversion

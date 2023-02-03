@@ -1,12 +1,11 @@
 import os
 import sys
+import psutil
 
 from typing import List
 from datetime import datetime
 
 import filetype
-
-import config
 
 sys.path.append("..")
 
@@ -37,3 +36,22 @@ def delete_tmp_files(file_paths: List[str]):
 def detect_file_type(stream: bytes) -> filetype:
     file_type = filetype.guess(stream)
     return file_type
+
+def terminate_hanging_process(process_id : int = None):
+    if process_id != None:
+        process = psutil.Process(process_id)
+        process.kill()
+        print("killed pid :" + str(process_id))
+    else:
+        print("No process ID given or process ID is empty")
+
+def get_process_id_by_process_name(process_name : str = "") -> int:
+    pid = None
+
+    for proc in psutil.process_iter():
+        if proc.name() in process_name:
+            pid = proc.pid
+            print("Found soffice process pid:" + str(pid))
+            break
+
+    return pid
