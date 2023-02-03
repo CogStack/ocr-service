@@ -203,6 +203,8 @@ class Processor:
         
         self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
+        _doc_metadata = {}
+
         if type(file_type) == archive.Pdf:
             images, _doc_metadata = self._preprocess_pdf_to_img(stream)
         elif file_type in DOCUMENT:
@@ -210,6 +212,7 @@ class Processor:
             images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
         elif file_type in IMAGE:
             images = [Image.open(BytesIO(stream))]
+            _doc_metadata["pages"] = 1
         else:
             # if the file has no type attempt to convert it to pdf anyways
             pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
