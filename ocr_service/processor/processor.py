@@ -8,6 +8,8 @@ import sys
 import time
 import traceback
 import uuid
+
+from subprocess import PIPE, Popen
 from io import BytesIO
 from typing import List, TypeVar
 
@@ -121,24 +123,27 @@ class Processor:
 
             loffice_subprocess = subprocess.Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
-                cwd=TMP_FILE_DIR, close_fds=False, shell=False) 
+                cwd=TMP_FILE_DIR, close_fds=False, shell=False, stdout=PIPE, stderr=PIPE) 
 
-            timer = Timer(LIBRE_OFFICE_PROCESS_TIMEOUT, loffice_subprocess.kill)
-
+            loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
+            soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), \
+                    function=terminate_hanging_process, args=[get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH)])
             try:
-                timer.start()
-                output, stderr = loffice_subprocess.communicate()
-                terminate_hanging_process(get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH))
+                loffice_timer.start()
+                stdout, stderr = loffice_subprocess.communicate()
+                soffice_timer.start()
             finally:
-                timer.cancel()
+                loffice_timer.cancel()
+                soffice_timer.cancel()
                 loffice_subprocess.kill()
 
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
-            time.sleep(50)
+          
             with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
                 pdf_stream = tmp_pdf_file.read()
-                delete_tmp_files([pdf_file_path, doc_file_path])
+            
+            delete_tmp_files([pdf_file_path, doc_file_path])
 
         except Exception:
             raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))

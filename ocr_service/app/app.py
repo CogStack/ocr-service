@@ -1,7 +1,6 @@
 import atexit
 import logging
 import os
-import signal
 import subprocess
 import sys
 import threading
@@ -12,6 +11,7 @@ from flask import Flask
 
 from config import *
 from ocr_service.api import api
+from ocr_service.utils.utils import get_process_id_by_process_name
 
 sys.path.append("..")
 
@@ -68,7 +68,7 @@ def process_listener():
     try:
         while True:
             p = psutil.Process(loffice_process.pid)
-            if p.is_running() is False or psutil.pid_exists(p.pid) is False:
+            if psutil.pid_exists(p.pid) is False or p.is_running() is False:
                 print("Libreoffice unoserver is DOWN, restarting.....")
                 exit_handler()
                 start_office_converter_server()
@@ -77,8 +77,9 @@ def process_listener():
                 exit_handler()
                 start_office_converter_server()
             
-            print("Checking loffice status " + str(p.name) + ", pid: " + str(loffice_process.pid))
-            time.sleep(30)
+            print("Checking soffice pid: " + str(get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH)))
+            print("Checking loffice subproceess status " + str(p.name))
+            time.sleep(10)
     except Exception:
         raise
 
