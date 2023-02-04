@@ -36,17 +36,7 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get upgrade -y
           sudo apt-get install -y python3.11 python3.11-dev python3.11-venv python3.11-doc python3-dev python3-pip
-          sudo apt-get --force-yes -o Dpkg::Options::="--force-confold" --force-yes -o Dpkg::Options::="--force-confdef" -fuy  dist-upgrade
-          sudo apt-get install -y pkg-config gnupg libssl-dev wget curl gnupg gnupg-agent dirmngr ca-certificates apt-transport-https fonts-dejavu build-essential unixodbc unixodbc-dev gfortran gcc g++
-
-          sudo apt-get install -y libimage-exiftool-perl libtcnative-1
-          sudo apt-get install -y ttf-mscorefonts-installer fontconfig
-          sudo apt-get install -y --fix-missing libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic
-          sudo apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35
           sudo apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract-dev libleptonica-dev liblept5
-          sudo apt-get install -y --fix-missing libpcre3 libpcre3-dev
-          sudo apt-get install -y --fix-missing mesa-opencl-icd pocl-opencl-icd
-          sudo apt-get install -y --fix-missing libvips-tools libvips libvips-dev
 
           sudo apt-get install -y isort flake8
           python -m pip install --upgrade pip
