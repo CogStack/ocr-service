@@ -34,7 +34,8 @@ def build_response(text, success = True, log_message = "", metadata = {}) -> dic
 
 def delete_tmp_files(file_paths: List[str]) -> None:
     for file_path in file_paths:
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
 def detect_file_type(stream: bytes) -> filetype:
     file_type = filetype.guess(stream)
