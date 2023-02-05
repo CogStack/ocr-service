@@ -70,20 +70,22 @@ Simply edit the `docker-compose.yml` file and copy the same `ocr-service` sectio
 
 The speed of the service depends on a lot of factors: the raw size of the images being ocr-ed, the number of pages of a document, and also the number of cores available, as well as a critical factor, the CPU clock, evidently both core count and core speed need to be high for optimal performance. 
 
-There are three relevant configuration variables that you will need to take into account: OCR_SERVICE_THREADS - web service threads (how many parallel requests it can handle, it is 1 by default), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
+There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_SERVICE_THREADS - web service threads (how many parallel requests it can handle, it is 1 by default), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
+
+Service timeouts scenarios are highly likely with higher DPI settings, please change the `OCR_SERVICE_TESSERACT_TIMEOUT` to higher values if you are experiencing response timeouts. Conversion timeouts are also likely, please change the `OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT` in this case.
 
 
 Below are some sample scenarios you might come across.
-
-
-### docs with high page count
+<br>
+### Docs with high page count
 If your documents are composed of a large number of pages (10+) it is suggested that you limit your self to a lower number of services (depending on the resources available), as an example, for a machine with 64 cores you could could attempt to run 4 service instances, each service having access to at most 8 cores. Of course, the performance also depends on what kind of document you are ocr-ing, if it is a large scale image you might not get the same text quality with only the default 200 dpi image rendering enabled, and so you would need to increase you dpi and thus increasing the quality and also the processing time, you may wish to lower the number of services in this case and increase the core count.
+<br> 
 
-### single page docs
+### Single page docs
 This is a reasonable scenarion in which you can benefit from having as many services as possible, and limiting each service to 1 core `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` . Spin up as many services as you want, each service will only use one CPU.
+<br>
 
-### images
-
+### Images
 Since images do not go through the doc conversion process, you can run one container service with a higher number of web request threads, set `OCR_SERVICE_THREADS` to a desired number, it should be no greater than the number of cores on the machine,
 and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUT / OCR_SERVICE_THREADS`, so for 16 cores and OCR_SERVICE_THREADS = 16 you would want `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` .
 
@@ -93,7 +95,7 @@ and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = O
 These are the config variables declared in `config.py`.
 
 ```
-OCR_SERVICE_THREADS - default 1, this is specifically used by the web service, it should always be set to 1 unless you an image only ocr-ing scenario, see OCR-ing scenarios section above
+OCR_SERVICE_THREADS - default 1, this is specifically used by the web service, it should ALWAYS be set to 1 unless you an image only ocr-ing scenario, see OCR-ing scenarios section above
 
 OCR_SERVICE_LOG_LEVEL - default 40, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
 
