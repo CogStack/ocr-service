@@ -12,7 +12,7 @@ TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
 # Integer or Float - duration in seconds for the OCR processing, after which, pytesseract will terminate and raise RuntimeError
-TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 360)
+TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30)
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
 TESSERACT_LANGUAGE = "eng"
