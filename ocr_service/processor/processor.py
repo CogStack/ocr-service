@@ -42,29 +42,40 @@ class Processor:
         self.log.debug("Processor log level set to : ", str(app_log_level))
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
+        """ Uses html2image to screenshot the page to an PIL image.
 
+        Args:
+            stream (bytes): _description_ . File byte buffer.
+            file_name (str): _description_ . File Id.
+
+        Returns:
+            List[PILImage]: _description_
+        """   
         hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
         html_file_path = os.path.join(TMP_FILE_DIR, file_name)
         png_img_file_path = html_file_path + ".png"
         
-        with open(file=html_file_path, mode="wb") as tmp_html_file:
-            tmp_html_file.write(stream)
+        try:
+            with open(file=html_file_path, mode="wb") as tmp_html_file:
+                tmp_html_file.write(stream)
 
-        hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
-
-        delete_tmp_files([png_img_file_path])
+            hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
+        finally:
+            delete_tmp_files([png_img_file_path])
 
         return [Image.open(BytesIO(png_img_file_path))]
     
     def _preprocess_pdf_to_img(self, stream: bytes) -> List[PILImage]:
-        """
-            :descripton: converts a stream of bytes from a PDF file into images
-            
-            :param stream: byte array from file
-            :type stream: bytes
+        """ Converts a stream of bytes from a PDF file into images.
 
-            :returns: list of PIL images
-            :rtype: List[PILImage]
+        Args:
+            stream (bytes): _description_ . byte buffer.
+
+        Raises:
+            Exception: _description_ , coverting image to pdf exception
+
+        Returns:
+            List[PILImage]: _description_
         """
 
         self.log.info("pre-processing pdf...")
@@ -88,22 +99,22 @@ class Processor:
         return pdf_image_pages, doc_metadata
     
     def _preprocess_doc(self, stream: bytes, file_name: str) -> List[PILImage]:
-        """
-            :descripton: pre-processing step, all non-pdf(docx/doc/odt/ppt/xls etc.) 
-                office doc type files are sent as a stream so that they 
-                can be converted to PDF using libreoffice,
-                stream -> pdf tmp file, it will delete all the temporary files created
-                in the TMP_FILE_DIR after getting the images into memory
-            
-            :param stream: byte array from file
-            :type stream: bytes
+        """ Pre-processing step, all non-pdf(docx/doc/odt/ppt/xls etc.) 
+        office doc type files are sent as a stream so that they 
+        can be converted to PDF using libreoffice,
+        stream -> pdf tmp file, it will delete all the temporary files created
+        in the TMP_FILE_DIR after getting the images into memory
 
-            :param file_name: required file name, it will be used to create
+        Args:
+            stream (bytes): _description_ . byte array from file
+            file_name (str): _description_ . required file name, it will be used to create
                 temporary files on disk (TMP_FILE_DIR)
-            :type file_name: str
 
-            :returns: list of PIL images
-            :rtype: List[PILImage]
+        Raises:
+            Exception: _description_
+
+        Returns:
+            List[PILImage]: _description_ . list of PIL images
         """
         
         pdf_stream = None
@@ -137,32 +148,30 @@ class Processor:
                 soffice_timer.cancel()
                 loffice_subprocess.kill()
 
+                with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                    pdf_stream = tmp_pdf_file.read()
+
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
           
-            with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
-                pdf_stream = tmp_pdf_file.read()
-            
-            delete_tmp_files([pdf_file_path, doc_file_path])
-
         except Exception:
             raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))
+        finally:
+            delete_tmp_files([doc_file_path, pdf_file_path])
+
 
         return pdf_stream
 
     def _process_image(self, img: Image, img_id: int) -> str:
-        """
-            :description: processes a PIL(Pillow) Image, calls tesseract ocr with the configured params
-            
-            :param img: the actual image of a page from a PDF file
-            :type img: Image
+        """ Processes a PIL(Pillow) Image, calls tesseract ocr with the configured params
 
-            :img_id: page number of the image
-            :type img_id: int
+        Args:
+            img (Image): _description . the actual image of a page from a PDF file
+            img_id (int): _description_ . page number of the image
 
-            :returns: text from the image, post-ocr
-            :rtype: str
-        """
+        Returns:
+            str: _description_ . text from the image, post-ocr
+        """        
 
         output_str = tesserocr.image_to_text(img)
          
@@ -171,24 +180,22 @@ class Processor:
         return (output_str, img_id)
 
     def _process(self, stream: bytes, file_name: str) -> str:
-        """
-            :description: processes a stream of bytes, resulting in the output string
-                files have their type detected and then managed accordingly to their requirements
-                images will be directly OCRed, while actual documents will undergo
-                the following process : byte_stream -> convert to pdf -> convert each pdf page to images ->
-                -> multiprocess ocr for the images -> output string text
+        """ Processes a stream of bytes, resulting in the output string
+        files have their type detected and then managed accordingly to their requirements
+        images will be directly OCRed, while actual documents will undergo
+        the following process : byte_stream -> convert to pdf -> convert each pdf page to images ->
+        -> multiprocess ocr for the images -> output string text
 
-            :param stream: byte array from file
-            :type stream: bytes
-
-            :param file_name: required file name, it will be used to create
+        Args:
+            stream (bytes): _description_ .  byte array from file
+            file_name (str): _description_ . required file name, it will be used to create
                 temporary files on disk (TMP_FILE_DIR)
-            :type file_name: str
 
-            :raises: :class:`Exception`: if ocr-ing fails
+        Raises:
+            Exception: _description_
 
-            :returns: output_text, the resulting text post-ocr
-            :rtype: str
+        Returns:
+            str: _description_
         """
 
         file_type = detect_file_type(stream)
@@ -250,25 +257,18 @@ class Processor:
         return output_text, doc_metadata
 
     def process_stream(self, stream: bytes, file_name: str = None) -> json:
-        """
-            :description: sends the stream of bytes to the `_process` function
-                that will do all the pre-processing + ocr-ing work
+        """ Sends the stream of bytes to the `_process` function
+        that will do all the pre-processing + ocr-ing work
 
-            :param stream: byte array from file
-            :type stream: bytes
-
-            :param file_name: file id generated by the service(if none provided)
+        Args:
+            stream (bytes): _description_. byte array from file
+            file_name (str, optional): _description_. Defaults to None, file id generated by the service(if none provided)
                  or the actual file name if the file was provided with the `file` parameter
-            :type file_name: str
 
-            :raises: :class:`Exception`: if ocr-ing fails
-
-            :returns: output_text, the resulting text post-ocr
-            :rtype: str
-
-            :returns: doc_metadata containing doc info like number of pages, author etc
-            :rtype: dict
-        """
+        Returns:
+            tuple : _description_ . output_text post-ocr and 
+                doc_metadata containing doc info like number of pages, author etc
+        """        
 
         output_text = ""
         doc_metadata = {}
