@@ -17,6 +17,11 @@ Libre office 7.4+
 <br>
 Tesseract-ocr package and its dependencies.
 
+# Starting the service
+
+Docker mode: `docker-compose up -d`
+Console mode: `bash start_service_production.sh`
+
 # API
 
 ## API specification
@@ -95,6 +100,10 @@ and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = O
 These are the config variables declared in `config.py`.
 
 ```
+TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tesseract model, by default the model within the Docker container is Tesseract Fast (https://github.com/tesseract-ocr/tessdata_fast), if you wish to change it for better results please go to https://github.com/tesseract-ocr/tessdata_best , download the zip from the release, extract it and change the path, don't forget to mount that folder on the container if you are using Docker.
+
+OCR_SERVICE_TESSERACT_LANG - default "eng", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
+
 OCR_SERVICE_THREADS - default 1, this is specifically used by the web service, it should ALWAYS be set to 1 unless you an image only ocr-ing scenario, see OCR-ing scenarios section above
 
 OCR_SERVICE_LOG_LEVEL - default 40, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
