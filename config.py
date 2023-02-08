@@ -73,6 +73,14 @@ LIBRE_OFFICE_EXEC_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
 if platform == "linux" or platform == "linux2":
     LIBRE_OFFICE_EXEC_PATH = "/usr/bin/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "/usr/bin/python3.11"
+    
+    # this is the path from the Docker image, Ubuntu Lunar
+    TESSDATA_PREFIX = "/usr/share/tesseract-ocr/5/tessdata"
+    
+    # if not found, then set the path to tesseract 4 data, tested with Ubuntu 22.04 LTS on WSL 2
+    if os.path.exists(TESSDATA_PREFIX) is False:
+        TESSDATA_PREFIX = "/usr/share/tesseract-ocr/4.00/tessdata"
+    
 elif platform == "win32":
     LIBRE_OFFICE_EXEC_PATH = "%ProgramFiles%/LibreOffice/Program/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "C:/Windows/py.exe"
