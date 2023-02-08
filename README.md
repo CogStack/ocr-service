@@ -10,12 +10,17 @@ Feel free to ask questions on the github issue tracker or on our [discourse webs
 
 Python 3.11+ <br>
 For the Python packages see [`requirements.txt`](./requirements.txt).
-Pillow package deps, see (https://pillow.readthedocs.io/en/stable/installation.html)
+
+Pillow package deps, see https://pillow.readthedocs.io/en/stable/installation.html
+
+Tessaract-ocr https://tesseract-ocr.github.io/tessdoc/Downloads.html
 
 ## Local development dependencies
 Libre office 7.4+
 <br>
 Tesseract-ocr package and its dependencies.
+
+Windows: this project can and should be run inside WSL (preferabily ubuntu) with ease, there are some dependencies and paths that are broken outside of it that might be a headache to repair, install necessary deps from the Dockerfile.
 
 # Starting the service
 
