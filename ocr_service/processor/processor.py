@@ -246,14 +246,15 @@ class Processor:
         else:
             doc_metadata["content-type"] = "text/plain"
         
+        # tmp metadata received from methods
         _doc_metadata = {}
         
         try:
+            pdf_stream = None
             if type(file_type) == archive.Pdf:
-                images, _doc_metadata = self._preprocess_pdf_to_img(stream)
+                pdf_stream = stream
             elif file_type in DOCUMENT:
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-                images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
             elif file_type in IMAGE:
                 images = [Image.open(BytesIO(stream))]
                 _doc_metadata["pages"] = 1
@@ -264,10 +265,11 @@ class Processor:
                 # if we get no content still then just run it through libreoffice converter
                 if pdf_stream is None:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-                images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
             else:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+            
+            if pdf_stream != None:
                 images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
         except:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
