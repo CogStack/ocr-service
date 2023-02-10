@@ -39,13 +39,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update && sudo apt-get upgrade -y
-          sudo apt-get install -y python3.11 python3.11-dev python3.11-venv python3.11-doc python3-dev python3-pip
+          sudo apt-get install -y  python3-dev python3-pip python3.11 python3.11-dev python3.11-venv python3.11-doc
           sudo apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract-dev libleptonica-dev liblept5
-
+          
+          # python3 poppler requirement
+          sudo apt-get install poppler-utils -y
+          sudo apt-get install -y libreoffice libreoffice-script-provider-python
           sudo apt-get install -y isort flake8
-          python3 -m pip install --upgrade pip
-          python3 -m pip install unoserver
-          python3 -m pip install -r ./requirements.txt
+
+          python3.11 -m pip install --upgrade pip
+          python3.11 -m pip install unoserver
+          python3.11 -m pip install -r ./requirements.txt
 
       # - name: Check linting and types
       #   run: |
