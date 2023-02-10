@@ -97,7 +97,7 @@ class Processor:
 
         return pdf_image_pages, doc_metadata
     
-    def _preprocess_doc(self, stream: bytes, file_name: str) -> List[PILImage]:
+    def _preprocess_doc(self, stream: bytes, file_name: str) -> bytes:
         """ Pre-processing step, all non-pdf(docx/doc/odt/ppt/xls etc.) 
         office doc type files are sent as a stream so that they 
         can be converted to PDF using libreoffice,
@@ -113,7 +113,7 @@ class Processor:
             Exception: _description_
 
         Returns:
-            List[PILImage]: _description_ . list of PIL images
+            bytes: _description_ . pdf file stream
         """
         
         pdf_stream = None
@@ -148,6 +148,7 @@ class Processor:
                 loffice_subprocess.kill()
 
                 with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                    os.fsync(tmp_pdf_file)
                     pdf_stream = tmp_pdf_file.read()
 
             conversion_time_end = time.time()
@@ -158,7 +159,36 @@ class Processor:
         finally:
             delete_tmp_files([doc_file_path, pdf_file_path])
 
+        return pdf_stream
+    
+    def _preprocess_xml_to_pdf(self, stream: bytes, file_name: str) -> bytes:
+        
+        
+        pdf_stream = None
+        
+        try:
+            from pyxml2pdf.core.initializer import Initializer
+            
+            # generate unique id
+            uid = uuid.uuid4().hex
+            xml_file_path = os.path.join(TMP_FILE_DIR, file_name + "_" + str(uid) + ".xml")
+            pdf_file_path = xml_file_path + ".pdf"
+            
+            with open(file=xml_file_path, mode="wb") as tmp_doc_file:
+                tmp_doc_file.write(stream)
+                os.fsync(tmp_doc_file)
+                
+            pdfinit = Initializer(xml_file_path, pdf_file_path)
 
+            if os.path.exists(pdf_file_path):
+                with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                    pdf_stream = tmp_pdf_file.read()
+                    os.fsync(tmp_pdf_file)
+        except Exception:
+            raise Exception("xml doc name:" + str(file_name) + " | "  "preprocess_xml_to_pdf exception: " + str(traceback.format_exc()))
+        finally:
+            delete_tmp_files([xml_file_path, pdf_file_path])
+            
         return pdf_stream
 
     def _process_image(self, img: Image, img_id: int, tess_api) -> str:
@@ -216,22 +246,33 @@ class Processor:
         else:
             doc_metadata["content-type"] = "text/plain"
         
-        self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
-
         _doc_metadata = {}
-
-        if type(file_type) == archive.Pdf:
-            images, _doc_metadata = self._preprocess_pdf_to_img(stream)
-        elif file_type in DOCUMENT:
-            pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-            images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
-        elif file_type in IMAGE:
-            images = [Image.open(BytesIO(stream))]
-            _doc_metadata["pages"] = 1
-        else:
-            # if the file has no type attempt to convert it to pdf anyways
-            pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-            images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+        
+        try:
+            if type(file_type) == archive.Pdf:
+                images, _doc_metadata = self._preprocess_pdf_to_img(stream)
+            elif file_type in DOCUMENT:
+                pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+            elif file_type in IMAGE:
+                images = [Image.open(BytesIO(stream))]
+                _doc_metadata["pages"] = 1
+            elif is_file_type_xml(stream):
+                doc_metadata["content-type"] = "text/xml"
+                pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
+                
+                # if we get no content still then just run it through libreoffice converter
+                if pdf_stream is None:
+                    pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+            else:
+                # if the file has no type attempt to convert it to pdf anyways
+                pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+        except:
+            raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
+            
+        self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
         doc_metadata.update(_doc_metadata)
 

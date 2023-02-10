@@ -1,12 +1,16 @@
 import os
 import sys
+import traceback
+import uuid
 import psutil
+import logging
 
 from sys import platform
 from typing import List
 from datetime import datetime
 
 import filetype
+import xml.sax
 
 sys.path.append("..")
 
@@ -37,6 +41,14 @@ def delete_tmp_files(file_paths: List[str]) -> None:
         if os.path.exists(file_path):
             os.remove(file_path)
 
+def is_file_type_xml(stream: bytes) -> bool:
+    try:
+        xml.sax.parseString(stream, xml.sax.ContentHandler())
+        return True
+    except:
+        logging.warning("Could not determine if file is XML.")
+    return False
+
 def detect_file_type(stream: bytes) -> filetype:
     file_type = filetype.guess(stream)
     return file_type
@@ -50,9 +62,9 @@ def terminate_hanging_process(process_id : int) -> None:
     if process_id != None:
         process = psutil.Process(process_id)
         process.kill()
-        print("killed pid :" + str(process_id))
+        logging.warning("killed pid :" + str(process_id))
     else:
-        print("No process ID given or process ID is empty")
+        logging.warning("No process ID given or process ID is empty")
 
 def get_process_id_by_process_name(process_name : str = "") -> int:
     """ Looks for specific process in process_name

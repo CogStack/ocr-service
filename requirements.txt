@@ -12,3 +12,4 @@ tesserocr==2.5.2
 pypdfium2==3.18.0
 psutil==5.9.4
 uharfbuzz==0.33.0
+pyxml2pdf==0.3.4
