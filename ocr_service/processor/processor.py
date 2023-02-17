@@ -207,7 +207,8 @@ class Processor:
 
         tess_data = {}
         confidences = tess_api.AllWordConfidences()
-        tess_data["confidence"] = sum(confidences)/len(confidences)
+        len_confidence = 1 if len(confidences) == 0 else len(confidences)
+        tess_data["confidence"] = sum(confidences)/len_confidence
 
         self.log.info("finished processing img: " + str(img_id))
 
