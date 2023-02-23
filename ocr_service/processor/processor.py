@@ -7,7 +7,6 @@ import sys
 import time
 import traceback
 import uuid
-import pikepdf
 
 from subprocess import PIPE, Popen
 from io import BytesIO

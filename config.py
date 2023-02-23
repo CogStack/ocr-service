@@ -9,7 +9,7 @@ ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
 
 # Should we actually ocr or just extract text from PDFs ? NOTE: OCR IS STILL APPLIED TO IMAGES if detected | possible vals : "OCR", "NO_OCR"
-OPERATION_MODE= os.environ.get("OCR_SERVICE_OPERATION_MODE", "NO_OCR")
+OPERATION_MODE= os.environ.get("OCR_SERVICE_OPERATION_MODE", "OCR")
 
 # basic app settings
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
