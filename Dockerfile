@@ -107,7 +107,7 @@ COPY ./ /ocr_service
 WORKDIR /ocr_service
 
 # Install requirements for the app
-RUN python3.11 -m pip install --no-cache-di --break-system-packagesr -r ./requirements.txt
+RUN python3.11 -m pip install --no-cache-dir --break-system-packages -r ./requirements.txt
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
