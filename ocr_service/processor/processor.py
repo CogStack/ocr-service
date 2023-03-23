@@ -109,6 +109,8 @@ class Processor:
         """
 
         self.log.info("pre-processing pdf...")
+        
+        pdf_image_pages = []
 
         try:
            pdf_image_pages, doc_metadata = self._pdf_to_img(stream)

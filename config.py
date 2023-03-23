@@ -17,7 +17,7 @@ OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 # Tesseract model path
 TESSDATA_PREFIX = os.environ.get("TESSDATA_PREFIX", "/usr/local/share/tessdata")
 
-# Integer or Float - duration in seconds for the OCR processing, after which, pytesseract will terminate and raise RuntimeError
+# Integer or Float - duration in seconds for the OCR processing, after which, tesseract will terminate and raise RuntimeError
 TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30)
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
@@ -26,7 +26,7 @@ TESSERACT_LANGUAGE = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng")
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
 TESSERACT_NICE = int(os.environ.get("OCR_SERVICE_TESSERACT_NICE", -18))
 
-# Any additional custom configuration flags that are not available via the pytesseract function. For example: config='--psm 6'
+# Any additional custom configuration flags that are not available via the tesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = os.environ.get("OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS", "")
 
 # controls both threads and cpus
