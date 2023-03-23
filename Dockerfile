@@ -96,10 +96,10 @@ RUN apt-get install -y libreoffice libreoffice-script-provider-python
 RUN rm -rf /var/lib/apt/lists/*
 
 # python3 packages
-RUN python3.11 -m pip install --upgrade pip
-RUN python3.11 -m pip install setuptools numpy matplotlib
-RUN python3.11 -m pip install wheel virtualenv cython uwsgi
-RUN python3.11 -m pip install opencv-python-headless
+RUN python3.11 -m pip install --upgrade pip --break-system-packages
+RUN python3.11 -m pip install setuptools numpy matplotlib --break-system-packages
+RUN python3.11 -m pip install wheel virtualenv cython uwsgi --break-system-packages
+RUN python3.11 -m pip install opencv-python-headless --break-system-packages
 
 # create and copy the app  
 RUN mkdir /ocr_service
@@ -107,7 +107,7 @@ COPY ./ /ocr_service
 WORKDIR /ocr_service
 
 # Install requirements for the app
-RUN python3.11 -m pip install --no-cache-dir -r ./requirements.txt
+RUN python3.11 -m pip install --no-cache-di --break-system-packagesr -r ./requirements.txt
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
