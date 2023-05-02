@@ -15,6 +15,9 @@ Pillow package deps, see https://pillow.readthedocs.io/en/stable/installation.ht
 
 Tessaract-ocr https://tesseract-ocr.github.io/tessdoc/Downloads.html
 
+Docker (optional, but recommended for deployments) version 20.10+ 
+Docker-compose v1.29.0+ (Python package)
+
 ## Local development dependencies
 Libre office 7.4+
 <br>
@@ -74,13 +77,15 @@ It is possible to control this however, please see the [resource management sect
 
 This service is fast but it is resource intensive, and will attempt to use all cores on your machine. You can spin up multiple docker services in the hopes of having multiple requests handled at the same time.
 
-Simply edit the `docker-compose.yml` file and copy the same `ocr-service` section and edit the `OCR_SERVICE_CPU_THREADS` and `OCR_SERVICE_CONVERTER_THREADS` parameters to be equal to the number_of_cores on the machine divided by the number of services, i.e for 4 services assuming 16 cores - `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 16/4` for each docker service, don't forget to rename the service name and container name : ocr-service-1/-2/-3 and to change the output ports from 8090 to something else (pref the same port range for ease of tracking 809(1/2/3).
+Simply edit the `docker-compose.yml` file and copy the same `ocr-service` section and edit the `OCR_SERVICE_CPU_THREADS` and `OCR_SERVICE_CONVERTER_THREADS` parameters to be equal to the number_of_cores on the machine divided by the number of services, i.e for 4 services assuming 16 cores - `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 16/4` for each docker service, don't forget to rename the service name and container name : ocr-service-1/-2/-3 and to change the output ports from 8090 to something else (pref the same port range for ease of tracking 809(1/2/3)).
+
+You can now also set the `OCR_WEB_SERVICE_THREADS` to a value greater than 1, allowing you to use only one docker container that can process multiple requests, each request having access to limited CPU cores, spread evenly. It might not be advised to use this with a different value than 1 if you are processing docuemnts with a large amount of pages, because each page gets sent to one core, it will take considerably more time to process, check the below [OCR-ing scenarios](#ocr-ing-scenarios).
 
 ## OCR-ing scenarios
 
 The speed of the service depends on a lot of factors: the raw size of the images being ocr-ed, the number of pages of a document, and also the number of cores available, as well as a critical factor, the CPU clock, evidently both core count and core speed need to be high for optimal performance. 
 
-There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_SERVICE_THREADS - web service threads (how many parallel requests it can handle, it is 1 by default), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
+There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_WEB_SERVICE_THREADS - web service threads (how many parallel requests it can handle, it is 1 by default), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
 
 Service timeouts scenarios are highly likely with higher DPI settings, please change the `OCR_SERVICE_TESSERACT_TIMEOUT` to higher values if you are experiencing response timeouts. Conversion timeouts are also likely, please change the `OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT` in this case.
 
@@ -96,8 +101,8 @@ This is a reasonable scenarion in which you can benefit from having as many serv
 <br>
 
 ### Images
-Since images do not go through the doc conversion process, you can run one container service with a higher number of web request threads, set `OCR_SERVICE_THREADS` to a desired number, it should be no greater than the number of cores on the machine,
-and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUT / OCR_SERVICE_THREADS`, so for 16 cores and OCR_SERVICE_THREADS = 16 you would want `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` .
+Since images do not go through the doc conversion process, you can run one container service with a higher number of web request threads, set `OCR_WEB_SERVICE_THREADS` to a desired number, it should be no greater than the number of cores on the machine,
+and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUT / OCR_WEB_SERVICE_THREADS`, so for 16 cores and OCR_WEB_SERVICE_THREADS = 16 you would want `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` .
 
 
 # Config variables
@@ -109,7 +114,7 @@ TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tessera
 
 OCR_SERVICE_TESSERACT_LANG - default "eng", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
 
-OCR_SERVICE_THREADS - default 1, this is specifically used by the web service, it should ALWAYS be set to 1 unless you an image only ocr-ing scenario, see OCR-ing scenarios section above
+OCR_WEB_SERVICE_THREADS - default 1, this is specifically used by the web service, this can now be set to a value greater than 1 to allow multiple requests to process at the same time, of course, with split CPU resources,see OCR-ing scenarios section above
 
 OCR_SERVICE_LOG_LEVEL - default 40, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
 
@@ -121,7 +126,7 @@ OCR_SERVICE_TESSERACT_NICE - default -18, this is just for Linux systems, we nee
 
 OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS - extra parameters that you might want to pass to tesseract
 
-OCR_SERVICE_CPU_THREADS - defaults to whatever the core count on the machine is, this variable is used by tesseract
+OCR_SERVICE_CPU_THREADS - defaults to whatever the core count on the machine is divided by OCR_WEB_SERVICE_THREADS , this variable is used by tesseract, each web thread will get access to a limited amount of CPUS so that resources are spread evenly
 
 OCR_SERVICE_CONVERTER_THREADS - defaults to whatever the core count on the machine is, this variable is used for converting pdf docs to images
 
