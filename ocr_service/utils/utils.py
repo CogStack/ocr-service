@@ -1,7 +1,5 @@
 import os
 import sys
-import traceback
-import uuid
 import psutil
 import logging
 
@@ -26,14 +24,14 @@ def get_app_info() -> dict:
             "service_model": "None",
             "config": ""}
 
-def build_response(text, success = True, log_message = "", metadata = {}) -> dict:
+def build_response(text, success: bool = True, log_message: str = "", metadata: dict = {}) -> dict:
     metadata["log_message"] = log_message
 
     return {
-        "text" : text,
+        "text": text,
         "metadata": metadata,
-        "success" : str(success),
-        "timestamp" :str(datetime.now())
+        "success": str(success),
+        "timestamp":str(datetime.now())
     }
 
 def delete_tmp_files(file_paths: List[str]) -> None:
@@ -53,7 +51,7 @@ def detect_file_type(stream: bytes) -> filetype:
     file_type = filetype.guess(stream)
     return file_type
 
-def terminate_hanging_process(process_id : int) -> None:
+def terminate_hanging_process(process_id: int) -> None:
     """ Kills process given process id.
 
     Args:
@@ -62,11 +60,11 @@ def terminate_hanging_process(process_id : int) -> None:
     if process_id != None:
         process = psutil.Process(process_id)
         process.kill()
-        logging.warning("killed pid :" + str(process_id))
+        logging.warning("killed pid:" + str(process_id))
     else:
         logging.warning("No process ID given or process ID is empty")
 
-def get_process_id_by_process_name(process_name : str = "") -> int:
+def get_process_id_by_process_name(process_name: str = "") -> int:
     """ Looks for specific process in process_name
     Used mostly for making sure that the 'soffice' process times out 
     forcefully (it has a habit of hanging or getting stuck so

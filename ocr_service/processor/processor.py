@@ -34,11 +34,13 @@ PILImage = TypeVar('PILImage', bound=Image)
 class Processor:
 
     @injector.inject
-    def __init__(self):
+    def __init__(self, loffice_process_list: dict = None):
         app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(level=app_log_level)
         self.log.debug("Processor log level set to : ", str(app_log_level))
+        
+        self.loffice_process_list = loffice_process_list
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
         """ Uses html2image to screenshot the page to an PIL image.
@@ -153,32 +155,50 @@ class Processor:
 
             conversion_time_start = time.time()
 
-            loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
-                "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", LIBRE_OFFICE_LISTENER_PORT, "--convert-to", "pdf"],
-                cwd=TMP_FILE_DIR, close_fds=False, shell=False, stdout=PIPE, stderr=PIPE) 
+            loffice_subprocess = None
+            used_port_num = None
 
-            loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
-            soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), \
-                    function=terminate_hanging_process, args=[get_process_id_by_process_name(LIBRE_OFFICE_EXEC_PATH)])
-            try:
-                loffice_timer.start()
-                stdout, stderr = loffice_subprocess.communicate()
-                soffice_timer.start()
-            finally:
-                loffice_timer.cancel()
-                soffice_timer.cancel()
-                loffice_subprocess.kill()
+            for port_num, loffice_process in self.loffice_process_list.items():
+                if loffice_process["used"] is False:
+                    used_port_num = port_num
+                    loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
+                        "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", str(used_port_num), "--convert-to", "pdf"],
+                        cwd=TMP_FILE_DIR, close_fds=False, shell=False, stdout=PIPE, stderr=PIPE)
+                    self.loffice_process_list[used_port_num]["used"] = True
+                    break 
 
-                with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
-                    os.fsync(tmp_pdf_file)
-                    pdf_stream = tmp_pdf_file.read()
+            if used_port_num is None:
+                pass
+            
+            if loffice_subprocess is not None and used_port_num is not None:
+                loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
+                soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), \
+                        function=terminate_hanging_process, args=[self.loffice_process_list[used_port_num]["process"].pid])
+                try:
+                    loffice_timer.start()
+                    stdout, stderr = loffice_subprocess.communicate()
+                    soffice_timer.start()
+                finally:
+                    loffice_timer.cancel()
+                    soffice_timer.cancel()
+                    loffice_subprocess.kill()
+
+                    with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                        os.fsync(tmp_pdf_file)
+                        pdf_stream = tmp_pdf_file.read()
+
+            else:
+                raise Exception("could not libre office server process on port:" + str(used_port_num))
 
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
           
         except Exception:
             raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))
+        
         finally:
+            if used_port_num:
+                self.loffice_process_list[used_port_num]["used"] = False
             delete_tmp_files([doc_file_path, pdf_file_path])
 
         return pdf_stream
