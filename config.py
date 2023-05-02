@@ -2,8 +2,9 @@ import multiprocessing
 import os
 from sys import platform
 
+OCR_SERVICE_VERSION = "0.1.0"
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
-LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 20))
+LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
 
 ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
@@ -21,7 +22,7 @@ TESSDATA_PREFIX = os.environ.get("TESSDATA_PREFIX", "/usr/local/share/tessdata")
 TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30)
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
-TESSERACT_LANGUAGE = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng")
+TESSERACT_LANGUAGE = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng+lat")
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows. Nice adjusts the niceness of unix-like processes.
 TESSERACT_NICE = int(os.environ.get("OCR_SERVICE_TESSERACT_NICE", -18))
@@ -38,10 +39,10 @@ TESSERACT_CUSTOM_CONFIG_FLAGS = os.environ.get("OCR_SERVICE_TESSERACT_CUSTOM_CON
 OCR_WEB_SERVICE_THREADS = int(os.environ.get("OCR_WEB_SERVICE_THREADS", multiprocessing.cpu_count()))
 
 # set this to control the number of threads used for OCR-ing per web request thread (check OCR_WEB_SERVICE_THREADS)
-CPU_THREADS = int(os.environ.get("OCR_SERVICE_CPU_THREADS", multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS))
+CPU_THREADS = int(os.environ.get("OCR_SERVICE_CPU_THREADS", (multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS)))
 
 # conversion thread number for the pdf -> PIL img conversion, per web request thread (check OCR_WEB_SERVICE_THREADS)
-CONVERTER_THREAD_NUM = int(os.environ.get("OCR_SERVICE_CONVERTER_THREADS", multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS))
+CONVERTER_THREAD_NUM = int(os.environ.get("OCR_SERVICE_CONVERTER_THREADS", (multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS)))
 
 # should we convert detected images to greyscale before OCR-ing
 OCR_CONVERT_GRAYSCALE_IMAGES = True

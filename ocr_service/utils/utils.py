@@ -10,6 +10,8 @@ from datetime import datetime
 import filetype
 import xml.sax
 
+from config import *
+
 sys.path.append("..")
 
 def get_app_info() -> dict:
@@ -20,8 +22,8 @@ def get_app_info() -> dict:
         dict: _description_ . Application information stored as KVPs
     """
     return {"service_app_name": "ocr-service",
-            "service_version": "0.0.1",
-            "service_model": "None",
+            "service_version": OCR_SERVICE_VERSION,
+            "service_model": TESSDATA_PREFIX,
             "config": ""}
 
 def build_response(text, success: bool = True, log_message: str = "", metadata: dict = {}) -> dict:

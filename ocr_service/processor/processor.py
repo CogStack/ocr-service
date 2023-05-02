@@ -113,6 +113,7 @@ class Processor:
         self.log.info("pre-processing pdf...")
         
         pdf_image_pages = []
+        doc_metadata = {}
 
         try:
            pdf_image_pages, doc_metadata = self._pdf_to_img(stream)
@@ -163,12 +164,9 @@ class Processor:
                     used_port_num = port_num
                     loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
                         "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", str(used_port_num), "--convert-to", "pdf"],
-                        cwd=TMP_FILE_DIR, close_fds=False, shell=False, stdout=PIPE, stderr=PIPE)
+                        cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
                     self.loffice_process_list[used_port_num]["used"] = True
                     break 
-
-            if used_port_num is None:
-                pass
             
             if loffice_subprocess is not None and used_port_num is not None:
                 loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
@@ -182,11 +180,13 @@ class Processor:
                     loffice_timer.cancel()
                     soffice_timer.cancel()
                     loffice_subprocess.kill()
-
-                    with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
-                        os.fsync(tmp_pdf_file)
-                        pdf_stream = tmp_pdf_file.read()
-
+                    
+                    if os.path.isfile(pdf_file_path):
+                        with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
+                            os.fsync(tmp_pdf_file)
+                            pdf_stream = tmp_pdf_file.read()
+                    else:
+                        self.log.info("libre office did not produce any output for file: " + str(pdf_file_path) + " | port:" + str(used_port_num))
             else:
                 raise Exception("could not libre office server process on port:" + str(used_port_num))
 
@@ -194,7 +194,7 @@ class Processor:
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
           
         except Exception:
-            raise Exception("doc name:" + str(file_name) + " | "  "preprocessing_doc exception: " + str(traceback.format_exc()))
+            raise Exception("doc name:" + str(file_name) + " | preprocessing_doc exception: " + str(traceback.format_exc()))
         
         finally:
             if used_port_num:
@@ -204,7 +204,6 @@ class Processor:
         return pdf_stream
     
     def _preprocess_xml_to_pdf(self, stream: bytes, file_name: str) -> bytes:
-        
         
         pdf_stream = None
         
