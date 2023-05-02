@@ -3,7 +3,7 @@ import os
 from sys import platform
 
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
-LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
+LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 20))
 
 ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
@@ -29,11 +29,19 @@ TESSERACT_NICE = int(os.environ.get("OCR_SERVICE_TESSERACT_NICE", -18))
 # Any additional custom configuration flags that are not available via the tesseract function. For example: config='--psm 6'
 TESSERACT_CUSTOM_CONFIG_FLAGS = os.environ.get("OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS", "")
 
-# controls both threads and cpus
-CPU_THREADS = int(os.environ.get("OCR_SERVICE_CPU_THREADS",  multiprocessing.cpu_count()))
+# controls both threads and cpus for one WEB SERVICE thread, basically, one request handler.
+# this is derived normally from the amount of threads Gunicorn is running with, for example:
+#  - if we have OCR_SERVICE_THREADS = 4, the OCR service can handle at most 4 requests at the same time,
+#    this means that you can not use all of your CPUS for OCR-ing for 1 request,
+#    because that means the other requests are sitting idle while the first one uses all resources,
+#    and so it is recommended to regulate the number of threads per request
+OCR_WEB_SERVICE_THREADS = int(os.environ.get("OCR_WEB_SERVICE_THREADS", multiprocessing.cpu_count()))
 
-# conversion thread number for the pdf -> PIL img conversion
-CONVERTER_THREAD_NUM = int(os.environ.get("OCR_SERVICE_CONVERTER_THREADS", multiprocessing.cpu_count()))
+# set this to control the number of threads used for OCR-ing per web request thread (check OCR_WEB_SERVICE_THREADS)
+CPU_THREADS = int(os.environ.get("OCR_SERVICE_CPU_THREADS", multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS))
+
+# conversion thread number for the pdf -> PIL img conversion, per web request thread (check OCR_WEB_SERVICE_THREADS)
+CONVERTER_THREAD_NUM = int(os.environ.get("OCR_SERVICE_CONVERTER_THREADS", multiprocessing.cpu_count() / OCR_WEB_SERVICE_THREADS))
 
 # should we convert detected images to greyscale before OCR-ing
 OCR_CONVERT_GRAYSCALE_IMAGES = True
@@ -45,13 +53,19 @@ OCR_IMAGE_DPI = int(os.environ.get("OCR_SERVICE_IMAGE_DPI", 200))
 # LIBRE OFFICE SECTION
 
 # 60 seconds before terminating processes
-LIBRE_OFFICE_PROCESS_TIMEOUT = int(os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 10))
+LIBRE_OFFICE_PROCESS_TIMEOUT = int(os.environ.get("OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT", 20))
 
 # This is the port for the background soffice listener service that gets started with the app
 # used internally for LibreOffice doc conversion
-LIBRE_OFFICE_LISTENER_PORT = "9999"
+# the service should start multiple libre office servers for doc conversions,
+# a libre office server will only use 1 CPU by default (not changable), thus,
+# for handling multiple requests, we will have one service per OCR_WEB_SERVICE_THREAD
+DEFAULT_LIBRE_OFFICE_SERVER_PORT = 9900
+LIBRE_OFFICE_LISTENER_PORT_RANGE = range(DEFAULT_LIBRE_OFFICE_SERVER_PORT, DEFAULT_LIBRE_OFFICE_SERVER_PORT + OCR_WEB_SERVICE_THREADS)
 
 LIBRE_OFFICE_NETWORK_INTERFACE = "localhost"
+
+LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL = 10
 
 
 # DO NOT CHANGE THIS UNLESS YOU ARE DEVELOPING OR RUNNING THIS APP LOCALLY
@@ -87,9 +101,3 @@ if platform == "linux" or platform == "linux2":
 elif platform == "win32":
     LIBRE_OFFICE_EXEC_PATH = "%ProgramFiles%/LibreOffice/Program/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "C:/Windows/py.exe"
-
-
-# Other settings for image or format conversions
-
-# might speed up pdf to img conversion, normally ppm is used
-CONVERTER_USE_PDF_CAIRO = True

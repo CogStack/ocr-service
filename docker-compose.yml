@@ -22,9 +22,10 @@ services:
       - OMP_THREAD_LIMIT=1
 
       # ocr service variables
+      - OCR_WEB_SERVICE_THREADS=8
       - OCR_SERVICE_LOG_LEVEL=20
-      - OCR_SERVICE_CPU_THREADS=4
-      - OCR_SERVICE_CONVERTER_THREADS=4
+      - OCR_SERVICE_CPU_THREADS=2
+      - OCR_SERVICE_CONVERTER_THREADS=2
       - OCR_SERVICE_OPERATION_MODE=OCR
     ulimits:
       memlock:
