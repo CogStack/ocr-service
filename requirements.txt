@@ -12,3 +12,4 @@ pypdfium2==3.21.1
 psutil==5.9.5
 uharfbuzz==0.35.0
 pyxml2pdf==0.3.4
+psycogreen==1.0.2
