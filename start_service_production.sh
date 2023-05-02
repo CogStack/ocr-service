@@ -28,7 +28,7 @@ if [ -z ${OCR_SERVICE_WORKER_TIMEOUT+x} ]; then
 fi
 
 if [ -z ${OCR_SERVICE_LOG_LEVEL+x} ]; then
-  OCR_SERVICE_LOG_LEVEL=20
+  OCR_SERVICE_LOG_LEVEL=40
   echo "OCR_SERVICE_LOG_LEVEL is unset -- setting to default: $OCR_SERVICE_LOG_LEVEL"
 fi
 
