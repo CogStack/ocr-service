@@ -92,7 +92,7 @@ RUN apt-get clean autoclean && \
 # python3 poppler requirement
 RUN apt-get install poppler-utils -y
 
-RUN apt-get install -y libreoffice libreoffice-script-provider-python
+RUN apt-get install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
 RUN rm -rf /var/lib/apt/lists/*
 
 # python3 packages
