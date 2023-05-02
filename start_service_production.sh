@@ -28,9 +28,15 @@ if [ -z ${OCR_SERVICE_WORKER_TIMEOUT+x} ]; then
 fi
 
 if [ -z ${OCR_SERVICE_LOG_LEVEL+x} ]; then
-  OCR_SERVICE_LOG_LEVEL=40
+  OCR_SERVICE_LOG_LEVEL=20
   echo "OCR_SERVICE_LOG_LEVEL is unset -- setting to default: $OCR_SERVICE_LOG_LEVEL"
 fi
+
+if [ -z ${OCR_WEB_SERVICE_WORKER_CLASS+x} ]; then
+  OCR_WEB_SERVICE_WORKER_CLASS="gthread"
+  echo "OCR_WEB_SERVICE_WORKER_CLASS is unset -- setting to default: $OCR_WEB_SERVICE_WORKER_CLASS"
+fi
+
 
 OCR_SERVICE_ACCESS_LOG_FORMAT="%(t)s [ACCESSS] %(h)s \"%(r)s\" %(s)s \"%(f)s\" \"%(a)s\""
 
@@ -39,5 +45,5 @@ OCR_SERVICE_ACCESS_LOG_FORMAT="%(t)s [ACCESSS] %(h)s \"%(r)s\" %(s)s \"%(f)s\" \
 #
 echo "Starting up Flask app using gunicorn OCR_SERVICE ..."
 python3.11 -m gunicorn --bind $OCR_SERVICE_HOST:$OCR_SERVICE_PORT -w $OCR_SERVICE_WORKERS --threads=$OCR_WEB_SERVICE_THREADS --timeout=$OCR_SERVICE_WORKER_TIMEOUT \
-  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=./ocr_service.log --log-file=./ocr_service.log --log-level error --worker-class=gthread \
+  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=./ocr_service.log --log-file=./ocr_service.log --log-level error --worker-class=$OCR_WEB_SERVICE_WORKER_CLASS \
   wsgi
