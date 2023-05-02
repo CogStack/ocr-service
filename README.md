@@ -112,7 +112,9 @@ These are the config variables declared in `config.py`.
 ```
 TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tesseract model, by default the model within the Docker container is Tesseract Fast (https://github.com/tesseract-ocr/tessdata_fast), if you wish to change it for better results please go to https://github.com/tesseract-ocr/tessdata_best , download the zip from the release, extract it and change the path, don't forget to mount that folder on the container if you are using Docker.
 
-OCR_SERVICE_TESSERACT_LANG - default "eng", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
+OCR_SERVICE_TESSERACT_LANG - default "eng+lat", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
+
+OCR_WEB_SERVICE_WORKER_CLASS - default "gthread", "gthread" is best if you use multiple threads per worker, if you are only using 1 worker and 1 thread, max performance is achieved with "sync", note that with "sync" you can only ever have one thread per worker, the       "OCR_WEB_SERVICE_THREADS" will be ignored.
 
 OCR_WEB_SERVICE_THREADS - default 1, this is specifically used by the web service, this can now be set to a value greater than 1 to allow multiple requests to process at the same time, of course, with split CPU resources,see OCR-ing scenarios section above
 
