@@ -2,6 +2,7 @@ import os
 import sys
 import psutil
 import logging
+import socket
 
 from sys import platform
 from typing import List
@@ -95,3 +96,8 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
             break
 
     return pid
+
+def is_port_in_use(port: int) -> bool:
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+

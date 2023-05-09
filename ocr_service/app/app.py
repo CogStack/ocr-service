@@ -12,7 +12,7 @@ from flask import Flask
 from config import *
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
-from ocr_service.utils.utils import get_process_id_by_process_name
+from ocr_service.utils.utils import is_port_in_use
 
 sys.path.append("..")
 
@@ -48,12 +48,23 @@ def start_office_converter_servers():
 
     port_count = 0
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
-        if port_count < OCR_WEB_SERVICE_THREADS:
-            port_count += 1
-            if port_num not in list(loffice_processes.keys()):
-                loffice_processes[port_num] = start_office_server(port_num)
+        if OCR_WEB_SERVICE_WORKERS <= 1:
+            if port_count < OCR_WEB_SERVICE_THREADS:
+                port_count += 1
+                if port_num not in list(loffice_processes.keys()):
+                    if is_port_in_use(port_num) == False:
+                        loffice_processes[port_num] = start_office_server(port_num)
+            else:
+                break
         else:
-            break
+            print("WOREKER TRYING PORT " + str(port_num))
+            if is_port_in_use(port_num) == False and port_count < OCR_WEB_SERVICE_WORKERS - 1:
+                loffice_processes[port_num] = start_office_server(port_num)
+                port_count += 1
+            else:
+                break
+
+
     return loffice_processes
             
 def create_app():
