@@ -2,7 +2,7 @@ import multiprocessing
 import os
 from sys import platform
 
-OCR_SERVICE_VERSION = "0.1.0"
+OCR_SERVICE_VERSION = "0.2.0"
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
 LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
 
