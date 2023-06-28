@@ -58,7 +58,7 @@ def start_office_converter_servers():
                 break
         else:
             print("WOREKER TRYING PORT " + str(port_num))
-            if is_port_in_use(port_num) == False and port_count < OCR_WEB_SERVICE_WORKERS - 1:
+            if is_port_in_use(port_num) == False and port_count < OCR_WEB_SERVICE_WORKERS:
                 loffice_processes[port_num] = start_office_server(port_num)
                 port_count += 1
             else:
