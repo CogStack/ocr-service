@@ -49,11 +49,10 @@ def start_office_converter_servers():
     port_count = 0
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
         if OCR_WEB_SERVICE_WORKERS > 1:
-            if port_count < 1:
-                if port_num not in list(loffice_processes.keys()):
-                    port_count += 1
-                    if is_port_in_use(port_num) == False:
-                        loffice_processes[port_num] = start_office_server(port_num)
+            if port_num not in list(loffice_processes.keys()):
+                port_count += 1
+                if is_port_in_use(port_num) == False:
+                    loffice_processes[port_num] = start_office_server(port_num)
             else:
                 break
         else:
