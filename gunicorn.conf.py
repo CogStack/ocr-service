@@ -11,7 +11,7 @@ counter = 0
 def pre_fork(server, worker):
     global counter
 
-    time.sleep(2 + counter * 1.5)
+    time.sleep(1 + counter)
     counter += 1
 
 def post_fork(server, worker):

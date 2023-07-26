@@ -99,7 +99,14 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
     return pid
 
 def sync_port_mapping(worker_id = None, worker_pid = None):
-      with open(os.path.join(TMP_FILE_DIR, './worker_process_data.txt'), encoding="utf-8", mode='a+') as f:
+      
+
+      f_path = os.path.join(TMP_FILE_DIR, './worker_process_data.txt')
+      open_mode = "r+"
+      if not os.path.exists(f_path):
+          open_mode = "w+"
+      
+      with open(f_path, encoding="utf-8", mode=open_mode) as f:
             fcntl.lockf(f, fcntl.LOCK_EX)
 
             port_mapping = {}
