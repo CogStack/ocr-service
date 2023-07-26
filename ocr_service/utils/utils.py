@@ -101,12 +101,12 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
 def sync_port_mapping(worker_id = None, worker_pid = None):
       
 
-      f_path = os.path.join(TMP_FILE_DIR, './worker_process_data.txt')
       open_mode = "r+"
-      if not os.path.exists(f_path):
+
+      if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):
           open_mode = "w+"
       
-      with open(f_path, encoding="utf-8", mode=open_mode) as f:
+      with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
             fcntl.lockf(f, fcntl.LOCK_EX)
 
             port_mapping = {}
@@ -124,7 +124,13 @@ def sync_port_mapping(worker_id = None, worker_pid = None):
 
 def get_assigned_port(current_worker_pid):
     port_mapping = {}
-    with open(os.path.join(TMP_FILE_DIR, './worker_process_data.txt'), encoding="utf-8", mode='r+') as f:
+
+    open_mode = "r+"
+
+    if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):
+          open_mode = "w+"
+    
+    with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
         fcntl.lockf(f, fcntl.LOCK_EX)
         port_mapping = json.loads(f.read())
         fcntl.lockf(f, fcntl.LOCK_UN)

@@ -4,6 +4,7 @@ import time
 import unittest
 
 from ocr_service.app.app import create_app
+from ocr_service.utils.utils import sync_port_mapping
 
 from ..tests.test_utils import *
 
@@ -97,6 +98,8 @@ class TestOcrServiceProcessor(unittest.TestCase):
 
     @staticmethod
     def _setup_app(cls):
+        sync_port_mapping(worker_id=0, worker_pid=os.getpid())
+
         cls.app = create_app()
         cls.client = cls.app.test_client()
 

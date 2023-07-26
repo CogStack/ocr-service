@@ -9,6 +9,8 @@ LOG_LEVEL = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
 
 ROOT_DIR = os.path.abspath(os.curdir)
 TMP_FILE_DIR = os.path.join(ROOT_DIR, "tmp")
+WORKER_PORT_MAP_FILE_PATH = os.path.join(TMP_FILE_DIR, './worker_process_data.txt')
+
 
 # Should we actually ocr or just extract text from PDFs ? NOTE: OCR IS STILL APPLIED TO IMAGES if detected | possible vals : "OCR", "NO_OCR"
 OPERATION_MODE = os.environ.get("OCR_SERVICE_OPERATION_MODE", "OCR")
