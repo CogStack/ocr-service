@@ -19,7 +19,7 @@ app = Flask(__name__, instance_relative_config=True)
 
 def start_office_server(port_num):
     loffice_process = { "process" : subprocess.Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.server", "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--executable", LIBRE_OFFICE_EXEC_PATH, "--port", str(port_num)],
-                                        cwd=TMP_FILE_DIR, close_fds=True, shell=False), "pid" : "" , "port" : str(port_num)}
+                                        cwd=TMP_FILE_DIR, close_fds=True, shell=False), "pid" : "" , "port" : str(port_num), "used": False}
     loffice_process["pid"] = loffice_process["process"].pid
 
     return loffice_process
