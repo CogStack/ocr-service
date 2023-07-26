@@ -1,8 +1,9 @@
+import fcntl
+import json
 import os
 import sys
 import psutil
 import logging
-import socket
 
 from sys import platform
 from typing import List
@@ -97,7 +98,54 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
 
     return pid
 
-def is_port_in_use(port: int) -> bool:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
+def sync_port_mapping(worker_id = None, worker_pid = None):
+      with open(os.path.join(TMP_FILE_DIR, './worker_process_data.txt'), encoding="utf-8", mode='a+') as f:
+            fcntl.lockf(f, fcntl.LOCK_EX)
 
+            port_mapping = {}
+            text = f.read()
+
+            if len(text) > 0:
+                port_mapping = json.loads(text)
+            
+            port_mapping[str((LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id))] = str(worker_pid)
+            output = json.dumps(port_mapping, indent=1)
+            f.seek(0)
+            f.truncate(0)
+            f.write(output)
+            fcntl.lockf(f, fcntl.LOCK_UN)
+
+def get_assigned_port(current_worker_pid):
+    port_mapping = {}
+    with open(os.path.join(TMP_FILE_DIR, './worker_process_data.txt'), encoding="utf-8", mode='r+') as f:
+        fcntl.lockf(f, fcntl.LOCK_EX)
+        port_mapping = json.loads(f.read())
+        fcntl.lockf(f, fcntl.LOCK_UN)
+    
+    for port_num, worker_pid in port_mapping.items():
+        if int(worker_pid) == int(current_worker_pid):
+            return int(port_num)
+    
+    return False
+
+def setup_logging():
+    """
+        :description: Configure and setup a default logging handler to print messages to stdout
+    """
+    global root_logger
+    root_logger = logging.getLogger()
+    log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
+    app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
+    log_handler = logging.StreamHandler(sys.stdout)
+    log_handler.setFormatter(logging.Formatter(fmt=log_format))
+    log_handler.setLevel(level=app_log_level)
+
+    # only add the handler if a previous one does not exists
+    handler_exists = False
+    for h in root_logger.handlers:
+        if isinstance(h, logging.StreamHandler) and h.level is log_handler.level:
+            handler_exists = True
+            break
+
+    if not handler_exists:
+        root_logger.addHandler(log_handler)

@@ -34,13 +34,12 @@ PILImage = TypeVar('PILImage', bound=Image)
 class Processor:
 
     @injector.inject
-    def __init__(self, loffice_process_list: dict = None):
+    def __init__(self):
         app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(level=app_log_level)
         self.log.debug("Processor log level set to : ", str(app_log_level))
-        
-        self.loffice_process_list = loffice_process_list
+        self.loffice_process_list = {}
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
         """ Uses html2image to screenshot the page to an PIL image.
