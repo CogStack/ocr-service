@@ -127,17 +127,14 @@ def get_assigned_port(current_worker_pid):
 
     open_mode = "r+"
 
-    if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):
-          open_mode = "w+"
-    
-    with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
-        fcntl.lockf(f, fcntl.LOCK_EX)
-        port_mapping = json.loads(f.read())
-        fcntl.lockf(f, fcntl.LOCK_UN)
-    
-    for port_num, worker_pid in port_mapping.items():
-        if int(worker_pid) == int(current_worker_pid):
-            return int(port_num)
+    if os.path.exists(WORKER_PORT_MAP_FILE_PATH):
+        with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
+            text = f.read()
+            if len(text) > 0:
+                port_mapping = json.loads(text)
+                for port_num, worker_pid in port_mapping.items():
+                    if int(worker_pid) == int(current_worker_pid):
+                        return int(port_num)
     
     return False
 

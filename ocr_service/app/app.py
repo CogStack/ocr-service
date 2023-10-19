@@ -27,7 +27,6 @@ def start_office_server(port_num):
 def start_office_converter_servers():
 
     loffice_processes = {}
-    port_count = 0
 
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
         if port_num == get_assigned_port(os.getpid()) and OCR_WEB_SERVICE_THREADS == 1:
@@ -38,6 +37,10 @@ def start_office_converter_servers():
         elif OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1:
             process = start_office_server(port_num)
             loffice_processes[port_num] = process
+        elif DEBUG_MODE:
+            process = start_office_server(port_num)
+            loffice_processes[port_num] = process
+            break
 
     return loffice_processes
             

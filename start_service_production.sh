@@ -14,11 +14,13 @@ fi
 
 if [ -z ${OCR_WEB_SERVICE_WORKERS+x} ]; then
   OCR_WEB_SERVICE_WORKERS=4
+  export OCR_WEB_SERVICE_WORKERS=4
   echo "OCR_WEB_SERVICE_WORKERS is unset -- setting to default: $OCR_WEB_SERVICE_WORKERS"
 fi
 
 if [ -z ${OCR_WEB_SERVICE_THREADS+x} ]; then
   OCR_WEB_SERVICE_THREADS=1
+  export OCR_WEB_SERVICE_THREADS=1
   echo "OCR_WEB_SERVICE_THREADS is unset -- setting to default: $OCR_WEB_SERVICE_THREADS"
 fi
 

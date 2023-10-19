@@ -187,7 +187,7 @@ class Processor:
                     else:
                         self.log.info("libre office did not produce any output for file: " + str(pdf_file_path) + " | port:" + str(used_port_num))
             else:
-                raise Exception("could not libre office server process on port:" + str(used_port_num))
+                raise Exception("could not find libre office server process on port:" + str(used_port_num))
 
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
