@@ -24,12 +24,15 @@ from threading import Timer
 
 from multiprocessing.dummy import Pool, Queue
 
-from config import *
-from ocr_service.utils.utils import *
+from config import CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LOG_LEVEL, TMP_FILE_DIR, \
+                   OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX, TESSERACT_LANGUAGE, \
+                   TESSERACT_TIMEOUT, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH
+from ocr_service.utils.utils import delete_tmp_files, detect_file_type, is_file_type_xml, terminate_hanging_process
 
 sys.path.append("..")
 
 PILImage = TypeVar('PILImage', bound=Image)
+
 
 class Processor:
 
@@ -54,7 +57,7 @@ class Processor:
         hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
         html_file_path = os.path.join(TMP_FILE_DIR, file_name)
         png_img_file_path = html_file_path + ".png"
-        
+
         try:
             with open(file=html_file_path, mode="wb") as tmp_html_file:
                 tmp_html_file.write(stream)
@@ -64,26 +67,26 @@ class Processor:
             delete_tmp_files([png_img_file_path])
 
         return [Image.open(BytesIO(png_img_file_path))]
-    
+
     def _pdf_to_img(self, stream: bytes) -> List[PILImage]:
         pdf_image_pages = []
         doc_metadata = {}
         with pdfium.PdfDocument(stream) as pdf:
             pdf_conversion_start_time = time.time()
             renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
-                    page_indices = range(len(pdf)),
-                    scale = OCR_IMAGE_DPI/72,
-                    n_processes=CONVERTER_THREAD_NUM)
+                                        page_indices=range(len(pdf)),
+                                        scale=OCR_IMAGE_DPI/72,
+                                        n_processes=CONVERTER_THREAD_NUM)
 
             pdf_image_pages = list(renderer)
             pdf_conversion_end_time = time.time()
 
-            self.log.info("PDF conversion to image(s) finished | Elapsed : " + str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+            self.log.info("PDF conversion to image(s) finished | Elapsed : " +
+                          str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
 
         return pdf_image_pages, doc_metadata
-    
+
     def _pdf_to_text(self, stream: bytes) -> str:
-        
         doc_metadata = {}
         output_text = ""
         with pdfium.PdfDocument(stream) as pdf:
@@ -94,7 +97,6 @@ class Processor:
                 output_text += "\n"
 
         return output_text, doc_metadata
-        
 
     def _preprocess_pdf_to_img(self, stream: bytes) -> List[PILImage]:
         """ Converts a stream of bytes from a PDF file into images.
@@ -110,20 +112,20 @@ class Processor:
         """
 
         self.log.info("pre-processing pdf...")
-        
+
         pdf_image_pages = []
         doc_metadata = {}
 
         try:
-           pdf_image_pages, doc_metadata = self._pdf_to_img(stream)
-        except Exception as e:
+            pdf_image_pages, doc_metadata = self._pdf_to_img(stream)
+        except Exception:
             self.log.error("preprocessing_pdf exception: " + str(traceback.format_exc()))
-                
+
         return pdf_image_pages, doc_metadata
-    
+
     def _preprocess_doc(self, stream: bytes, file_name: str) -> bytes:
-        """ Pre-processing step, all non-pdf(docx/doc/odt/ppt/xls etc.) 
-        office doc type files are sent as a stream so that they 
+        """ Pre-processing step, all non-pdf(docx/doc/odt/ppt/xls etc.)
+        office doc type files are sent as a stream so that they
         can be converted to PDF using libreoffice,
         stream -> pdf tmp file, it will delete all the temporary files created
         in the TMP_FILE_DIR after getting the images into memory
@@ -161,16 +163,19 @@ class Processor:
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
                     used_port_num = port_num
-                    loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter", doc_file_path, pdf_file_path,
-                        "--interface", LIBRE_OFFICE_NETWORK_INTERFACE, "--port", str(used_port_num), "--convert-to", "pdf"],
-                        cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
+                    loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
+                                                     doc_file_path, pdf_file_path,
+                                                     "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
+                                                     "--port", str(used_port_num), "--convert-to", "pdf"],
+                                               cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
                     self.loffice_process_list[used_port_num]["used"] = True
-                    break 
-            
+                    break
+
             if loffice_subprocess is not None and used_port_num is not None:
                 loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
-                soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), \
-                        function=terminate_hanging_process, args=[self.loffice_process_list[used_port_num]["process"].pid])
+                soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT),
+                                      function=terminate_hanging_process,
+                                      args=[self.loffice_process_list[used_port_num]["process"].pid])
                 try:
                     loffice_timer.start()
                     stdout, stderr = loffice_subprocess.communicate()
@@ -179,7 +184,7 @@ class Processor:
                     loffice_timer.cancel()
                     soffice_timer.cancel()
                     loffice_subprocess.kill()
-                    
+
                     if os.path.isfile(pdf_file_path):
                         with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
                             os.fsync(tmp_pdf_file)
@@ -190,34 +195,35 @@ class Processor:
                 raise Exception("could not find libre office server process on port:" + str(used_port_num))
 
             conversion_time_end = time.time()
-            self.log.info("doc conversion to PDF finished | Elapsed : " + str(conversion_time_end - conversion_time_start) + " seconds")
-          
+            self.log.info("doc conversion to PDF finished | Elapsed : " + \
+                          str(conversion_time_end - conversion_time_start) + " seconds")
+
         except Exception:
             raise Exception("doc name:" + str(file_name) + " | preprocessing_doc exception: " + str(traceback.format_exc()))
-        
+
         finally:
             if used_port_num:
                 self.loffice_process_list[used_port_num]["used"] = False
             delete_tmp_files([doc_file_path, pdf_file_path])
 
         return pdf_stream
-    
+
     def _preprocess_xml_to_pdf(self, stream: bytes, file_name: str) -> bytes:
-        
+
         pdf_stream = None
-        
+
         try:
             from pyxml2pdf.core.initializer import Initializer
-            
+
             # generate unique id
             uid = uuid.uuid4().hex
             xml_file_path = os.path.join(TMP_FILE_DIR, file_name + "_" + str(uid) + ".xml")
             pdf_file_path = xml_file_path + ".pdf"
-            
+
             with open(file=xml_file_path, mode="wb") as tmp_doc_file:
                 tmp_doc_file.write(stream)
                 os.fsync(tmp_doc_file)
-                
+
             pdfinit = Initializer(xml_file_path, pdf_file_path)
 
             if os.path.exists(pdf_file_path):
@@ -228,7 +234,7 @@ class Processor:
             raise Exception("xml doc name:" + str(file_name) + " | "  "preprocess_xml_to_pdf exception: " + str(traceback.format_exc()))
         finally:
             delete_tmp_files([xml_file_path, pdf_file_path])
-            
+
         return pdf_stream
 
     def _process_image(self, img: Image, img_id: int, tess_api) -> str:
@@ -282,17 +288,18 @@ class Processor:
         images = []
         doc_metadata = {}
 
-        if file_type != None:
+        if file_type is not None:
             doc_metadata["content-type"] = str(file_type.mime)
         else:
             doc_metadata["content-type"] = "text/plain"
-        
+
         # tmp metadata received from methods
         _doc_metadata = {}
-        
+
         try:
             pdf_stream = None
-            if type(file_type) == archive.Pdf:
+
+            if type(file_type) is archive.Pdf:
                 pdf_stream = stream
             elif file_type in DOCUMENT:
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
@@ -302,20 +309,20 @@ class Processor:
             elif is_file_type_xml(stream):
                 doc_metadata["content-type"] = "text/xml"
                 pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
-                
+
                 # if we get no content still then just run it through libreoffice converter
                 if pdf_stream is None:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
             else:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
-            
-            if pdf_stream != None:
+
+            if pdf_stream is not None:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
                 elif OPERATION_MODE == "NO_OCR":
                     output_text, _doc_metadata = self._pdf_to_text(pdf_stream)
-                        
+    
             self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
             doc_metadata.update(_doc_metadata)
@@ -333,7 +340,10 @@ class Processor:
                     for img in images:
                         count += 1
                         tess_api_q.put(self._init_tesseract_api_worker())
-                        proc_results.append(process_pool.starmap_async(self._process_image,[(img, count, tess_api_q.get()  )], chunksize=1, error_callback=logging.error))
+                        proc_results.append(process_pool.starmap_async(self._process_image,
+                                                                       [(img, count, tess_api_q.get())],
+                                                                       chunksize=1,
+                                                                       error_callback=logging.error))
                     try:
                         for result in proc_results:
                             result_data = result.get(timeout=TESSERACT_TIMEOUT)
@@ -345,17 +355,16 @@ class Processor:
                     finally:
                         for tess_api in tess_api_q.queue:
                             tess_api.End()
-                
+
                 ocr_end_time = time.time()
 
                 self.log.info("OCR processing finished | Elapsed : " + str("{:.4f}".format(ocr_end_time - ocr_start_time)) + " seconds")
 
                 doc_metadata["pages"] = image_count
                 doc_metadata["confidence"] = round(sum([page["confidence"] for page in tess_data]) / image_count, 4)
-            
-            output_text = output_text.replace('\\n', '\n').replace('\\t', '\t')
 
-        except:
+            output_text = output_text.replace('\\n', '\n').replace('\\t', '\t')
+        except Exception:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
 
         return output_text, doc_metadata
@@ -366,13 +375,14 @@ class Processor:
 
         Args:
             stream (bytes): _description_. byte array from file
-            file_name (str, optional): _description_. Defaults to None, file id generated by the service(if none provided)
+            file_name (str, optional): _description_. Defaults to None,
+                 file id generated by the service(if none provided)
                  or the actual file name if the file was provided with the `file` parameter
 
         Returns:
             tuple : _description_ . output_text post-ocr and 
                 doc_metadata containing doc info like number of pages, author etc
-        """        
+        """
 
         output_text = ""
         doc_metadata = {}
@@ -388,7 +398,7 @@ class Processor:
             doc_metadata["elapsed_time"] = elapsed_time
 
             self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time) + " seconds")
-        except Exception as exception:
+        except Exception:
             traceback.print_exc(file=sys.stdout)
 
         return output_text, doc_metadata
