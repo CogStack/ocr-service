@@ -1,4 +1,4 @@
-FROM ubuntu:lunar
+FROM ubuntu:jammy
 
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -85,7 +85,6 @@ RUN apt-get install -y python3-tk tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfb
 RUN apt-get clean autoclean && \
     apt-get autoremove --purge -y
 
-
 # other openCL packages
 # beignet-opencl-icd
 
@@ -96,10 +95,7 @@ RUN apt-get install -y --no-install-recommends default-jre libreoffice-java-comm
 RUN rm -rf /var/lib/apt/lists/*
 
 # python3 packages
-RUN python3.11 -m pip install --upgrade pip --break-system-packages
-RUN python3.11 -m pip install setuptools numpy matplotlib --break-system-packages
-RUN python3.11 -m pip install wheel virtualenv cython uwsgi --break-system-packages
-RUN python3.11 -m pip install opencv-python-headless --break-system-packages
+RUN python3.11 -m pip install --no-cache-dir --upgrade pip --break-system-packages
 
 # create and copy the app  
 RUN mkdir /ocr_service
