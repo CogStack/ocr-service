@@ -17,13 +17,13 @@ ENV no_proxy=$NO_PROXY
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBIAN_PRIORITY=critical
 
-ENV NVIDIA_VISIBLE_DEVICES all
-ENV NVIDIA_DRIVER_CAPABILITIES compute,utility,display
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,display
 
 # Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONUNBUFFERED=1
 
 # default user
 USER root
@@ -74,7 +74,7 @@ RUN apt-get install -y libimage-exiftool-perl libtcnative-1 && \
     apt-get install -y ttf-mscorefonts-installer fontconfig && \
     apt-get install -y --fix-missing libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
     apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 && \
-    apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract5 libtesseract-dev libleptonica-dev liblept5 && \
+    apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libtesseract libtesseract-dev libleptonica-dev liblept5 && \
     apt-get install -y --fix-missing libpcre3 libpcre3-dev && \
     apt-get install -y --fix-missing mesa-opencl-icd pocl-opencl-icd && \
     apt-get install -y --fix-missing libvips-tools libvips libvips-dev
