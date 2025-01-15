@@ -1,12 +1,13 @@
 import json
 import logging
 import time
+import os
 import unittest
 
 from ocr_service.app.app import create_app
 from ocr_service.utils.utils import sync_port_mapping
 
-from ..tests.test_utils import *
+from ..tests.test_utils import get_file
 
 
 class TestOcrServiceProcessor(unittest.TestCase):
@@ -24,12 +25,12 @@ class TestOcrServiceProcessor(unittest.TestCase):
     @staticmethod
     def runner(app):
         return app.test_cli_runner()
-    
+
     def test_request_api_info(cls):
         response = cls.client.get(cls.ENDPOINT_API_INFO)
         api_info = json.loads(response.data)
         assert len(api_info.keys()) > 0
-    
+
     def test_request_api_process_doc(cls):
         file = get_file("generic/pat_id_1.doc")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
@@ -65,7 +66,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
         response = json.loads(response.data)
         assert len(response["result"]["text"]) > 100
-    
+
     def test_request_api_process_png(cls):
         file = get_file("generic/pat_id_1.png")
         response = cls.client.post(cls.ENDPOINT_PROCESS_SINGLE, data=file)
