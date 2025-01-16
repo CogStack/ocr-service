@@ -1,9 +1,6 @@
-version: "3.7"
-
 services:
   ocr-service:
     container_name: ocr-service
-    platform: linux
     # image: cogstacksystems/cogstack-ocr-service:latest
     build: .
     restart: always
