@@ -1,5 +1,4 @@
 setuptools==75.8.0
-unoserver==3.1
 filetype==1.2.0
 Pillow==11.1.0
 html2image==2.0.5
@@ -20,3 +19,7 @@ cython==3.0.11
 wheel==0.45.0
 uwsgi==2.0.28
 psycogreen==1.0.2
+
+# only version 1.6 works properly,
+# all other versions cannot convert office type files or RTF files to PDF for some reason
+unoserver==1.6
