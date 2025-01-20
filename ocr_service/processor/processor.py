@@ -141,7 +141,7 @@ class Processor:
         Returns:
             bytes: _description_ . pdf file stream
         """
-        
+
         pdf_stream = None
 
         try:
@@ -190,16 +190,18 @@ class Processor:
                             os.fsync(tmp_pdf_file)
                             pdf_stream = tmp_pdf_file.read()
                     else:
-                        self.log.info("libre office did not produce any output for file: " + str(pdf_file_path) + " | port:" + str(used_port_num))
+                        self.log.info("libre office did not produce any output for file: " +
+                                      str(pdf_file_path) + " | port:" + str(used_port_num))
             else:
                 raise Exception("could not find libre office server process on port:" + str(used_port_num))
 
             conversion_time_end = time.time()
-            self.log.info("doc conversion to PDF finished | Elapsed : " + \
+            self.log.info("doc conversion to PDF finished | Elapsed : " +
                           str(conversion_time_end - conversion_time_start) + " seconds")
 
         except Exception:
-            raise Exception("doc name:" + str(file_name) + " | preprocessing_doc exception: " + str(traceback.format_exc()))
+            raise Exception("doc name:" + str(file_name) + " | preprocessing_doc exception: "
+                            + str(traceback.format_exc()))
 
         finally:
             if used_port_num:
@@ -302,7 +304,7 @@ class Processor:
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
             elif file_type in DOCUMENT:
-                pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
                 images = [Image.open(BytesIO(stream))]
                 _doc_metadata["pages"] = 1
@@ -312,17 +314,17 @@ class Processor:
 
                 # if we get no content still then just run it through libreoffice converter
                 if pdf_stream is None:
-                    pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                    pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             else:
                 # if the file has no type attempt to convert it to pdf anyways
-                pdf_stream = self._preprocess_doc(stream, file_name=file_name) 
+                pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
             if pdf_stream is not None:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
                 elif OPERATION_MODE == "NO_OCR":
                     output_text, _doc_metadata = self._pdf_to_text(pdf_stream)
-    
+
             self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
             doc_metadata.update(_doc_metadata)
@@ -358,7 +360,8 @@ class Processor:
 
                 ocr_end_time = time.time()
 
-                self.log.info("OCR processing finished | Elapsed : " + str("{:.4f}".format(ocr_end_time - ocr_start_time)) + " seconds")
+                self.log.info("OCR processing finished | Elapsed : " +
+                              str("{:.4f}".format(ocr_end_time - ocr_start_time)) + " seconds")
 
                 doc_metadata["pages"] = image_count
                 doc_metadata["confidence"] = round(sum([page["confidence"] for page in tess_data]) / image_count, 4)
