@@ -17,8 +17,17 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-22.04
+    runs-on: ${{ matrix.runner }}
     
+    strategy:
+      matrix:
+        platform: [amd64, arm64]
+        include:
+          - platform: amd64
+            runner: ubuntu-22.04
+          - platform: arm64
+            runner: ubuntu-22.04-arm
+
     env:
       working-directory: ./
 
@@ -67,27 +76,19 @@ jobs:
         if: ${{ env.RELEASE_VERSION == 'master' }}
         run: echo "RELEASE_VERSION=latest" >> $GITHUB_ENV
 
-      - name: Build and push Docker OCR Service image
-        id: docker_build
-        uses: docker/build-push-action@v2
-        with:
-          context : ./
-          file : "./Dockerfile"
-          allow: network.host
-          github-token: ${{ github.token }}
-          tags: cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}
-          push: true
-          
-      - name: Build and push Docker OCR Service Multilanguage image
-        id: docker_build_multilang
-        uses: docker/build-push-action@v2
-        with:
-          context : ./
-          file : "./Dockerfile_multilang"
-          allow: network.host
-          github-token: ${{ github.token }}
-          tags: cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}
-          push: true
+      - name: set CPU architecture
+        id: set_cpu_architecture
+        run: echo "CPU_ARCHITECTURE=${{ matrix.platform }}" >> $GITHUB_ENV
 
+      - name: Build and push Docker OCR Service image
+        run: |
+          docker build --platform linux/${{ matrix.platform }} -t cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}-${{ matrix.platform }} -f Dockerfile --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
+          docker push cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
+
+      - name: Build and push Docker OCR Service image
+        run: |
+          docker build --platform linux/${{ matrix.platform }} -t cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}-${{ matrix.platform }} -f Dockerfile_multilang --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
+          docker push cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
+  
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
