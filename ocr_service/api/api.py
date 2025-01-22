@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import sys
 import uuid
 import traceback
@@ -9,16 +8,15 @@ from flask import Response, request
 
 from multiprocessing import Pool
 
-from config import LOG_LEVEL, CPU_THREADS, TESSERACT_TIMEOUT
+from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL
 from ocr_service.api.api_blueprint import ApiBlueprint
-from ocr_service.utils.utils import build_response, get_app_info
+from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
 sys.path.append("..")
 
-log = logging.getLogger("API")
-log.setLevel(level=os.getenv("APP_LOG_LEVEL", LOG_LEVEL))
 
 api = ApiBlueprint(name="api", import_name="api", url_prefix="/api")
+log = setup_logging("api", log_level=LOG_LEVEL)
 
 
 @api.route("/info", methods=["GET"])
@@ -32,6 +30,8 @@ def info() -> Response:
 def process() -> Response:
     stream = None
     file_name: str = None
+
+    global log
 
     # if it is sent via the file parameter (file keeps its original name)
     if len(request.files):
@@ -52,13 +52,17 @@ def process() -> Response:
 
     if len(output_text) > 0:
         response = build_response(output_text, metadata=doc_metadata)
-        return Response(response=json.dumps({"result": response}), status=200, mimetype="application/json")
+        return Response(response=json.dumps({"result": response}),
+                        status=200,
+                        mimetype="application/json")
     else:
         response = build_response(output_text,
                                   metadata=doc_metadata,
                                   success=False,
                                   log_message="No text has been generated")
-        return Response(response=json.dumps({"result": response}), status=500, mimetype="application/json")
+        return Response(response=json.dumps({"result": response}),
+                        status=500,
+                        mimetype="application/json")
 
 
 @api.route("/process_file", methods=["POST"])

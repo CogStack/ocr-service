@@ -265,6 +265,7 @@ class Processor:
 
     def _init_tesseract_api_worker(self):
         tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)
+        self.log.debug("Initialised pytesseract api worker for language:" + str(TESSERACT_LANGUAGE))
         return tess_api
 
     def _process(self, stream: bytes, file_name: str) -> str:
@@ -323,10 +324,11 @@ class Processor:
             if pdf_stream is not None:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
+
                 elif OPERATION_MODE == "NO_OCR":
                     output_text, _doc_metadata = self._pdf_to_text(pdf_stream)
 
-            self.log.info("Detect file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
+            self.log.info("Detected file type for doc id: " + file_name + " | " + str(doc_metadata["content-type"]))
 
             doc_metadata.update(_doc_metadata)
             image_count = len(images)

@@ -4,6 +4,7 @@ import subprocess
 import sys
 import threading
 import time
+import logging
 
 import psutil
 from flask import Flask
@@ -12,9 +13,10 @@ from config import DEBUG_MODE, LIBRE_OFFICE_EXEC_PATH, LIBRE_OFFICE_LISTENER_POR
                    LIBRE_OFFICE_NETWORK_INTERFACE, \
                    LIBRE_OFFICE_PYTHON_PATH, LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL, \
                    OCR_WEB_SERVICE_THREADS, OCR_WEB_SERVICE_WORKERS, TMP_FILE_DIR
+
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
-from ocr_service.utils.utils import setup_logging, get_assigned_port
+from ocr_service.utils.utils import get_assigned_port
 
 sys.path.append("..")
 
@@ -43,7 +45,7 @@ def start_office_converter_servers():
 
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
         if port_num == get_assigned_port(os.getpid()) and OCR_WEB_SERVICE_THREADS == 1:
-            print("STARTED WORKER ON PORT: " + str(port_num))
+            logging.debug("STARTED WORKER ON PORT: " + str(port_num))
             process = start_office_server(port_num)
             loffice_processes[port_num] = process
             break
@@ -65,7 +67,6 @@ def create_app():
     """
 
     try:
-        setup_logging()
         global _loffice_processes
         _loffice_processes = {}
         _loffice_processes.update(start_office_converter_servers())
@@ -93,13 +94,13 @@ def process_listener():
             for port_num, loffice_process in api.processor.loffice_process_list.items():
                 p = psutil.Process(api.processor.loffice_process_list[port_num]["process"].pid)
                 if psutil.pid_exists(p.pid) is False or p.is_running() is False or p.status() is psutil.STATUS_ZOMBIE:
-                    print("Libreoffice port:" + str(port_num) + "unoserver is DOWN, restarting.....")
+                    logging.info("Libreoffice port:" + str(port_num) + "unoserver is DOWN, restarting.....")
                     exit_handler(port_num)
                     process = start_office_server(port_num)
                     api.processor.loffice_process_list[port_num] = process
 
-                print("Checking soffice pid: " + str(p.pid) + " | port: " + str(port_num))
-                print("Checking loffice subproceess status " + str(p.name))
+                logging.info("Checking soffice pid: " + str(p.pid) + " | port: " + str(port_num))
+                logging.info("Checking loffice subproceess status " + str(p.name))
 
                 _loffice_processes = api.processor.loffice_process_list
             time.sleep(LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL)
@@ -108,7 +109,7 @@ def process_listener():
 
 
 def exit_handler(port_num: int):
-    print("exit handler: libreoffice unoserver shutting down...")
+    logging.info("exit handler: libreoffice unoserver shutting down...")
     api.processor.loffice_process_list[port_num]["process"].kill()
     del api.processor.loffice_process_list[port_num]
 
