@@ -369,7 +369,7 @@ class Processor:
                 doc_metadata["pages"] = image_count
                 doc_metadata["confidence"] = round(sum([page["confidence"] for page in tess_data]) / image_count, 4)
 
-            output_text = output_text.replace('\\n', '\n').replace('\\t', '\t')
+            output_text = output_text.translate({'\\n': '\n', '\\t': '\t'})
         except Exception:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
 

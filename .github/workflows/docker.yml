@@ -78,5 +78,16 @@ jobs:
           tags: cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}
           push: true
           
+      - name: Build and push Docker OCR Service Multilanguage image
+        id: docker_build_multilang
+        uses: docker/build-push-action@v2
+        with:
+          context : ./
+          file : "./Dockerfile_multilang"
+          allow: network.host
+          github-token: ${{ github.token }}
+          tags: cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}
+          push: true
+
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}

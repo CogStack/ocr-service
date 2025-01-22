@@ -82,7 +82,9 @@ RUN apt-get install -y libimage-exiftool-perl libtcnative-1 && \
     apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
 # tessaract language packages
-RUN apt-get install -y --fix-missing tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat
+RUN apt-get install -y --fix-missing tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-script-latn && \
+    apt-get install -y --fix-missing tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor && \
+    apt-get install -y --fix-missing tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
 
 # Pillow package requirements
 RUN apt-get install -y python3-tk tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev 
