@@ -22,7 +22,7 @@ OPERATION_MODE = os.environ.get("OCR_SERVICE_OPERATION_MODE", "OCR")
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
 # Tesseract model path
-TESSDATA_PREFIX = os.environ.get("TESSDATA_PREFIX", "/usr/local/share/tessdata")
+TESSDATA_PREFIX = os.environ.get("OCR_TESSDATA_PREFIX", "/usr/local/share/tessdata")
 
 # Integer or Float - duration in seconds for the OCR processing, after which,
 #   tesseract will terminate and raise RuntimeError

@@ -158,6 +158,7 @@ def setup_logging(component_name: str = "config_logger", log_level: int = 20) ->
     log_handler.setFormatter(logging.Formatter(fmt=log_format))
     log_handler.setLevel(level=log_level)
     root_logger.setLevel(level=log_level)
+    root_logger.propagate = False
 
     # only add the handler if a previous one does not exists
     handler_exists = False
