@@ -339,7 +339,7 @@ class Processor:
                 ocr_start_time = time.time()
                 proc_results = list()
 
-                with Pool(processes=CPU_THREADS, initializer=self._init_tesseract_api_worker) as process_pool:
+                with Pool(processes=CPU_THREADS) as process_pool:
                     tess_api_q = Queue()
                     count = 0
                     for img in images:
