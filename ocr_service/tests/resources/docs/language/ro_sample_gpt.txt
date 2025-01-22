@@ -1,0 +1,105 @@
+# This document is for Romanian, Moldavian, Moldovan (these are the same language really but idk why tesseract refers to them as separate languages)
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-ron
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+NOTĂ DE CONSULTAȚIE CARDIOLOGICĂ
+Data: 22.01.2025
+Nr. consultație: 247/2025
+DATELE PACIENTULUI:
+Nume: Popescu Ioan
+Data nașterii: 15.03.1962
+Vârstă: 62 ani
+Sex: Masculin
+Ocupație: Profesor pensionar
+MOTIVUL PREZENTĂRII:
+Pacientul se prezintă pentru durere precordială cu caracter de apăsare, care apare la efort moderat, durată aproximativ 5-10 minute, ameliorată în repaus. Asociază dispnee la eforturi moderate (urcat 2 etaje). Simptomatologie debutată în urmă cu aproximativ 3 luni, cu agravare progresivă.
+ANTECEDENTE PERSONALE PATOLOGICE:
+
+HTA esențială grad II în tratament de 8 ani
+Diabet zaharat tip 2 diagnosticat în 2020
+Dislipidemie mixtă
+
+MEDICAȚIE CURENTĂ:
+
+Perindopril 10mg/zi
+Metformin 850mg x 2/zi
+Atorvastatină 20mg/zi
+Aspenter 75mg/zi
+
+EXAMEN CLINIC ACTUAL:
+Stare generală: bună
+TA: 145/85 mmHg
+AV: 75 bpm, ritmic
+IMC: 28.4 kg/m²
+SaO2: 98%
+Cord: Zgomote cardiace ritmice, fără sufluri patologice
+Pulmonar: MV prezent bilateral, fără raluri
+Extremități: Fără edeme gambiere
+Puls periferic prezent bilateral
+INVESTIGAȚII EFECTUATE AZI:
+ECG: Ritm sinusal, 75/min, ax QRS intermediar, unde T negative în V4-V6,
+secvență QS în V1-V3
+ECOCARDIOGRAFIE:
+
+VS nedilatat, hipokinezie SIV și perete anterior
+FE VS = 48%
+Disfuncție diastolică tip relaxare întârziată
+Insuficiență mitrală grad I
+Ao ascendentă = 35mm
+
+ANALIZE RECENTE (17.01.2025):
+
+Colesterol total = 245 mg/dl
+LDL = 156 mg/dl
+Glicemie = 142 mg/dl
+Creatinină = 1.1 mg/dl
+Troponina I = negativă
+
+DIAGNOSTIC:
+
+Cardiopatie ischemică cronică
+Angină pectorală de efort clasa II CCS
+Disfuncție sistolică VS formă ușoară
+HTA esențială grad II risc înalt
+Diabet zaharat tip 2
+Dislipidemie mixtă
+
+CONDUITĂ TERAPEUTICĂ:
+
+Modificare stil de viață:
+
+Regim hiposodat (max 5g sare/zi)
+Activitate fizică regulată adaptată toleranței
+Reducere ponderală (target -5kg în 3 luni)
+
+
+Tratament medicamentos:
+
+Perindopril 10mg 1-0-0
+Bisoprolol 5mg 1-0-0
+Atorvastatină 40mg 0-0-1
+Aspenter 75mg 1-0-0
+Metformin 850mg 1-0-1
+Nitroglicerină spray la nevoie
+
+
+
+PLAN DE MONITORIZARE:
+
+Test de efort programat pentru 29.01.2025
+Angiografie coronariană programată pentru 05.02.2025
+Control cardiologic în 2 săptămâni cu rezultatele investigațiilor
+
+RECOMANDĂRI:
+
+Monitorizare TA și AV de 2 ori/zi
+Jurnal al episoadelor anginoase
+Prezentare de urgență dacă durerea nu cedează la nitroglicerină
+Evitarea efortului fizic intens
+Respectarea strictă a tratamentului prescris
+
+Dr. Ionescu Maria
+Medic Primar Cardiolog
+Cod parafă: A123456
+Semnătura și parafa

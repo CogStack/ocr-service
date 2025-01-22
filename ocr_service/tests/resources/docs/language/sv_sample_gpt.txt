@@ -1,0 +1,105 @@
+# This document is for Swedish
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-swe
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+KARDIOLOGISK KONSULTATIONSANTECKNING
+Datum: 22.01.2025
+Konsultationsnr: 247/2025
+PATIENTUPPGIFTER:
+Namn: Popescu Ioan
+Födelsedatum: 15.03.1962
+Ålder: 62 år
+Kön: Man
+Yrke: Pensionerad lärare
+BESÖKSORSAK:
+Patienten söker för tryckande bröstsmärta som uppkommer vid måttlig ansträngning och varar i cirka 5-10 minuter, med lindring i vila. Associerad andfåddhet vid måttlig ansträngning (gå upp två trappor). Symtomen började för cirka 3 månader sedan med successiv försämring.
+TIDIGARE SJUKDOMAR:
+
+Essentiell hypertoni grad II under behandling i 8 år
+Typ 2-diabetes diagnostiserad 2020
+Blandad dyslipidemi
+
+NUVARANDE MEDICINERING:
+
+Perindopril 10mg/dag
+Metformin 850mg x 2/dag
+Atorvastatin 20mg/dag
+Aspenter 75mg/dag
+
+KLINISK UNDERSÖKNING:
+Allmäntillstånd: Gott
+Blodtryck: 145/85 mmHg
+Hjärtfrekvens: 75 slag/min, regelbunden
+BMI: 28.4 kg/m²
+Saturation: 98%
+Hjärta: Regelbundna hjärttoner, inga blåsljud
+Lungor: Bilateralt normala andningsljud, inga rassel
+Extremiteter: Inga benödem
+Perifera pulsar: Palpabla bilateralt
+UNDERSÖKNINGAR IDAG:
+EKG: Sinusrytm, 75/min, intermediär QRS-axel, negativa T-vågor i V4-V6,
+QS-komplex i V1-V3
+EKOKARDIOGRAFI:
+
+Normal VK-storlek, hypokinesi i septum och framvägg
+VK ejektionsfraktion = 48%
+Diastolisk dysfunktion typ försenad relaxation
+Mitralisinsufficiens grad I
+Aorta ascendens = 35mm
+
+SENASTE LABORATORIEPROVER (17.01.2025):
+
+Totalkolesterol = 245 mg/dl
+LDL = 156 mg/dl
+Glukos = 142 mg/dl
+Kreatinin = 1.1 mg/dl
+Troponin I = negativ
+
+DIAGNOS:
+
+Kronisk ischemisk hjärtsjukdom
+Angina pectoris CCS klass II
+Lätt systolisk VK-dysfunktion
+Essentiell hypertoni grad II, hög risk
+Typ 2-diabetes
+Blandad dyslipidemi
+
+BEHANDLINGSPLAN:
+
+Livsstilsförändringar:
+
+Saltreducerad kost (max 5g salt/dag)
+Regelbunden fysisk aktivitet anpassad efter tolerans
+Viktreduktion (mål -5kg på 3 månader)
+
+
+Läkemedelsbehandling:
+
+Perindopril 10mg 1-0-0
+Bisoprolol 5mg 1-0-0
+Atorvastatin 40mg 0-0-1
+Aspenter 75mg 1-0-0
+Metformin 850mg 1-0-1
+Nitroglycerin spray vid behov
+
+
+
+UPPFÖLJNINGSPLAN:
+
+Arbetsprov planerat till 29.01.2025
+Koronarangiografi planerad till 05.02.2025
+Kardiologisk uppföljning om 2 veckor med undersökningsresultat
+
+REKOMMENDATIONER:
+
+Blodtrycks- och pulskontroll 2 gånger/dag
+Dokumentera kärlkrampsattacker
+Söka akut om smärtan inte lindras av nitroglycerin
+Undvika intensiv fysisk ansträngning
+Strikt följsamhet till ordinerad behandling
+
+Dr. Ionescu Maria
+Specialistläkare i Kardiologi
+Läkarkod: A123456
+Underskrift och stämpel

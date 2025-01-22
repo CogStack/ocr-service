@@ -1,0 +1,105 @@
+# This document is for Dutch
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-nld
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+CARDIOLOGISCH CONSULTVERSLAG
+Datum: 22.01.2025
+Consultnummer: 247/2025
+PATIËNTGEGEVENS:
+Naam: Popescu Ioan
+Geboortedatum: 15.03.1962
+Leeftijd: 62 jaar
+Geslacht: Man
+Beroep: Gepensioneerd leraar
+REDEN VAN BEZOEK:
+Patiënt presenteert zich met drukkende pijn op de borst die optreedt bij matige inspanning, duurt ongeveer 5-10 minuten en verdwijnt in rust. Geassocieerde kortademigheid bij matige inspanning (twee trappen oplopen). Symptomen begonnen ongeveer 3 maanden geleden met progressieve verergering.
+MEDISCHE VOORGESCHIEDENIS:
+
+Essentiële hypertensie graad II onder behandeling sinds 8 jaar
+Diabetes mellitus type 2 gediagnosticeerd in 2020
+Gemengde dyslipidemie
+
+HUIDIGE MEDICATIE:
+
+Perindopril 10mg/dag
+Metformine 850mg 2x/dag
+Atorvastatine 20mg/dag
+Acetylsalicylzuur 75mg/dag
+
+LICHAMELIJK ONDERZOEK:
+Algemene toestand: Goed
+RR: 145/85 mmHg
+Hartfrequentie: 75/min, regulair
+BMI: 28.4 kg/m²
+Zuurstofsaturatie: 98%
+Hart: Regulaire harttonen, geen souffles
+Longen: Vesiculair ademgeruis beiderzijds, geen crepitaties
+Extremiteiten: Geen oedeem
+Perifere pulsaties: Beiderzijds palpabel
+ONDERZOEKEN VANDAAG:
+ECG: Sinusritme, 75/min, intermediaire QRS-as, negatieve T-golven in V4-V6,
+QS-complex in V1-V3
+ECHOCARDIOGRAFIE:
+
+LV niet gedilateerd, hypokinesie septum en voorwand
+LV ejectiefractie = 48%
+Diastolische dysfunctie type verstoorde relaxatie
+Mitralisinsufficiëntie graad I
+Aorta ascendens = 35mm
+
+RECENTE LABORATORIUMUITSLAGEN (17.01.2025):
+
+Totaal cholesterol = 245 mg/dl
+LDL = 156 mg/dl
+Glucose = 142 mg/dl
+Creatinine = 1.1 mg/dl
+Troponine I = negatief
+
+DIAGNOSE:
+
+Chronische ischemische hartziekte
+Angina pectoris CCS klasse II
+Milde systolische LV dysfunctie
+Essentiële hypertensie graad II, hoog risico
+Diabetes mellitus type 2
+Gemengde dyslipidemie
+
+BEHANDELPLAN:
+
+Leefstijlmodificatie:
+
+Zoutbeperkt dieet (max 5g zout/dag)
+Regelmatige lichaamsbeweging aangepast aan tolerantie
+Gewichtsreductie (doel -5kg in 3 maanden)
+
+
+Medicamenteuze behandeling:
+
+Perindopril 10mg 1-0-0
+Bisoprolol 5mg 1-0-0
+Atorvastatine 40mg 0-0-1
+Acetylsalicylzuur 75mg 1-0-0
+Metformine 850mg 1-0-1
+Nitroglycerine spray zo nodig
+
+
+
+FOLLOW-UP PLAN:
+
+Inspanningstest gepland op 29.01.2025
+Coronaire angiografie gepland op 05.02.2025
+Cardiologische controle over 2 weken met onderzoeksresultaten
+
+AANBEVELINGEN:
+
+RR en hartfrequentie 2x/dag meten
+Dagboek bijhouden van angina-aanvallen
+Spoedeisende hulp bezoeken als pijn niet reageert op nitroglycerine
+Vermijd intensieve fysieke inspanning
+Strikte therapietrouw
+
+Dr. Ionescu Maria
+Cardioloog
+BIG-nummer: A123456
+Handtekening en stempel

@@ -1,0 +1,105 @@
+# This document is for Spanish
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-spa
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+NOTA DE CONSULTA CARDIOLÓGICA
+Fecha: 22.01.2025
+N° de consulta: 247/2025
+DATOS DEL PACIENTE:
+Nombre: Popescu Ioan
+Fecha de nacimiento: 15.03.1962
+Edad: 62 años
+Sexo: Masculino
+Ocupación: Profesor jubilado
+MOTIVO DE CONSULTA:
+Paciente acude por dolor precordial de tipo opresivo que aparece con esfuerzo moderado, duración aproximada de 5-10 minutos, que mejora con el reposo. Asocia disnea de esfuerzo moderado (subir 2 pisos). Sintomatología iniciada hace aproximadamente 3 meses, con agravamiento progresivo.
+ANTECEDENTES PATOLÓGICOS:
+
+Hipertensión arterial esencial grado II en tratamiento desde hace 8 años
+Diabetes mellitus tipo 2 diagnosticada en 2020
+Dislipidemia mixta
+
+MEDICACIÓN ACTUAL:
+
+Perindopril 10mg/día
+Metformina 850mg x 2/día
+Atorvastatina 20mg/día
+Aspirina 75mg/día
+
+EXAMEN FÍSICO ACTUAL:
+Estado general: Bueno
+TA: 145/85 mmHg
+FC: 75 lpm, rítmico
+IMC: 28.4 kg/m²
+SatO2: 98%
+Corazón: Ruidos cardíacos rítmicos, sin soplos patológicos
+Pulmones: Murmullo vesicular presente bilateral, sin estertores
+Extremidades: Sin edemas en miembros inferiores
+Pulsos periféricos: Presentes bilateralmente
+PRUEBAS REALIZADAS HOY:
+ECG: Ritmo sinusal, 75/min, eje QRS intermedio, ondas T negativas en V4-V6,
+complejo QS en V1-V3
+ECOCARDIOGRAMA:
+
+VI no dilatado, hipocinesia del SIV y pared anterior
+FEVI = 48%
+Disfunción diastólica tipo alteración de la relajación
+Insuficiencia mitral grado I
+Ao ascendente = 35mm
+
+ANÁLISIS RECIENTES (17.01.2025):
+
+Colesterol total = 245 mg/dl
+LDL = 156 mg/dl
+Glucemia = 142 mg/dl
+Creatinina = 1.1 mg/dl
+Troponina I = negativa
+
+DIAGNÓSTICO:
+
+Cardiopatía isquémica crónica
+Angina de esfuerzo clase II CCS
+Disfunción sistólica del VI leve
+HTA esencial grado II riesgo alto
+Diabetes mellitus tipo 2
+Dislipidemia mixta
+
+PLAN TERAPÉUTICO:
+
+Modificación del estilo de vida:
+
+Dieta hiposódica (máx 5g sal/día)
+Actividad física regular adaptada a la tolerancia
+Reducción de peso (objetivo -5kg en 3 meses)
+
+
+Tratamiento farmacológico:
+
+Perindopril 10mg 1-0-0
+Bisoprolol 5mg 1-0-0
+Atorvastatina 40mg 0-0-1
+Aspirina 75mg 1-0-0
+Metformina 850mg 1-0-1
+Nitroglicerina spray según necesidad
+
+
+
+PLAN DE SEGUIMIENTO:
+
+Prueba de esfuerzo programada para 29.01.2025
+Angiografía coronaria programada para 05.02.2025
+Control cardiológico en 2 semanas con resultados de las pruebas
+
+RECOMENDACIONES:
+
+Monitorización de TA y FC dos veces/día
+Registro de episodios anginosos
+Acudir a urgencias si el dolor no cede con nitroglicerina
+Evitar esfuerzo físico intenso
+Cumplimiento estricto del tratamiento prescrito
+
+Dra. Ionescu Maria
+Médico Especialista en Cardiología
+N° de colegiado: A123456
+Firma y sello

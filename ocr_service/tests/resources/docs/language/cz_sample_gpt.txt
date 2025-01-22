@@ -1,0 +1,105 @@
+# This document is for Czech
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-ces
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+KARDIOLOGICKÝ KONZULTAČNÍ ZÁZNAM
+Datum: 22.01.2025
+Číslo konzultace: 247/2025
+ÚDAJE O PACIENTOVI:
+Jméno: Popescu Ioan
+Datum narození: 15.03.1962
+Věk: 62 let
+Pohlaví: Muž
+Povolání: Důchodce, bývalý učitel
+DŮVOD NÁVŠTĚVY:
+Pacient přichází s tlakovou bolestí na hrudi, která se objevuje při střední námaze, trvá přibližně 5-10 minut a ustupuje v klidu. Přidružená dušnost při střední námaze (výstup do 2. patra). Symptomy začaly před přibližně 3 měsíci s progresivním zhoršováním.
+OSOBNÍ ANAMNÉZA:
+
+Esenciální hypertenze 2. stupně, léčená 8 let
+Diabetes mellitus 2. typu diagnostikován v roce 2020
+Smíšená dyslipidemie
+
+SOUČASNÁ MEDIKACE:
+
+Perindopril 10mg/den
+Metformin 850mg 2x denně
+Atorvastatin 20mg/den
+Anopyrin 75mg/den
+
+NYNĚJŠÍ VYŠETŘENÍ:
+Celkový stav: Dobrý
+TK: 145/85 mmHg
+TF: 75/min, pravidelná
+BMI: 28.4 kg/m²
+SpO2: 98%
+Srdce: Pravidelná srdeční akce, bez šelestů
+Plíce: Dýchání čisté, sklípkové, bilaterálně
+Končetiny: Bez otoků
+Periferní pulzace: Hmatná bilaterálně
+DNEŠNÍ VYŠETŘENÍ:
+EKG: Sinusový rytmus, 75/min, intermediální sklon QRS, negativní T vlny ve V4-V6,
+QS komplex ve V1-V3
+ECHOKARDIOGRAFIE:
+
+LK není dilatovaná, hypokineze septa a přední stěny
+EF LK = 48%
+Diastolická dysfunkce typu poruchy relaxace
+Mitrální insuficience 1. stupně
+Vzestupná aorta = 35mm
+
+NEDÁVNÉ LABORATORNÍ VÝSLEDKY (17.01.2025):
+
+Celkový cholesterol = 245 mg/dl
+LDL = 156 mg/dl
+Glykémie = 142 mg/dl
+Kreatinin = 1.1 mg/dl
+Troponin I = negativní
+
+DIAGNÓZA:
+
+Chronická ischemická choroba srdeční
+Angina pectoris námahová, CCS třída II
+Lehká systolická dysfunkce LK
+Esenciální hypertenze 2. stupně, vysoké riziko
+Diabetes mellitus 2. typu
+Smíšená dyslipidemie
+
+TERAPEUTICKÝ PLÁN:
+
+Úprava životního stylu:
+
+Dieta s omezením soli (max 5g soli/den)
+Pravidelná fyzická aktivita přizpůsobená toleranci
+Redukce hmotnosti (cíl -5kg za 3 měsíce)
+
+
+Farmakologická léčba:
+
+Perindopril 10mg 1-0-0
+Bisoprolol 5mg 1-0-0
+Atorvastatin 40mg 0-0-1
+Anopyrin 75mg 1-0-0
+Metformin 850mg 1-0-1
+Nitroglycerin spray dle potřeby
+
+
+
+PLÁN SLEDOVÁNÍ:
+
+Zátěžový test plánován na 29.01.2025
+Koronarografie plánována na 05.02.2025
+Kardiologická kontrola za 2 týdny s výsledky vyšetření
+
+DOPORUČENÍ:
+
+Měření TK a TF 2x denně
+Vedení deníku anginózních obtíží
+Návštěva pohotovosti při přetrvávání bolesti po nitroglycerinu
+Vyvarovat se intenzivní fyzické námaze
+Přísné dodržování předepsané léčby
+
+MUDr. Ionescu Maria
+Kardiolog
+Registrační číslo: A123456
+Podpis a razítko

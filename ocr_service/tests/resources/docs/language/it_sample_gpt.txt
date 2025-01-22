@@ -1,0 +1,105 @@
+# This document is for Italian
+# Tesseract package (Ubuntu 24.04): tesseract-ocr-ita
+# Generated with Claude 3.5 Sonnet
+# Created by : Vlad Dinu (KCL)
+
+REFERTO DI CONSULTO CARDIOLOGICO
+Data: 22.01.2025
+N° visita: 247/2025
+DATI DEL PAZIENTE:
+Nome e Cognome: Popescu Ioan
+Data di nascita: 15.03.1962
+Età: 62 anni
+Sesso: Maschile
+Professione: Insegnante in pensione
+MOTIVO DELLA VISITA:
+Il paziente si presenta con dolore toracico oppressivo che insorge durante sforzo moderato, della durata di circa 5-10 minuti, che si allevia a riposo. Associata dispnea da sforzo moderato (salire 2 piani di scale). Sintomatologia iniziata circa 3 mesi fa con peggioramento progressivo.
+ANAMNESI PATOLOGICA:
+
+Ipertensione arteriosa essenziale di grado II in trattamento da 8 anni
+Diabete mellito tipo 2 diagnosticato nel 2020
+Dislipidemia mista
+
+TERAPIA IN CORSO:
+
+Perindopril 10mg/die
+Metformina 850mg x 2/die
+Atorvastatina 20mg/die
+Aspirina 75mg/die
+
+ESAME OBIETTIVO:
+Condizioni generali: Buone
+PA: 145/85 mmHg
+FC: 75 bpm, ritmica
+BMI: 28.4 kg/m²
+SpO2: 98%
+Cuore: Toni cardiaci ritmici, assenza di soffi patologici
+Polmoni: Murmure vescicolare presente bilateralmente, assenza di rantoli
+Arti: Assenza di edemi declivi
+Polsi periferici: Presenti bilateralmente
+ESAMI ESEGUITI OGGI:
+ECG: Ritmo sinusale, 75/min, asse QRS intermedio, onde T negative in V4-V6,
+complesso QS in V1-V3
+ECOCARDIOGRAMMA:
+
+VS non dilatato, ipocinesia del setto e della parete anteriore
+FE VS = 48%
+Disfunzione diastolica tipo alterato rilasciamento
+Insufficienza mitralica di grado I
+Aorta ascendente = 35mm
+
+ESAMI DI LABORATORIO RECENTI (17.01.2025):
+
+Colesterolo totale = 245 mg/dl
+LDL = 156 mg/dl
+Glicemia = 142 mg/dl
+Creatinina = 1.1 mg/dl
+Troponina I = negativa
+
+DIAGNOSI:
+
+Cardiopatia ischemica cronica
+Angina pectoris da sforzo classe II CCS
+Disfunzione sistolica VS lieve
+Ipertensione arteriosa essenziale di grado II ad alto rischio
+Diabete mellito tipo 2
+Dislipidemia mista
+
+PIANO TERAPEUTICO:
+
+Modifiche dello stile di vita:
+
+Dieta iposodica (max 5g sale/die)
+Attività fisica regolare adattata alla tolleranza
+Riduzione del peso (obiettivo -5kg in 3 mesi)
+
+
+Terapia farmacologica:
+
+Perindopril 10mg 1-0-0
+Bisoprololo 5mg 1-0-0
+Atorvastatina 40mg 0-0-1
+Aspirina 75mg 1-0-0
+Metformina 850mg 1-0-1
+Nitroglicerina spray al bisogno
+
+
+
+PIANO DI FOLLOW-UP:
+
+Test da sforzo programmato per il 29.01.2025
+Coronarografia programmata per il 05.02.2025
+Controllo cardiologico tra 2 settimane con risultati degli esami
+
+RACCOMANDAZIONI:
+
+Monitoraggio PA e FC due volte/die
+Diario degli episodi anginosi
+Accesso al pronto soccorso se il dolore non recede con nitroglicerina
+Evitare sforzo fisico intenso
+Stretta aderenza alla terapia prescritta
+
+Dott.ssa Ionescu Maria
+Specialista in Cardiologia
+N° Iscrizione Ordine: A123456
+Firma e timbro
