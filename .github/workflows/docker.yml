@@ -85,7 +85,7 @@ jobs:
           docker build --platform linux/${{ matrix.platform }} -t cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}-${{ matrix.platform }} -f Dockerfile --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
           docker push cogstacksystems/cogstack-ocr-service:${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
 
-      - name: Build and push Docker OCR Service image
+      - name: Build and push Docker OCR Service image (multilang)
         run: |
           docker build --platform linux/${{ matrix.platform }} -t cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}-${{ matrix.platform }} -f Dockerfile_multilang --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
           docker push cogstacksystems/cogstack-ocr-service-multilang:${{ env.RELEASE_VERSION }}-${{ matrix.platform }}
