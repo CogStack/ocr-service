@@ -3,7 +3,7 @@ This file is used to create a Flask application that will be served by a WSGI se
 """
 import sys
 
-from config import *
+from config import OCR_SERVICE_PORT
 from ocr_service.app import create_app
 
 sys.path.append("..")

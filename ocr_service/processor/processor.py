@@ -27,7 +27,8 @@ from multiprocessing.dummy import Pool, Queue
 from config import CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LOG_LEVEL, TMP_FILE_DIR, \
                    OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX, TESSERACT_LANGUAGE, \
                    TESSERACT_TIMEOUT, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH
-from ocr_service.utils.utils import delete_tmp_files, detect_file_type, is_file_type_xml, terminate_hanging_process
+from ocr_service.utils.utils import delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging, \
+                                    terminate_hanging_process
 
 sys.path.append("..")
 
@@ -39,9 +40,8 @@ class Processor:
     @injector.inject
     def __init__(self):
         app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
-        self.log = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(level=app_log_level)
-        self.log.debug("Processor log level set to : ", str(app_log_level))
+        self.log = setup_logging(component_name="processor", log_level=app_log_level)
+        self.log.debug("log level set to : " + str(app_log_level))
         self.loffice_process_list = {}
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[PILImage]:
@@ -233,13 +233,14 @@ class Processor:
                     pdf_stream = tmp_pdf_file.read()
                     os.fsync(tmp_pdf_file)
         except Exception:
-            raise Exception("xml doc name:" + str(file_name) + " | "  "preprocess_xml_to_pdf exception: " + str(traceback.format_exc()))
+            self.log.error("xml doc name:" + str(file_name) + " | "
+                           + "preprocess_xml_to_pdf exception: " + str(traceback.format_exc()))
         finally:
             delete_tmp_files([xml_file_path, pdf_file_path])
 
         return pdf_stream
 
-    def _process_image(self, img: Image, img_id: int, tess_api) -> str:
+    def _process_image(self, img: Image, img_id: int, tess_api: PyTessBaseAPI) -> str:
         """ Processes a PIL(Pillow) Image, calls tesseract ocr with the configured params
 
         Args:
@@ -248,7 +249,7 @@ class Processor:
 
         Returns:
             str: _description_ . text from the image, post-ocr
-        """        
+        """
 
         tess_api.SetImage(img)
         output_str = tess_api.GetUTF8Text()
@@ -400,7 +401,8 @@ class Processor:
             elapsed_time = round(end_time - start_time, 4)
             doc_metadata["elapsed_time"] = elapsed_time
 
-            self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time) + " seconds")
+            self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time)
+                          + " seconds")
         except Exception:
             traceback.print_exc(file=sys.stdout)
 

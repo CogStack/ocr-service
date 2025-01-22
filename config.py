@@ -26,7 +26,7 @@ TESSDATA_PREFIX = os.environ.get("TESSDATA_PREFIX", "/usr/local/share/tessdata")
 
 # Integer or Float - duration in seconds for the OCR processing, after which,
 #   tesseract will terminate and raise RuntimeError
-TESSERACT_TIMEOUT = os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30)
+TESSERACT_TIMEOUT = int(os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30))
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
 TESSERACT_LANGUAGE = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng+lat")
@@ -121,7 +121,7 @@ if platform == "linux" or platform == "linux2":
     LIBRE_OFFICE_EXEC_PATH = "/usr/bin/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "/usr/bin/python3.11"
 
-    # this is the path from the Docker image, Ubuntu Lunar
+    # this is the path from the Docker image, Ubuntu Lunar, Noble too.
     TESSDATA_PREFIX = "/usr/share/tesseract-ocr/5/tessdata"
 
     # if not found, then set the path to tesseract 4 data, tested with Ubuntu 22.04 LTS on WSL 2

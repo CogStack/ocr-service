@@ -2,7 +2,9 @@ services:
   ocr-service:
     container_name: ocr-service
     # image: cogstacksystems/cogstack-ocr-service:latest
-    build: .
+    build:
+      context: ../
+      dockerfile: "Dockerfile"
     restart: always
     mem_swappiness: 0
     # cpuset: "0-15"
@@ -18,13 +20,10 @@ services:
       # tesseract threading is disabled as the processing will take care of distribution
       - OMP_THREAD_LIMIT=1
 
-      # ocr service variables
-      - OCR_WEB_SERVICE_WORKERS=2
-      - OCR_WEB_SERVICE_THREADS=1
-      - OCR_SERVICE_LOG_LEVEL=20
-      - OCR_SERVICE_CPU_THREADS=4
-      - OCR_SERVICE_CONVERTER_THREADS=4
-      - OCR_SERVICE_OPERATION_MODE=OCR
+    # ocr service variables
+    env_file:
+      - ../env/general.env
+      - ../env/ocr_service.env
     ulimits:
       memlock:
         soft: -1
@@ -45,4 +44,3 @@ services:
 networks:
   cognet:
     name: cogstack-net
-

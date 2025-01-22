@@ -13,7 +13,7 @@ import filetype
 import xml.sax
 
 from config import OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH, \
-                   LIBRE_OFFICE_LISTENER_PORT_RANGE, LOG_LEVEL
+                   LIBRE_OFFICE_LISTENER_PORT_RANGE
 
 sys.path.append("..")
 
@@ -148,17 +148,16 @@ def get_assigned_port(current_worker_pid: int) -> int | bool:
     return False
 
 
-def setup_logging():
+def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:
     """
         :description: Configure and setup a default logging handler to print messages to stdout
     """
-    global root_logger
-    root_logger = logging.getLogger()
+    root_logger = logging.getLogger(component_name)
     log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
-    app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
     log_handler = logging.StreamHandler(sys.stdout)
     log_handler.setFormatter(logging.Formatter(fmt=log_format))
-    log_handler.setLevel(level=app_log_level)
+    log_handler.setLevel(level=log_level)
+    root_logger.setLevel(level=log_level)
 
     # only add the handler if a previous one does not exists
     handler_exists = False
@@ -169,3 +168,5 @@ def setup_logging():
 
     if not handler_exists:
         root_logger.addHandler(log_handler)
+
+    return root_logger
