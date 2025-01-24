@@ -1,7 +1,7 @@
 services:
   ocr-service:
     container_name: ocr-service
-    #image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:latest}
+    #image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:latest-${CPU_ARCHITECTURE:-amd64}}
     build:
       context: ../
       dockerfile: "Dockerfile"

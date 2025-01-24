@@ -38,15 +38,11 @@ The following docker images are available
 
 ```
   cogstacksystems/cogstack-ocr-service:latest            - ENGLISH ONLY
-  cogstacksystems/cogstack-ocr-service-multilang:latest  - MULTILANGUAGE SUPPORT (lat, es, fr, nl, etc.)
 ```
-
-Check the [Dockerfile_multilang](./Dockerfile_multilang) for supported languages.
 
 # Available models
 
 Currently, only TESERRACT models are supported.
-As described above, you must use the multilang docker image if you want to load and use models for other languages.
 You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you can load multiple models at the same time, example: English + Latin + French `OCR_SERVICE_TESSERACT_LANG=eng+lat+fra`.
 
 <b>For perfomrance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.</b>
