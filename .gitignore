@@ -15,5 +15,8 @@ models/*
 # tmp folder
 tmp/*
 
+# env folder
+env/*
+
 # logs
 ./ocr_service.log
