@@ -53,7 +53,7 @@ class Processor:
 
         Returns:
             List[PILImage]: _description_
-        """   
+        """
         hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
         html_file_path = os.path.join(TMP_FILE_DIR, file_name)
         png_img_file_path = html_file_path + ".png"
@@ -94,7 +94,9 @@ class Processor:
             for page in pdf:
                 textpage = page.get_textpage()
                 output_text += textpage.get_text_range()
-                output_text += "\n"
+
+                # this has caused issues before with the output text
+                # output_text += "\n"
 
         return output_text, doc_metadata
 
