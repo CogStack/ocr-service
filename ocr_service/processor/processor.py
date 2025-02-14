@@ -307,7 +307,7 @@ class Processor:
 
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
-            elif file_type in DOCUMENT:
+            elif file_type in DOCUMENT or type(file_type) is archive.Rtf:
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
                 images = [Image.open(BytesIO(stream))]
