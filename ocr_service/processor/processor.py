@@ -305,6 +305,8 @@ class Processor:
         try:
             pdf_stream = None
 
+            self.log.info("Assumed file type for doc id: " + file_name)
+
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
             elif file_type in DOCUMENT or type(file_type) is archive.Rtf:

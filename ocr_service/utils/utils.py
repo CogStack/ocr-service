@@ -52,7 +52,7 @@ def is_file_type_xml(stream: bytes) -> bool:
     try:
         xml.sax.parseString(stream, xml.sax.ContentHandler())
         return True
-    except xml.sax.SAXParseException:
+    except Exception:
         logging.warning("Could not determine if file is XML.")
     return False
 
