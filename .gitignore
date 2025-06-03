@@ -18,5 +18,5 @@ tmp/*
 # env folder
 env/*
 
-# logs
+# log files
 ./ocr_service.log

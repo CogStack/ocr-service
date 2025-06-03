@@ -2,14 +2,13 @@
 
 This is a python-replacement of the previous Tika-service in an attempt to resolve scalability and performance issues. It also relies on tesseract ocr but without the ambiguities of the Tika framework.
 
-# Asking questions
+## Asking questions
 
-Feel free to ask questions on the github issue tracker or on our [discourse website](https://discourse.cogstack.org) which is frequently used by our development team!
-<br>
+Feel free to ask questions on the github issue tracker or on our [discourse website](https://discourse.cogstack.org) which is frequently used by our development team!  
 
 # Dependencies
 
-Python 3.11+ <br>
+Python 3.11+  
 For the Python packages see [`requirements.txt`](./requirements.txt).
 
 Pillow package deps, see <https://pillow.readthedocs.io/en/stable/installation.html>
@@ -21,7 +20,7 @@ Docker (optional, but recommended for deployments) version 21.10+
 ## Local development dependencies
 
 Libre office 7.4+
-<br>
+
 Tesseract-ocr package and its dependencies.
 
 Windows: this project can and should be run inside WSL (preferabily ubuntu) with ease, there are some dependencies and paths that are broken outside of it that might be a headache to repair, install necessary deps from the Dockerfile.
@@ -36,8 +35,8 @@ Console mode: `bash start_service_production.sh`
 
 The following docker images are available
 
-```
-  cogstacksystems/cogstack-ocr-service:latest            - ENGLISH ONLY
+```text
+  cogstacksystems/cogstack-ocr-service:latest
 ```
 
 # Available models
@@ -45,7 +44,7 @@ The following docker images are available
 Currently, only TESERRACT models are supported.
 You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you can load multiple models at the same time, example: English + Latin + French `OCR_SERVICE_TESSERACT_LANG=eng+lat+fra`.
 
-<b>For perfomrance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.</b>
+**For performance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.**
 
 # API
 
@@ -68,7 +67,7 @@ Using `curl` to send the document to server instance running on localhost on `80
 
 output
 
-```
+```json
 {
   "result": {
     "text": "This is an example of a clinical document\n\nThe patient’s name is Bart Davidson.\n\nHis carer’s Name Paul Wayne.\n\nHis telephone number is 07754828992\n\nHis Address is 61 Basildon Way,\n\nEast Croyhurst,\n\nAngelton,\n\nAL64 9HT\n\nHis mother’s name is Pauline Smith.\n\nHe is on 100mg Paracetamol, 20 milligrams clozapine\n",
@@ -130,7 +129,7 @@ and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = O
 
 These are the config variables declared in `config.py`.
 
-```
+```text
 OCR_TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tesseract model, by default the model within the Docker container is Tesseract Fast (https://github.com/tesseract-ocr/tessdata_fast), if you wish to change it for better results please go to https://github.com/tesseract-ocr/tessdata_best , download the zip from the release, extract it and change the path, don't forget to mount that folder on the container if you are using Docker.
 
 OCR_SERVICE_TESSERACT_LANG - default "eng+lat", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
