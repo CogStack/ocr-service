@@ -55,7 +55,42 @@ Tika Service, by default, will be listening on port `8090` and the returned cont
 The service exposes such endpoints:
 
 - *GET* `/api/info` - returns information about the service with its configuration,
-- *POST* `/api/process` - processes a binary data stream with the binary document content ("Content-Type: application/octet-stream"), also accepts binary files directly via the 'file' parameter, if sending via curl.
+- *POST* `/api/process` - processes a binary data stream with the binary document content ("Content-Type: application/octet-stream"), also accepts binary files directly via the 'file' parameter, if sending via curl. It
+also has the extra functionality of accepting json, in case you want to process records and want to keep additional data in the footer , e.g
+
+original record payload must contain the "binary_data" key with a base64 buffer (REQUIREMENT for it to work), and the "footer", that has the other record fields:
+```json
+{
+  "binary_data": "b2NyIHNlcnZpY2U=",
+  "footer": {
+    "id": 1,
+    "source_system_id": 201102
+  }
+}
+```
+
+the result will have the following format:
+
+```json
+{
+  "result": {
+    "text": "........",
+    "footer": {
+      "id": 1,
+      "source_system_id": 201102 
+    },
+    "metadata": {
+      "content-type": "...",
+      "pages": "...",
+      "confidence": "...",
+      "elapsed_time": "...",
+      "log_message": "..."
+    },
+    "success": "True",
+    "timestamp": "....."
+  }
+}
+```
 
 Supports most document formats: pdf, html, doc(x), rtf, odt and also the image formats: png, jpeg/jpg, jpx, tiff, bmp.
 
