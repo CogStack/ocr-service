@@ -31,11 +31,12 @@ def get_app_info() -> dict:
             "config": ""}
 
 
-def build_response(text, success: bool = True, log_message: str = "", metadata: dict = {}) -> dict:
+def build_response(text, success: bool = True, log_message: str = "", footer: dict = {}, metadata: dict = {}) -> dict:
     metadata["log_message"] = log_message
 
     return {
         "text": text,
+        "footer": footer,
         "metadata": metadata,
         "success": str(success),
         "timestamp": str(datetime.now())

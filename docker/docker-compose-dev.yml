@@ -82,4 +82,6 @@ services:
 #---------------------------------------------------------------------------#
 networks:
   cognet:
+    driver: bridge
     name: cogstack-net
+

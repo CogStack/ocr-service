@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 import uuid
+import base64
 import traceback
 
 from flask import Response, request
@@ -29,7 +30,9 @@ def info() -> Response:
 @api.route("/process", methods=["POST"])
 def process() -> Response:
     stream = None
-    file_name: str = None
+    file_name: str = ""
+
+    footer = {}
 
     global log
 
@@ -48,10 +51,23 @@ def process() -> Response:
 
         stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
 
+        try:
+            record = json.loads(stream)
+            if isinstance(record, dict) and "binary_data" in record.keys():
+                stream = base64.b64decode(record["binary_data"])
+
+                if "footer" in record.keys():
+                    footer = record["footer"]
+                    log.info("Footer found in the request.")
+
+            log.info("Stream contains valid JSON.")
+        except json.JSONDecodeError:
+            log.warning("Stream does not contain valid JSON.")
+
     output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)
 
     if len(output_text) > 0:
-        response = build_response(output_text, metadata=doc_metadata)
+        response = build_response(output_text, footer=footer, metadata=doc_metadata)
         return Response(response=json.dumps({"result": response}),
                         status=200,
                         mimetype="application/json")
@@ -60,15 +76,15 @@ def process() -> Response:
                                   metadata=doc_metadata,
                                   success=False,
                                   log_message="No text has been generated")
+
         return Response(response=json.dumps({"result": response}),
                         status=500,
                         mimetype="application/json")
 
-
 @api.route("/process_file", methods=["POST"])
 def process_file() -> Response:
     stream = None
-    file_name: str = None
+    file_name: str = ""
 
     # if it is sent via the file parameter (file keeps its original name)
     if len(request.files):
