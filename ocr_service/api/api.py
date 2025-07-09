@@ -29,6 +29,12 @@ def info() -> Response:
 
 @api.route("/process", methods=["POST"])
 def process() -> Response:
+    """ Processes raw binary input stream, file, or
+        JSON containing the binary_data field in base64 format
+
+    Returns:
+        Response: json with the result of the OCR processing
+    """
     stream = None
     file_name: str = ""
 
@@ -53,6 +59,8 @@ def process() -> Response:
 
         try:
             record = json.loads(stream)
+            if isinstance(record, list) and len(record) > 0:
+                record = record[0]
             if isinstance(record, dict) and "binary_data" in record.keys():
                 stream = base64.b64decode(record["binary_data"])
 
