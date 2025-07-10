@@ -21,8 +21,8 @@ OPERATION_MODE = os.environ.get("OCR_SERVICE_OPERATION_MODE", "OCR")
 # basic app settings
 OCR_SERVICE_PORT = os.environ.get("OCR_SERVICE_PORT", 8090)
 
-# Tesseract model path
-TESSDATA_PREFIX = os.environ.get("OCR_TESSDATA_PREFIX", "/usr/local/share/tessdata")
+# Tesseract model path: macos - /opt/homebrew/share/tessdata | linux - "/usr/local/share/tessdata"
+TESSDATA_PREFIX = os.environ.get("OCR_TESSDATA_PREFIX", "/opt/homebrew/share/tessdata")
 
 # Integer or Float - duration in seconds for the OCR processing, after which,
 #   tesseract will terminate and raise RuntimeError
@@ -67,6 +67,9 @@ OCR_CONVERT_GRAYSCALE_IMAGES = True
 
 # dpi used for images in TESSERACT and other stuff
 OCR_IMAGE_DPI = int(os.environ.get("OCR_SERVICE_IMAGE_DPI", 200))
+
+# possible values: json (stringified output), dict (dict means no json.dumps() is applied to the output)
+OCR_SERVICE_RESPONSE_OUTPUT_TYPE: str = str(os.environ.get("OCR_SERVICE_RESPONSE_OUTPUT_TYPE", "json"))
 
 # LIBRE OFFICE SECTION
 

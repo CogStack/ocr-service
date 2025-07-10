@@ -9,7 +9,7 @@ from flask import Response, request
 
 from multiprocessing import Pool
 
-from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL
+from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE
 from ocr_service.api.api_blueprint import ApiBlueprint
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
@@ -36,7 +36,7 @@ def process() -> Response:
         Response: json with the result of the OCR processing
     """
     stream = None
-    file_name: str = ""
+    file_name: str | None = ""
 
     footer = {}
 
@@ -48,7 +48,7 @@ def process() -> Response:
         stream = file.stream.read()
         file_name = file.filename
         del file
-        log.info("Processing file given via 'file' parameter, file name: " + file_name)
+        log.info("Processing file given via 'file' parameter, file name: " + str(file_name))
     else:
         # if it is sent as a data-binary
         log.info("Processing binary as data-binary, generating temporary file name...")
@@ -70,29 +70,40 @@ def process() -> Response:
 
             log.info("Stream contains valid JSON.")
         except json.JSONDecodeError:
-            log.warning("Stream does not contain valid JSON.")
+            log.error("Stream does not contain valid JSON.")
 
-    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)
+    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
 
+    success = False
+    code = 200
+    log_message = ""
     if len(output_text) > 0:
-        response = build_response(output_text, footer=footer, metadata=doc_metadata)
-        return Response(response=json.dumps({"result": response}),
-                        status=200,
-                        mimetype="application/json")
+        success = True
     else:
-        response = build_response(output_text,
-                                  metadata=doc_metadata,
-                                  success=False,
-                                  log_message="No text has been generated")
+        code = 500
+        log_message = "No text has been generated"
 
-        return Response(response=json.dumps({"result": response}),
-                        status=500,
-                        mimetype="application/json")
+    response = build_response(output_text,
+                              footer=footer,
+                              metadata=doc_metadata,
+                              success=success,
+                              log_message=log_message)
+
+    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
+        response = json.dumps({"result": response})
+    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
+        response = {"result": response}
+
+    return Response(response=response,
+                    status=code,
+                    mimetype="application/json")
 
 @api.route("/process_file", methods=["POST"])
 def process_file() -> Response:
     stream = None
-    file_name: str = ""
+    file_name: str | None = ""
+
+    global log
 
     # if it is sent via the file parameter (file keeps its original name)
     if len(request.files):
@@ -100,7 +111,7 @@ def process_file() -> Response:
         stream = file.stream.read()
         file_name = file.filename
         del file
-        log.info("Processing file given via 'file' parameter, file name: " + file_name)
+        log.info("Processing file given via 'file' parameter, file name: " + str(file_name))
     else:
         # if it is sent as a data-binary
         log.info("Processing binary as data-binary, generating temporary file name...")
@@ -109,7 +120,7 @@ def process_file() -> Response:
 
         stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
 
-    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)
+    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
 
     if len(output_text) > 0:
         response = build_response(output_text, metadata=doc_metadata)
