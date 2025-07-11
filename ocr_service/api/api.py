@@ -92,7 +92,7 @@ def process() -> Response:
     if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
         response = json.dumps({"result": response})
     elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
-        response = {"result": response}
+        response = json.dumps({"result": response}).encode("utf-8")
 
     return Response(response=response,
                     status=code,
