@@ -17,7 +17,7 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     
     env:
       working-directory: ./
@@ -35,7 +35,7 @@ jobs:
           sudo apt update
 
       - name: Install Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: "x64"
@@ -88,11 +88,11 @@ jobs:
           sudo -H python3.11 -m pip install unoserver
           sudo -H python3.11 -m pip install --no-cache-dir -r ./requirements.txt
 
-      # - name: Check linting and types
-      #   run: |
-      #     isort .
-      #     flake8 .
-      #     mypy . --ignore-missing-imports
+      - name: Check linting and types
+        run: |
+          isort .
+          flake8 .
+          mypy . --ignore-missing-imports
 
       - name: Run tests
         run: /usr/bin/python3 -m unittest ocr_service/tests/process.py
