@@ -21,18 +21,17 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,display
 
 # Keeps Python from generating .pyc files in the container
-ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONDONTWRITEBYTECODE=0
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-ENV SETUPTOOLS_USE_DISTUTILS=stdlib
+# ENV SETUPTOOLS_USE_DISTUTILS=stdlib
 
 # default user
 USER root
 
-# Update and install python3
-RUN apt-get update && apt-get upgrade -y && \
-     apt-get install -y software-properties-common
+# install extra features
+RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
 
 # add extra repos
 RUN apt-add-repository multiverse && \
@@ -42,12 +41,9 @@ RUN apt-add-repository multiverse && \
     apt-get update && apt-get upgrade -y 
 
 # install req packages
-RUN apt-get install -y python3.11 python3.11-dev python3.11-venv python3-dev python3-pip
-
-RUN apt-get update && apt-get upgrade -y && \
-    apt-get --force-yes -o Dpkg::Options::="--force-confold" --force-yes -o Dpkg::Options::="--force-confdef" -fuy  dist-upgrade  && \
-    apt-get install -y \
-    pkg-config \
+RUN apt-get install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev
+RUN apt-get -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
+    apt-get install -y --no-install-recommends \
     gnupg \
     libssl-dev \
     wget \
@@ -66,54 +62,55 @@ RUN apt-get update && apt-get upgrade -y && \
     g++
 
 ##### utils for python and TESSERACT
-
 RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections
-RUN apt-get install -y --no-install-recommends fontconfig ttf-mscorefonts-installer
-RUN fc-cache -f -v
 
-RUN apt-get install -y libimage-exiftool-perl libtcnative-1 && \
-    apt-get install -y ttf-mscorefonts-installer fontconfig && \
-    apt-get install -y --fix-missing libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
-    apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 && \
-    apt-get install -y --fix-missing fonts-noto fonts-noto-cjk fonts-noto-extra xfonts-terminus fonts-font-awesome fonts-hack fonts-inconsolata fonts-liberation2 fonts-mononoki && \
-    apt-get install -y --fix-missing libpcre3 libpcre3-dev && \
-    apt-get install -y --fix-missing mesa-opencl-icd pocl-opencl-icd && \
-    apt-get install -y --fix-missing libvips-tools libvips libvips-dev && \
-    apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
+RUN apt-get install -y --no-install-recommends fontconfig ttf-mscorefonts-installer libimage-exiftool-perl libtcnative-1 \
+    libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic \
+    ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 \
+    fonts-noto fonts-noto-cjk fonts-noto-extra xfonts-terminus fonts-font-awesome fonts-hack fonts-inconsolata fonts-liberation2 fonts-mononoki \
+    libpcre3 libpcre3-dev \
+    mesa-opencl-icd pocl-opencl-icd libvips-tools libvips libvips-dev \
+    imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
 # tessaract language packages
-RUN apt-get install -y --fix-missing tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat  && \
-    apt-get install -y --fix-missing tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn && \
-    apt-get install -y --fix-missing tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor && \
-    apt-get install -y --fix-missing tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
+RUN apt-get install -y --no-install-recommends --fix-missing tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat \
+    tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn \
+    tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor \
+    tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
 
 # Pillow package requirements
-RUN apt-get install -y python3-tk tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev 
+RUN apt-get install -y --no-install-recommends tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev libglib2.0-dev libgl1
 
 # python3 poppler requirement
-RUN apt-get install poppler-utils -y
+RUN apt-get install -y --no-install-recommends poppler-utils
 
+# libre office and java
 RUN apt-get install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
 
-RUN apt-get clean autoclean && \
-    apt-get autoremove --purge -y
+# build font cache
+RUN fc-cache -f -v
+
+# there is a bug in the blinker package that causes issues with uwsgi
+# (this removes software-properties-common)
+RUN apt remove -y python3-blinker
+
+RUN apt-get clean autoclean && apt-get autoremove --purge -y
 
 # other openCL packages
 # beignet-opencl-icd
 
 RUN rm -rf /var/lib/apt/lists/*
 
-# python3 packages
-# RUN python3.11 -m pip install --no-cache-dir --upgrade pip --break-system-packages
-
 # create and copy the app  
 RUN mkdir /ocr_service
 COPY ./ /ocr_service
 WORKDIR /ocr_service
 
-# Install requirements for the app
-#RUN apt-get remove python3-wheel -y
-RUN python3.11 -m pip install --no-cache-dir --ignore-installed --break-system-packages -r ./requirements.txt
+# Install uwsgi from PyPI source using the global tools
+RUN python3.12 -m pip install --no-cache-dir --break-system-packages --no-build-isolation -r ./requirements.txt
+
+# compile the python files
+RUN python3.12 -m compileall /ocr_service
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]

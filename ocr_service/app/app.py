@@ -72,6 +72,7 @@ def create_app():
         _loffice_processes.update(start_office_converter_servers())
 
         app.register_blueprint(api)
+        app.debug = DEBUG_MODE
 
         # share processes for api call resource allocation
         api.processor = Processor()
@@ -115,4 +116,4 @@ def exit_handler(port_num: int):
 
 
 if __name__ == '__main__':
-    atexit.register(exit_handler)
+    atexit.register(exit_handler, port_num=get_assigned_port(os.getpid()))

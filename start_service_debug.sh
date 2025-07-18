@@ -35,4 +35,4 @@ if [ -z ${OCR_SERVICE_DEBUG_MODE+x} ]; then
   echo "DEBUG_MODE is unset -- setting to default: $OCR_SERVICE_DEBUG_MODE"
 fi
 
-python3.11 -m flask run --debug --no-reload -p ${OCR_SERVICE_PORT} -h ${OCR_SERVICE_HOST}
+python3.12 -m flask run --debug --no-reload -p ${OCR_SERVICE_PORT} -h ${OCR_SERVICE_HOST}

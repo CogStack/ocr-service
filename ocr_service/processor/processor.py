@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 import os
 import sys
@@ -15,8 +14,8 @@ from typing import List, TypeVar
 import injector
 import pypdfium2 as pdfium
 
-from tesserocr import get_languages, PyTessBaseAPI
-from filetype.types import DOCUMENT, IMAGE, archive, document, image
+from tesserocr import PyTessBaseAPI
+from filetype.types import DOCUMENT, IMAGE, archive
 from html2image import Html2Image
 from PIL import Image, ImageFile
 
@@ -39,9 +38,8 @@ class Processor:
 
     @injector.inject
     def __init__(self):
-        app_log_level = os.getenv("LOG_LEVEL", LOG_LEVEL)
-        self.log = setup_logging(component_name="processor", log_level=app_log_level)
-        self.log.debug("log level set to : " + str(app_log_level))
+        self.log = setup_logging(component_name="processor", log_level=LOG_LEVEL)
+        self.log.debug("log level set to : " + str(LOG_LEVEL))
         self.loffice_process_list = {}
 
     def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[ImageFile.ImageFile]:
@@ -145,6 +143,9 @@ class Processor:
         """
 
         pdf_stream = None
+        doc_file_path = ""
+        pdf_file_path = ""
+        used_port_num = None
 
         try:
             # generate unique id
@@ -160,7 +161,6 @@ class Processor:
             conversion_time_start = time.time()
 
             loffice_subprocess = None
-            used_port_num = None
 
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
@@ -266,7 +266,7 @@ class Processor:
         return output_str, img_id, tess_data
 
     def _init_tesseract_api_worker(self):
-        tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)
+        tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)  # type: ignore
         self.log.debug("Initialised pytesseract api worker for language:" + str(TESSERACT_LANGUAGE))
         return tess_api
 
@@ -295,7 +295,7 @@ class Processor:
         doc_metadata: dict = {}
 
         if file_type is not None:
-            doc_metadata["content-type"] = str(file_type.mime)
+            doc_metadata["content-type"] = str(file_type.mime)  # type: ignore
         else:
             doc_metadata["content-type"] = "text/plain"
 
@@ -373,7 +373,7 @@ class Processor:
                 doc_metadata["pages"] = image_count
                 doc_metadata["confidence"] = round(sum([page["confidence"] for page in tess_data]) / image_count, 4)
 
-            output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})
+            output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
         except Exception:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
 
