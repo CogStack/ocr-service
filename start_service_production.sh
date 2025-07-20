@@ -50,8 +50,4 @@ else
   echo "Neither python 3.11/3.12 are not available. Please install one of them."
 fi
 
-$python_version -m uvicorn asgi:app --host ${OCR_SERVICE_HOST:-0.0.0.0} --port ${OCR_SERVICE_PORT:-8000}  --limit-concurrency ${OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS:-1} --workers ${OCR_WEB_SERVICE_WORKERS:-1}
-
-#$python_version -m gunicorn --bind $OCR_SERVICE_HOST:$OCR_SERVICE_PORT -w $OCR_WEB_SERVICE_WORKERS --threads=$OCR_WEB_SERVICE_THREADS --timeout=$OCR_SERVICE_WORKER_TIMEOUT \
-#  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=./ocr_service.log --log-file=./ocr_service.log --log-level 'error' --worker-class=$OCR_WEB_SERVICE_WORKER_CLASS \
-#  wsgi
+$python_version -m uvicorn asgi:app --host ${OCR_SERVICE_HOST:-0.0.0.0} --port ${OCR_SERVICE_PORT:-8000}  --limit-concurrency ${OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS:-1} --workers ${OCR_WEB_SERVICE_WORKERS:-1} --access-log

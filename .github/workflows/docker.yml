@@ -24,9 +24,9 @@ jobs:
         platform: [amd64, arm64]
         include:
           - platform: amd64
-            runner: ubuntu-22.04
+            runner: ubuntu-24.04
           - platform: arm64
-            runner: ubuntu-22.04-arm
+            runner: ubuntu-24.04-arm
 
     env:
       working-directory: ./

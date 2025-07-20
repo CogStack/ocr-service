@@ -1,5 +1,5 @@
 """
-This file is used to create a Flask application that will be served by a WSGI server
+This file is used to create a FastAPI application that will be served by a ASGI server
 """
 import sys
 import uvicorn

@@ -85,7 +85,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
     def setUpClass(cls):
         """
         Initializes the resources before all the tests are run. It is run only once.
-        The Flask app instance is created only once when starting all the unit tests.
+        The app instance is created only once when starting all the unit tests.
         :return:
         """
         cls._setup_logging(cls)
