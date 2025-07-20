@@ -1,165 +1,149 @@
 import json
-import logging
 import sys
+import logging
 import uuid
-import base64
 import traceback
+import base64
 
-from flask import Response, request
+from typing import Optional
+
+from ocr_service.processor.processor import Processor
+from fastapi import APIRouter, Request, UploadFile, File
+from fastapi.responses import JSONResponse, Response
 
 from multiprocessing import Pool
 
 from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE
-from ocr_service.api.api_blueprint import ApiBlueprint
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
 sys.path.append("..")
 
 
-api = ApiBlueprint(name="api", import_name="api", url_prefix="/api")
+api = APIRouter(prefix="/api")
 log = setup_logging("api", log_level=LOG_LEVEL)
 
 
-@api.route("/info", methods=["GET"])
-def info() -> Response:
-    return Response(response=json.dumps(get_app_info()),
-                    status=200,
-                    mimetype="application/json")
+@api.get("/info")
+def info() -> JSONResponse:
+    return JSONResponse(content=get_app_info())
 
 
-@api.route("/process", methods=["POST"])
-def process() -> Response:
-    """ Processes raw binary input stream, file, or
+@api.post("/process")
+async def process(request: Request, file: Optional[UploadFile]) -> Response:
+    """
+     Processes raw binary input stream, file, or
         JSON containing the binary_data field in base64 format
 
     Returns:
         Response: json with the result of the OCR processing
     """
-    stream = None
-    file_name: str | None = ""
 
     footer = {}
+    file_name: str = ""
+    stream: bytes = b""
 
     global log
 
-    # if it is sent via the file parameter (file keeps its original name)
-    if len(request.files):
-        file = list(request.files.values())[0]
-        stream = file.stream.read()
-        file_name = file.filename
-        del file
-        log.info("Processing file given via 'file' parameter, file name: " + str(file_name))
+    if file:
+        file_name: str = file.filename if file.filename else ""
+        stream = await file.read()
+        log.info(f"Processing file given via 'file' parameter, file name: {file_name}")
     else:
-        # if it is sent as a data-binary
-        log.info("Processing binary as data-binary, generating temporary file name...")
         file_name = uuid.uuid4().hex
-        log.info("Generated file name:" + file_name)
-
-        stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
+        log.info(f"Processing binary as data-binary, generated file name: {file_name}")
+        raw_body = await request.body()
 
         try:
-            record = json.loads(stream)
+            record = json.loads(raw_body)
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
-            if isinstance(record, dict) and "binary_data" in record.keys():
-                stream = base64.b64decode(record["binary_data"])
 
-                if "footer" in record.keys():
-                    footer = record["footer"]
-                    log.info("Footer found in the request.")
+            if isinstance(record, dict) and "binary_data" in record:
+                stream = base64.b64decode(record["binary_data"])
+                footer = record.get("footer", {})
+                log.info("Footer found in the request.")
+            else:
+                stream = raw_body
 
             log.info("Stream contains valid JSON.")
         except json.JSONDecodeError:
-            log.error("Stream does not contain valid JSON.")
+            stream = raw_body
+            log.warning("Stream does not contain valid JSON.")
 
-    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
+    processor: Processor = request.app.state.processor
+    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
 
-    success = False
-    code = 200
-    log_message = ""
-    if len(output_text) > 0:
-        success = True
-    else:
-        code = 500
-        log_message = "No text has been generated"
+    code = 200 if len(output_text) > 0 else 500
 
     response = build_response(output_text,
                               footer=footer,
-                              metadata=doc_metadata,
-                              success=success,
-                              log_message=log_message)
+                              metadata=doc_metadata)
 
     if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
         response = json.dumps({"result": response})
     elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
         response = json.dumps({"result": response}).encode("utf-8")
 
-    return Response(response=response,
-                    status=code,
-                    mimetype="application/json")
-
-@api.route("/process_file", methods=["POST"])
-def process_file() -> Response:
-    stream = None
-    file_name: str | None = ""
-
-    global log
-
-    # if it is sent via the file parameter (file keeps its original name)
-    if len(request.files):
-        file = list(request.files.values())[0]
-        stream = file.stream.read()
-        file_name = file.filename
-        del file
-        log.info("Processing file given via 'file' parameter, file name: " + str(file_name))
-    else:
-        # if it is sent as a data-binary
-        log.info("Processing binary as data-binary, generating temporary file name...")
-        file_name = uuid.uuid4().hex
-        log.info("Generated file name:" + file_name)
-
-        stream = request.get_data(cache=False, as_text=False, parse_form_data=False)
-
-    output_text, doc_metadata = api.processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
-
-    if len(output_text) > 0:
-        response = build_response(output_text, metadata=doc_metadata)
-        return Response(response=json.dumps({"result": response}),
-                        status=200,
-                        mimetype="application/json")
-    else:
-        response = build_response(output_text, success=False,
-                                  log_message="No text has been generated",
-                                  metadata=doc_metadata)
-        return Response(response=json.dumps({"result": response}),
-                        status=500,
-                        mimetype="application/json")
+    return JSONResponse(content=response, status_code=code)
 
 
-@api.route("/process_bulk", methods=["POST"])
-def process_bulk() -> Response:
+@api.post("/process_file")
+async def process_file(request: Request, file: UploadFile = File(...)) -> JSONResponse:
+
+    file_name: str = file.filename if file.filename else ""
+    stream = await file.read()
+    log.info(f"Processing file: {file_name}")
+
+    processor: Processor = request.app.state.processor
+
+    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+
+    code = 200 if len(output_text) > 0 else 500
+
+    response = build_response(output_text,
+                              metadata=doc_metadata)
+
+    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
+        response = json.dumps({"result": response})
+    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
+        response = json.dumps({"result": response}).encode("utf-8")
+
+    return JSONResponse(content=response, status_code=code)
+
+
+@api.post("/process_bulk")
+async def process_bulk(request: Request) -> JSONResponse:
+    """
+        Processes multiple files in a single request.
+    """
+
+    form = await request.form()
     file_streams = {}
-
-    for param_name in request.files:
-        file_storage = request.files[param_name]
-        file_streams[file_storage.filename] = file_storage.read()
 
     proc_results = list()
     ocr_results = []
+
+    processor: Processor = request.app.state.processor
+
+    # collect uploaded files
+    for name, file in form.items():
+        if isinstance(file, UploadFile):
+            content = await file.read()
+            file_streams[file.filename] = content
 
     with Pool(processes=CPU_THREADS) as process_pool:
         count = 0
 
         for file_name, file_stream in file_streams.items():
             count += 1
-            proc_results.append(process_pool.starmap_async(api.processor.process_stream,
+            proc_results.append(process_pool.starmap_async(processor.process_stream,
                                                            [(file_name, file_stream)],
-                                                           chunksize=1, error_callback=logging.error))
-
+                                                           chunksize=1,
+                                                           error_callback=logging.error))
         try:
             for result in proc_results:
                 ocr_results.append(result.get(timeout=TESSERACT_TIMEOUT))
         except Exception:
             raise Exception("OCR exception generated by worker: " + str(traceback.format_exc()))
 
-    return Response(response=json.dumps({"response": "Not yet implemented"}), status=501, mimetype="application/json")
+    return JSONResponse(content={"response": "Not yet implemented"}, status_code=200)

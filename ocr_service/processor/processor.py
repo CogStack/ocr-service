@@ -11,7 +11,6 @@ from subprocess import PIPE, Popen
 from io import BytesIO
 from typing import List, TypeVar
 
-import injector
 import pypdfium2 as pdfium
 
 from tesserocr import PyTessBaseAPI
@@ -36,7 +35,6 @@ PILImage = TypeVar('PILImage', bound=Image)
 
 class Processor:
 
-    @injector.inject
     def __init__(self):
         self.log = setup_logging(component_name="processor", log_level=LOG_LEVEL)
         self.log.debug("log level set to : " + str(LOG_LEVEL))
@@ -390,7 +388,7 @@ class Processor:
                  or the actual file name if the file was provided with the `file` parameter
 
         Returns:
-            tuple : _description_ . output_text post-ocr and 
+            tuple : _description_ . output_text post-ocr and
                 doc_metadata containing doc info like number of pages, author etc
         """
 

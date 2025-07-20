@@ -34,6 +34,12 @@ def get_app_info() -> dict:
 def build_response(text, success: bool = True, log_message: str = "", footer: dict = {}, metadata: dict = {}) -> dict:
     metadata["log_message"] = log_message
 
+    if len(text) > 0:
+        success = True
+    else:
+        success = False
+        log_message = "No text has been generated."
+
     return {
         "text": text,
         "footer": footer,
@@ -151,7 +157,7 @@ def get_assigned_port(current_worker_pid: int) -> int | bool:
 
 def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:
     """
-        :description: Configure and setup a default logging handler to print messages to stdout
+        :description: Configure and setup a default logging handler to print messages to stdout.
     """
     root_logger = logging.getLogger(component_name)
     log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'

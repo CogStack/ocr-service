@@ -2,7 +2,6 @@ import os
 import multiprocessing
 
 from sys import platform
-from typing import Tuple
 
 OCR_SERVICE_VERSION: str = "0.3.0"
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
@@ -23,7 +22,7 @@ OPERATION_MODE: str = os.environ.get("OCR_SERVICE_OPERATION_MODE", "OCR")
 OCR_SERVICE_PORT: int = int(os.environ.get("OCR_SERVICE_PORT", 8090))
 
 # Tesseract model path: macos - /opt/homebrew/share/tessdata | linux - "/usr/local/share/tessdata"
-TESSDATA_PREFIX: str = os.environ.get("OCR_TESSDATA_PREFIX", "/opt/homebrew/share/tessdata")
+TESSDATA_PREFIX: str = str(os.environ.get("OCR_TESSDATA_PREFIX", "/opt/homebrew/share/tessdata"))
 
 # Integer or Float - duration in seconds for the OCR processing, after which,
 #   tesseract will terminate and raise RuntimeError
@@ -137,3 +136,8 @@ if platform == "linux" or platform == "linux2":
 elif platform == "win32":
     LIBRE_OFFICE_EXEC_PATH = "%ProgramFiles%/LibreOffice/Program/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "C:/Windows/py.exe"
+
+elif platform == "darwin":
+    LIBRE_OFFICE_EXEC_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+    LIBRE_OFFICE_PYTHON_PATH = "/Applications/LibreOffice.app/Contents/Resources/python"
+    TESSDATA_PREFIX = "/opt/homebrew/share/tessdata"
