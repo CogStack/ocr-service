@@ -3,9 +3,9 @@ name: Run tests
 on:
 
   push:
-    branches: [ dev, main ]
+    branches: [ all]
   pull_request:
-    branches: [ dev, main ]
+    branches: [ all ]
     
   release:
     types: [published]
@@ -24,7 +24,7 @@ jobs:
     
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.11", "3.12"]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
