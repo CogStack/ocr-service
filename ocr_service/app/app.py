@@ -65,21 +65,21 @@ def start_office_converter_servers() -> dict[str, Any]:
         if port_num == get_assigned_port(os.getpid()) and OCR_WEB_SERVICE_THREADS == 1:
             logging.debug("STARTED WORKER ON PORT: " + str(port_num))
             process = start_office_server(port_num)
-            loffice_processes[port_num] = process
+            loffice_processes[str(port_num)] = process
             break
         elif OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1:
             process = start_office_server(port_num)
-            loffice_processes[port_num] = process
+            loffice_processes[str(port_num)] = process
             break
         elif DEBUG_MODE:
             process = start_office_server(port_num)
-            loffice_processes[port_num] = process
+            loffice_processes[str(port_num)] = process
             break
 
     return loffice_processes
 
 
-def monitor_office_processes(thread_event: Event, processor: Processor):
+def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
     """
         :description: Monitors LibreOffice unoserver processes and restarts them if they are down
         :param thread_event: Event to signal the thread to stop

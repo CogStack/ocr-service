@@ -62,11 +62,12 @@ class Processor:
         finally:
             delete_tmp_files([png_img_file_path])
 
-        return [Image.open(BytesIO(png_img_file_path))]
+        return [Image.open(BytesIO(png_img_file_path.encode('utf-8')))]
 
     def _pdf_to_img(self, stream: bytes) -> tuple[List[PILImage], dict]:
         pdf_image_pages = []
         doc_metadata = {}
+
         with pdfium.PdfDocument(stream) as pdf:
             pdf_conversion_start_time = time.time()
             renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
@@ -140,7 +141,7 @@ class Processor:
             bytes: _description_ . pdf file stream
         """
 
-        pdf_stream = None
+        pdf_stream = b""
         doc_file_path = ""
         pdf_file_path = ""
         used_port_num = None
@@ -263,7 +264,7 @@ class Processor:
 
         return output_str, img_id, tess_data
 
-    def _init_tesseract_api_worker(self):
+    def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
         tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)  # type: ignore
         self.log.debug("Initialised pytesseract api worker for language:" + str(TESSERACT_LANGUAGE))
         return tess_api
@@ -288,7 +289,7 @@ class Processor:
         """
 
         file_type = detect_file_type(stream)
-        output_text = ""
+        output_text: str = ""
         images = []
         doc_metadata: dict = {}
 
@@ -301,16 +302,19 @@ class Processor:
         _doc_metadata = {}
 
         try:
-            pdf_stream = None
+            pdf_stream: bytes = b""
 
-            self.log.info("Assumed file type for doc id: " + file_name)
+            self.log.info("Checking file type for doc id: " + file_name)
 
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
             elif file_type in DOCUMENT or type(file_type) is archive.Rtf:
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
-                images = [Image.open(BytesIO(stream))]
+                _img = None
+                with Image.open(BytesIO(stream)) as imgf:
+                    _img = imgf.copy()
+                images = [_img]
                 _doc_metadata["pages"] = 1
             elif is_file_type_xml(stream):
                 doc_metadata["content-type"] = "text/xml"
@@ -323,7 +327,7 @@ class Processor:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
-            if pdf_stream is not None:
+            if pdf_stream is not None and len(pdf_stream) > 0:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
 
@@ -348,7 +352,7 @@ class Processor:
                         count += 1
                         tess_api_q.put(self._init_tesseract_api_worker())
                         proc_results.append(process_pool.starmap_async(self._process_image,
-                                                                       [(img, count, tess_api_q.get())],
+                                                                       [(img, count, tess_api_q.get(),)],
                                                                        chunksize=1,
                                                                        error_callback=logging.error))
                     try:
