@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# check the gunicorn config params
-#
+# check the uvicorn config params
+
 if [ -z ${OCR_SERVICE_HOST+x} ]; then
   OCR_SERVICE_HOST=0.0.0.0
   echo "OCR_SERVICE_HOST is unset -- setting to default: $OCR_SERVICE_HOST"
@@ -23,10 +23,10 @@ if [ -z ${OCR_WEB_SERVICE_WORKERS+x} ]; then
   echo "OCR_WEB_SERVICE_WORKERS is unset -- setting to default: $OCR_WEB_SERVICE_WORKERS"
 fi
 
-if [ -z ${OCR_WEB_SERVICE_THREADS+x} ]; then
-  OCR_WEB_SERVICE_THREADS=1
-  export OCR_WEB_SERVICE_THREADS=1
-  echo "OCR_WEB_SERVICE_THREADS is unset -- setting to default: $OCR_WEB_SERVICE_THREADS"
+if [ -z ${OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS+x} ]; then
+  OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS=1
+  export OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS=1
+  echo "OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS is unset -- setting to default: $OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS"
 fi
 
 if [ -z ${OCR_SERVICE_DEBUG_MODE+x} ]; then
@@ -35,4 +35,14 @@ if [ -z ${OCR_SERVICE_DEBUG_MODE+x} ]; then
   echo "DEBUG_MODE is unset -- setting to default: $OCR_SERVICE_DEBUG_MODE"
 fi
 
-python3.12 -m flask run --debug --no-reload -p ${OCR_SERVICE_PORT} -h ${OCR_SERVICE_HOST}
+python_version=python3
+
+if command -v python3.11 &>/dev/null; then
+  python_version=python3.11
+elif command -v python3.12 &>/dev/null; then
+  python_version=python3.12
+else
+  echo "Neither python 3.11/3.12 are not available. Please install one of them."
+fi
+
+$python_version -m uvicorn asgi:app --host ${OCR_SERVICE_HOST:-0.0.0.0} --port ${OCR_SERVICE_PORT:-8000} --reload --log-level "debug"

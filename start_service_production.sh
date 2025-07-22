@@ -13,15 +13,15 @@ if [ -z ${OCR_SERVICE_PORT+x} ]; then
 fi
 
 if [ -z ${OCR_WEB_SERVICE_WORKERS+x} ]; then
-  OCR_WEB_SERVICE_WORKERS=4
-  export OCR_WEB_SERVICE_WORKERS=4
+  OCR_WEB_SERVICE_WORKERS=1
+  export OCR_WEB_SERVICE_WORKERS=1
   echo "OCR_WEB_SERVICE_WORKERS is unset -- setting to default: $OCR_WEB_SERVICE_WORKERS"
 fi
 
-if [ -z ${OCR_WEB_SERVICE_THREADS+x} ]; then
-  OCR_WEB_SERVICE_THREADS=1
-  export OCR_WEB_SERVICE_THREADS=1
-  echo "OCR_WEB_SERVICE_THREADS is unset -- setting to default: $OCR_WEB_SERVICE_THREADS"
+if [ -z ${OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS+x} ]; then
+  OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS=1
+  export OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS=1
+  echo "OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS is unset -- setting to default: $OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS"
 fi
 
 if [ -z ${OCR_SERVICE_WORKER_TIMEOUT+x} ]; then
@@ -34,16 +34,20 @@ if [ -z ${OCR_SERVICE_LOG_LEVEL+x} ]; then
   echo "OCR_SERVICE_LOG_LEVEL is unset -- setting to default: $OCR_SERVICE_LOG_LEVEL"
 fi
 
-if [ -z ${OCR_WEB_SERVICE_WORKER_CLASS+x} ]; then
-  OCR_WEB_SERVICE_WORKER_CLASS="sync"
-  echo "OCR_WEB_SERVICE_WORKER_CLASS is unset -- setting to default: $OCR_WEB_SERVICE_WORKER_CLASS"
-fi
-
 OCR_SERVICE_ACCESS_LOG_FORMAT="%(t)s [ACCESSS] %(h)s \"%(r)s\" %(s)s \"%(f)s\" \"%(a)s\""
 
 # start the OCR_SERVICE
 #
-echo "Starting up Flask app using gunicorn OCR_SERVICE ..."
-python3.12 -m gunicorn --bind $OCR_SERVICE_HOST:$OCR_SERVICE_PORT -w $OCR_WEB_SERVICE_WORKERS --threads=$OCR_WEB_SERVICE_THREADS --timeout=$OCR_SERVICE_WORKER_TIMEOUT \
-  --access-logformat="$OCR_SERVICE_ACCESS_LOG_FORMAT" --access-logfile=./ocr_service.log --log-file=./ocr_service.log --log-level 'error' --worker-class=$OCR_WEB_SERVICE_WORKER_CLASS \
-  wsgi
+echo "Starting up OCR app using uvicorn OCR_SERVICE ..."
+
+python_version=python3
+
+if command -v python3.11 &>/dev/null; then
+  python_version=python3.11
+elif command -v python3.12 &>/dev/null; then
+  python_version=python3.12
+else
+  echo "Neither python 3.11/3.12 are not available. Please install one of them."
+fi
+
+$python_version -m uvicorn asgi:app --host ${OCR_SERVICE_HOST:-0.0.0.0} --port ${OCR_SERVICE_PORT:-8000}  --limit-concurrency ${OCR_WEB_SERVICE_LIMIT_CONCURRENCY_TASKS:-1} --workers ${OCR_WEB_SERVICE_WORKERS:-1} --access-log

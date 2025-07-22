@@ -11,21 +11,21 @@ from subprocess import PIPE, Popen
 from io import BytesIO
 from typing import List, TypeVar
 
-import injector
 import pypdfium2 as pdfium
 
 from tesserocr import PyTessBaseAPI
 from filetype.types import DOCUMENT, IMAGE, archive
 from html2image import Html2Image
-from PIL import Image, ImageFile
+from PIL import Image
 
 from threading import Timer
 
 from multiprocessing.dummy import Pool, Queue
 
-from config import CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LOG_LEVEL, TMP_FILE_DIR, \
+from config import CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LOG_LEVEL, TMP_FILE_DIR, \
                    OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX, TESSERACT_LANGUAGE, \
-                   TESSERACT_TIMEOUT, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH
+                   TESSERACT_TIMEOUT, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH, \
+                   OCR_CONVERT_GRAYSCALE_IMAGES
 from ocr_service.utils.utils import delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging, \
                                     terminate_hanging_process
 
@@ -36,13 +36,12 @@ PILImage = TypeVar('PILImage', bound=Image)
 
 class Processor:
 
-    @injector.inject
     def __init__(self):
         self.log = setup_logging(component_name="processor", log_level=LOG_LEVEL)
         self.log.debug("log level set to : " + str(LOG_LEVEL))
         self.loffice_process_list = {}
 
-    def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[ImageFile.ImageFile]:
+    def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[Image.Image]:
         """ Uses html2image to screenshot the page to an PIL image.
 
         Args:
@@ -56,49 +55,63 @@ class Processor:
         html_file_path = os.path.join(TMP_FILE_DIR, file_name)
         png_img_file_path = html_file_path + ".png"
 
+        image: Image.Image = Image.Image()
+
         try:
             with open(file=html_file_path, mode="wb") as tmp_html_file:
                 tmp_html_file.write(stream)
 
             hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
+
+            with Image.open(BytesIO(png_img_file_path.encode('utf-8'))) as imgf:
+                image = imgf.copy()
+
         finally:
             delete_tmp_files([png_img_file_path])
 
-        return [Image.open(BytesIO(png_img_file_path))]
+        return [image]
 
-    def _pdf_to_img(self, stream: bytes) -> tuple[List[PILImage], dict]:
+    def _pdf_to_img(self, stream: bytes) -> tuple[List[Image.Image], dict]:
         pdf_image_pages = []
         doc_metadata = {}
-        with pdfium.PdfDocument(stream) as pdf:
-            pdf_conversion_start_time = time.time()
-            renderer = pdf.render_topil(pdfium.BitmapConv.pil_image,
-                                        page_indices=range(len(pdf)),
-                                        scale=OCR_IMAGE_DPI/72,
-                                        n_processes=CONVERTER_THREAD_NUM)
 
-            pdf_image_pages = list(renderer)
-            pdf_conversion_end_time = time.time()
+        pdf = pdfium.PdfDocument(stream)
 
-            self.log.info("PDF conversion to image(s) finished | Elapsed : " +
-                          str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
+        pdf_conversion_start_time = time.time()
+
+        for page_index in range(len(pdf)):
+            page = pdf[page_index]
+            pdf_image_pages.append(page.render(
+                scale=int(OCR_IMAGE_DPI / 72),
+                rotation=0,
+                crop=(0, 0, 0, 0),
+                grayscale="gray" if OCR_CONVERT_GRAYSCALE_IMAGES else "rgb"
+            ).to_pil())
+
+        pdf_conversion_end_time = time.time()
+
+        self.log.info("PDF conversion to image(s) finished | Elapsed : " +
+                      str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
 
         return pdf_image_pages, doc_metadata
 
     def _pdf_to_text(self, stream: bytes) -> tuple[str, dict]:
         doc_metadata = {}
         output_text = ""
-        with pdfium.PdfDocument(stream) as pdf:
-            doc_metadata["pages"] = len(pdf)
-            for page in pdf:
-                textpage = page.get_textpage()
-                output_text += textpage.get_text_range()
 
-                # this has caused issues before with the output text
-                # output_text += "\n"
+        pdf = pdfium.PdfDocument(stream)
+
+        doc_metadata["pages"] = len(pdf)
+        for page in pdf:
+            textpage = page.get_textpage()
+            output_text += textpage.get_text_bounded()
+
+            # this has caused issues before with the output text
+            # output_text += "\n"
 
         return output_text, doc_metadata
 
-    def _preprocess_pdf_to_img(self, stream: bytes) -> tuple[List[PILImage], dict]:
+    def _preprocess_pdf_to_img(self, stream: bytes) -> tuple[List[Image.Image], dict]:
         """ Converts a stream of bytes from a PDF file into images.
 
         Args:
@@ -142,7 +155,7 @@ class Processor:
             bytes: _description_ . pdf file stream
         """
 
-        pdf_stream = None
+        pdf_stream = b""
         doc_file_path = ""
         pdf_file_path = ""
         used_port_num = None
@@ -242,7 +255,7 @@ class Processor:
 
         return pdf_stream
 
-    def _process_image(self, img: PILImage, img_id: int, tess_api: PyTessBaseAPI) -> tuple[str, int, dict]:
+    def _process_image(self, img: Image.Image, img_id: int, tess_api: PyTessBaseAPI) -> tuple[str, int, dict]:
         """ Processes a PIL(Pillow) Image, calls tesseract ocr with the configured params
 
         Args:
@@ -265,7 +278,7 @@ class Processor:
 
         return output_str, img_id, tess_data
 
-    def _init_tesseract_api_worker(self):
+    def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
         tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)  # type: ignore
         self.log.debug("Initialised pytesseract api worker for language:" + str(TESSERACT_LANGUAGE))
         return tess_api
@@ -290,7 +303,7 @@ class Processor:
         """
 
         file_type = detect_file_type(stream)
-        output_text = ""
+        output_text: str = ""
         images = []
         doc_metadata: dict = {}
 
@@ -303,16 +316,19 @@ class Processor:
         _doc_metadata = {}
 
         try:
-            pdf_stream = None
+            pdf_stream: bytes = b""
 
-            self.log.info("Assumed file type for doc id: " + file_name)
+            self.log.info("Checking file type for doc id: " + file_name)
 
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
             elif file_type in DOCUMENT or type(file_type) is archive.Rtf:
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
-                images = [Image.open(BytesIO(stream))]
+                _img = None
+                with Image.open(BytesIO(stream)) as imgf:
+                    _img = imgf.copy()
+                images = [_img]
                 _doc_metadata["pages"] = 1
             elif is_file_type_xml(stream):
                 doc_metadata["content-type"] = "text/xml"
@@ -325,7 +341,7 @@ class Processor:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
-            if pdf_stream is not None:
+            if pdf_stream is not None and len(pdf_stream) > 0:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)
 
@@ -350,7 +366,7 @@ class Processor:
                         count += 1
                         tess_api_q.put(self._init_tesseract_api_worker())
                         proc_results.append(process_pool.starmap_async(self._process_image,
-                                                                       [(img, count, tess_api_q.get())],
+                                                                       [(img, count, tess_api_q.get(),)],
                                                                        chunksize=1,
                                                                        error_callback=logging.error))
                     try:
@@ -390,7 +406,7 @@ class Processor:
                  or the actual file name if the file was provided with the `file` parameter
 
         Returns:
-            tuple : _description_ . output_text post-ocr and 
+            tuple : _description_ . output_text post-ocr and
                 doc_metadata containing doc info like number of pages, author etc
         """
 
