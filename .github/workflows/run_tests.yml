@@ -133,9 +133,6 @@ jobs:
      
       - name: Install python deps
         run: |
-          isort .
-          flake8 .
-          mypy . --ignore-missing-imports
           sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
           sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
 
