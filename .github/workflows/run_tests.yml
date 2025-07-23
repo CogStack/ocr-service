@@ -120,7 +120,6 @@ jobs:
 
           sudo rm -rf /var/lib/apt/lists/*
 
-          sudo -H python${{ matrix.python-version }} -m pip install --upgrade pip --break-system-packages
           sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
           sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
 
