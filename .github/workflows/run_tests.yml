@@ -24,7 +24,7 @@ jobs:
     
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.12"]
       max-parallel: 4
 
     # Steps represent a sequence of tasks that will be executed as part of the job
