@@ -41,7 +41,7 @@ RUN apt-add-repository multiverse && \
     add-apt-repository ppa:apt-fast/stable && \
     apt-get update && apt-get upgrade -y 
 
-RUN apt-get install apt-fast
+RUN apt-get install apt-fast -y --no-install-recommends
 
 # install req packages
 RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev
