@@ -3,9 +3,9 @@ name: Run tests
 on:
 
   push:
-    branches: [ all]
+    branches: [ "*" ]
   pull_request:
-    branches: [ all ]
+    branches: [ "*" ]
     
   release:
     types: [published]
@@ -31,9 +31,6 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@v4
-      
-      - run: |
-          sudo apt update
 
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -46,41 +43,15 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           export DEBIAN_PRIORITY=critical
 
-          sudo apt-get update && apt-get upgrade -y
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update && apt-get upgrade -y
           sudo apt-get install -y software-properties-common
 
           # add extra repos
-          sudo apt-add-repository multiverse && \
-              apt-add-repository universe && \
-              add-apt-repository ppa:graphics-drivers/ppa && \
-              add-apt-repository ppa:deadsnakes/ppa && \
-              apt-get update && apt-get upgrade -y 
-
-          sudo apt-get install -y --no-install-recommends python3-dev python3-pip
-
-          echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections
-          sudo apt-get install -y --no-install-recommends fontconfig ttf-mscorefonts-installer
-          sudo fc-cache -f -v
-
-          sudo apt-get install -y libimage-exiftool-perl libtcnative-1 && \
-          sudo apt-get install -y ttf-mscorefonts-installer fontconfig && \
-          sudo apt-get install -y --fix-missing libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic && \
-          sudo apt-get install -y --fix-missing ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 && \
-          sudo apt-get install -y --fix-missing imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat tesseract-ocr-fra tesseract-ocr-deu libleptonica-dev liblept5 && \
-          sudo apt-get install -y --fix-missing libpcre3 libpcre3-dev && \
-          sudo apt-get install -y --fix-missing mesa-opencl-icd pocl-opencl-icd && \
-          sudo apt-get install -y --fix-missing libvips-tools libvips libvips-dev
-
-          sudo apt-get install -y python3-tk tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev
-          
-          # python3 poppler requirement
-          sudo apt-get install poppler-utils -y
-
-          sudo apt-get install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
-
-          sudo apt-get install -y isort flake8
-          sudo -H python3.11 -m pip install --upgrade pip --break-system-packages
-          sudo -H python3.11 -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
+          sudo apt-add-repository multiverse
+          sudo apt-add-repository universe 
+          sudo add-apt-repository ppa:graphics-drivers/ppa
+          sudo add-apt-repository ppa:deadsnakes/ppa
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update && apt-get upgrade -y 
 
       - name: Check linting and types
         run: |

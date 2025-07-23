@@ -3,9 +3,9 @@ name: docker-ocr-service
 on:
 
   push:
-    branches: [ all ]
+    branches: [ "*" ]
   pull_request:
-    branches: [ all ]
+    branches: [ "*" ]
     
   release:
     types: [published]
