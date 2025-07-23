@@ -1,6 +1,5 @@
-import os
 import multiprocessing
-
+import os
 from sys import platform
 
 OCR_SERVICE_VERSION: str = "0.3.0"

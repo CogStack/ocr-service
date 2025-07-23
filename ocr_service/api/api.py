@@ -1,19 +1,17 @@
-import json
-import sys
-import logging
-import uuid
-import traceback
 import base64
-
+import json
+import logging
+import sys
+import traceback
+import uuid
+from multiprocessing import Pool
 from typing import Optional
 
-from ocr_service.processor.processor import Processor
-from fastapi import APIRouter, Request, UploadFile, File
+from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from multiprocessing import Pool
-
-from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE
+from config import CPU_THREADS, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE, TESSERACT_TIMEOUT
+from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
 sys.path.append("..")
@@ -41,8 +39,6 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
     footer = {}
     file_name: str = ""
     stream: bytes = b""
-
-    global log
 
     if file:
         file_name: str = file.filename if file.filename else ""

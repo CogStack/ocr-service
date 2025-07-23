@@ -6,28 +6,23 @@ import sys
 import time
 import traceback
 import uuid
-
-from subprocess import PIPE, Popen
 from io import BytesIO
+from multiprocessing.dummy import Pool, Queue
+from subprocess import PIPE, Popen
+from threading import Timer
 from typing import List, TypeVar
 
 import pypdfium2 as pdfium
-
-from tesserocr import PyTessBaseAPI
 from filetype.types import DOCUMENT, IMAGE, archive
 from html2image import Html2Image
 from PIL import Image
+from tesserocr import PyTessBaseAPI
 
-from threading import Timer
-
-from multiprocessing.dummy import Pool, Queue
-
-from config import CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LOG_LEVEL, TMP_FILE_DIR, \
-                   OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX, TESSERACT_LANGUAGE, \
-                   TESSERACT_TIMEOUT, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH, \
-                   OCR_CONVERT_GRAYSCALE_IMAGES
-from ocr_service.utils.utils import delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging, \
-                                    terminate_hanging_process
+from config import (CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH,
+                    LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX,
+                    TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
+from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging,
+                                     terminate_hanging_process)
 
 sys.path.append("..")
 
@@ -228,6 +223,8 @@ class Processor:
     def _preprocess_xml_to_pdf(self, stream: bytes, file_name: str) -> bytes:
 
         pdf_stream = None
+        pdf_file_path = ""
+        xml_file_path = ""
 
         try:
             from pyxml2pdf.core.initializer import Initializer
@@ -241,7 +238,7 @@ class Processor:
                 tmp_doc_file.write(stream)
                 os.fsync(tmp_doc_file)
 
-            pdfinit = Initializer(xml_file_path, pdf_file_path)
+            _pdfinit = Initializer(xml_file_path, pdf_file_path)  # noqa: F841
 
             if os.path.exists(pdf_file_path):
                 with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
