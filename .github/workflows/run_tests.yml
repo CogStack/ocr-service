@@ -63,7 +63,6 @@ jobs:
           sudo apt-add-repository multiverse
           sudo apt-add-repository universe 
           sudo add-apt-repository ppa:graphics-drivers/ppa
-          sudo add-apt-repository ppa:deadsnakes/ppa
           sudo add-apt-repository ppa:apt-fast/stable
           sudo apt-get update
           sudo apt-get upgrade -y
@@ -103,7 +102,7 @@ jobs:
               imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
           # tessaract language packages
-          sudo apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat \
+          sudo apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
               tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn \
               tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor \
               tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
@@ -131,18 +130,25 @@ jobs:
 
           sudo rm -rf /var/lib/apt/lists/*
      
-      - name: Install python deps
+      - name: Install python deps & create virtual environment
         run: |
-          sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
-          sudo -H python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
-
-          sudo python${{ matrix.python-version }} -m compileall /ocr_service
+          python${{ matrix.python-version }} -m venv venv
+          source venv/bin/activate
+          python${{ matrix.python-version }} -m pip install --upgrade pip
+          python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
+          python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
+          python${{ matrix.python-version }} -m compileall /ocr_service
 
       - name: Check linting and types
         run: |
+          source venv/bin/activate
           isort .
           flake8 .
           mypy . --ignore-missing-imports
+        shell: bash
 
       - name: Run tests
-        run: /usr/bin/python${{ matrix.python-version }} -m unittest ocr_service/tests/process.py
+        run: |
+          source venv/bin/activate
+          python${{ matrix.python-version }} -m unittest ocr_service/tests/process.py
+        shell: bash

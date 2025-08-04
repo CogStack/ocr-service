@@ -37,7 +37,6 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properti
 RUN apt-add-repository multiverse && \
     apt-add-repository universe && \
     add-apt-repository ppa:graphics-drivers/ppa && \
-    add-apt-repository ppa:deadsnakes/ppa && \
     add-apt-repository ppa:apt-fast/stable && \
     apt-get update && apt-get upgrade -y 
 
@@ -76,7 +75,7 @@ RUN apt-fast install -y --no-install-recommends fontconfig ttf-mscorefonts-insta
     imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
 # tessaract language packages
-RUN apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-eng tesseract-ocr-osd tesseract-ocr-lat \
+RUN apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
     tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn \
     tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor \
     tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
