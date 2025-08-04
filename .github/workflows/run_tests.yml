@@ -134,10 +134,10 @@ jobs:
         run: |
           python${{ matrix.python-version }} -m venv venv
           source venv/bin/activate
-          python${{ matrix.python-version }} -m pip install --upgrade pip
-          python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements.txt
-          python${{ matrix.python-version }} -m pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
-          python${{ matrix.python-version }} -m compileall /ocr_service
+          python -m pip install --upgrade pip
+          pip install --break-system-packages --no-cache-dir -r ./requirements.txt
+          pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
+          python -m compileall /ocr_service
 
       - name: Check linting and types
         run: |
@@ -153,5 +153,5 @@ jobs:
           LIBRE_OFFICE_PYTHON_PATH: ${{ github.workspace }}/venv/bin/python
         run: |
           source venv/bin/activate
-          python${{ matrix.python-version }} -m unittest ocr_service/tests/process.py
+          python -m unittest ocr_service/tests/process.py
         shell: bash
