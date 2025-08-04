@@ -112,8 +112,10 @@ async def process_file(request: Request, file: UploadFile = File(...)) -> Respon
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
-    response: dict[Any, Any] | bytes | str = build_response(output_text,
-                              metadata=doc_metadata)
+    response: dict[Any, Any] | bytes | str = build_response(
+        output_text,
+        metadata=doc_metadata
+    )
 
     if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
         response = json.dumps({"result": response})
