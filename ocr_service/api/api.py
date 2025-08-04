@@ -39,6 +39,8 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
     footer = {}
     file_name: str = ""
     stream: bytes = b""
+    output_text = ""
+    doc_metadata = {}
 
     if file:
         file_name = file.filename if file.filename else ""
@@ -55,13 +57,15 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
                 record = record[0]
 
             if isinstance(record, dict) and "binary_data" in record.keys():
+                stream = record.get("binary_data", {})
                 try:
-                    stream = base64.b64decode(record["binary_data"])
-                except UnicodeDecodeError:
+                    if stream not in [None, "", {}]:
+                        stream = base64.b64decode(stream)
+                except Exception:
                     log.warning("Binary_data field could not be base64 decoded")
-                    stream = record["binary_data"]
+                    stream = record.get("binary_data", {})
+
                 footer = record.get("footer", {})
-                log.info("Footer found in the request.")
             else:
                 stream = raw_body
 
@@ -71,9 +75,11 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
             log.warning("Stream does not contain valid JSON.")
 
     processor: Processor = request.app.state.processor
-    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
 
-    code = 200 if len(output_text) > 0 else 500
+    if stream:
+        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
+
+    code = 200 if len(output_text) > 0 or not stream else 500
 
     response = build_response(output_text,
                               footer=footer,
@@ -91,14 +97,18 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
 async def process_file(request: Request, file: UploadFile = File(...)) -> Response:
 
     file_name: str = file.filename if file.filename else ""
-    stream = await file.read()
+    stream: bytes = await file.read()
     log.info(f"Processing file: {file_name}")
 
     processor: Processor = request.app.state.processor
 
-    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    output_text: str = ""
+    doc_metadata: dict = {}
 
-    code = 200 if len(output_text) > 0 else 500
+    if stream:
+        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+
+    code = 200 if len(output_text) > 0 or not stream else 500
 
     response = build_response(output_text,
                               metadata=doc_metadata)
