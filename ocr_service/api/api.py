@@ -5,7 +5,7 @@ import sys
 import traceback
 import uuid
 from multiprocessing import Pool
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
@@ -36,11 +36,11 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
         Response: json with the result of the OCR processing
     """
 
-    footer = {}
+    footer: dict = {}
     file_name: str = ""
     stream: bytes = b""
-    output_text = ""
-    doc_metadata = {}
+    output_text: str = ""
+    doc_metadata: dict = {}
 
     if file:
         file_name = file.filename if file.filename else ""
@@ -77,13 +77,15 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
     processor: Processor = request.app.state.processor
 
     if stream:
-        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
+        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
-    response = build_response(output_text,
-                              footer=footer,
-                              metadata=doc_metadata)
+    response: dict[Any, Any] | bytes | str = build_response(
+        output_text,
+        footer=footer,
+        metadata=doc_metadata
+    )
 
     if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
         response = json.dumps({"result": response})
@@ -110,7 +112,7 @@ async def process_file(request: Request, file: UploadFile = File(...)) -> Respon
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
-    response = build_response(output_text,
+    response: dict[Any, Any] | bytes | str = build_response(output_text,
                               metadata=doc_metadata)
 
     if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
