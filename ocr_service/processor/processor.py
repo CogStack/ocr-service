@@ -18,9 +18,9 @@ from html2image import Html2Image
 from PIL import Image
 from tesserocr import PyTessBaseAPI
 
-from config import (CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH,
-                    LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX,
-                    TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR, CONVERTER_THREAD_NUM)
+from config import (CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT,
+                    LIBRE_OFFICE_PYTHON_PATH, LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE,
+                    TESSDATA_PREFIX, TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
 from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging,
                                      terminate_hanging_process)
 
