@@ -10,7 +10,7 @@ from io import BytesIO
 from multiprocessing.dummy import Pool, Queue
 from subprocess import PIPE, Popen
 from threading import Timer
-from typing import List, TypeVar
+from typing import Any, List, TypeVar
 
 import pypdfium2 as pdfium
 from filetype.types import DOCUMENT, IMAGE, archive
@@ -20,13 +20,13 @@ from tesserocr import PyTessBaseAPI
 
 from config import (CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT, LIBRE_OFFICE_PYTHON_PATH,
                     LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE, TESSDATA_PREFIX,
-                    TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
+                    TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR, CONVERTER_THREAD_NUM)
 from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging,
                                      terminate_hanging_process)
 
 sys.path.append("..")
 
-PILImage = TypeVar('PILImage', bound=Image)
+PILImage = TypeVar('PILImage', bound=Image.Image)
 
 
 class Processor:
@@ -68,20 +68,25 @@ class Processor:
 
     def _pdf_to_img(self, stream: bytes) -> tuple[List[Image.Image], dict]:
         pdf_image_pages = []
-        doc_metadata = {}
+        doc_metadata: dict[str, Any] = {}
 
         pdf = pdfium.PdfDocument(stream)
 
         pdf_conversion_start_time = time.time()
+        scale = int(OCR_IMAGE_DPI / 72)
+        grayscale = "gray" if OCR_CONVERT_GRAYSCALE_IMAGES else "rgb"
 
-        for page_index in range(len(pdf)):
-            page = pdf[page_index]
-            pdf_image_pages.append(page.render(
-                scale=int(OCR_IMAGE_DPI / 72),
+        def render_page(index: int) -> Image.Image:
+            page = pdf[index]
+            return page.render(
+                scale=scale,
                 rotation=0,
                 crop=(0, 0, 0, 0),
-                grayscale="gray" if OCR_CONVERT_GRAYSCALE_IMAGES else "rgb"
-            ).to_pil())
+                grayscale=grayscale
+            ).to_pil()
+
+        with Pool(CONVERTER_THREAD_NUM) as pool:
+            pdf_image_pages = pool.map(render_page, range(len(pdf)))
 
         pdf_conversion_end_time = time.time()
 
@@ -121,8 +126,8 @@ class Processor:
 
         self.log.info("pre-processing pdf...")
 
-        pdf_image_pages = []
-        doc_metadata = {}
+        pdf_image_pages: List[Image.Image] = []
+        doc_metadata: dict[str, Any] = {}
 
         try:
             pdf_image_pages, doc_metadata = self._pdf_to_img(stream)
@@ -222,7 +227,7 @@ class Processor:
 
     def _preprocess_xml_to_pdf(self, stream: bytes, file_name: str) -> bytes:
 
-        pdf_stream = None
+        pdf_stream = b""
         pdf_file_path = ""
         xml_file_path = ""
 
@@ -357,7 +362,7 @@ class Processor:
                 proc_results = list()
 
                 with Pool(processes=CPU_THREADS) as process_pool:
-                    tess_api_q = Queue()
+                    tess_api_q: Queue = Queue()
                     count = 0
                     for img in images:
                         count += 1
@@ -408,7 +413,7 @@ class Processor:
         """
 
         output_text = ""
-        doc_metadata = {}
+        doc_metadata: dict[str, Any] = {}
         elapsed_time = 0
 
         try:
@@ -417,7 +422,7 @@ class Processor:
             output_text, doc_metadata = self._process(stream, file_name=file_name)
 
             end_time = time.time()
-            elapsed_time = round(end_time - start_time, 4)
+            elapsed_time = round(int(end_time - start_time), 4)
             doc_metadata["elapsed_time"] = elapsed_time
 
             self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time)

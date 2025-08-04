@@ -27,7 +27,7 @@ def info() -> JSONResponse:
 
 
 @api.post("/process")
-async def process(request: Request, file: Optional[UploadFile]) -> Response:
+async def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> Response:
     """
      Processes raw binary input stream, file, or
         JSON containing the binary_data field in base64 format
@@ -41,7 +41,7 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
     stream: bytes = b""
 
     if file:
-        file_name: str = file.filename if file.filename else ""
+        file_name = file.filename if file.filename else ""
         stream = await file.read()
         log.info(f"Processing file given via 'file' parameter, file name: {file_name}")
     else:
@@ -54,8 +54,12 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
-            if isinstance(record, dict) and "binary_data" in record:
-                stream = base64.b64decode(record["binary_data"])
+            if isinstance(record, dict) and "binary_data" in record.keys():
+                try:
+                    stream = base64.b64decode(record["binary_data"])
+                except UnicodeDecodeError:
+                    log.warning("Binary_data field could not be base64 decoded")
+                    stream = record["binary_data"]
                 footer = record.get("footer", {})
                 log.info("Footer found in the request.")
             else:

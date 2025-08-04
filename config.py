@@ -1,3 +1,4 @@
+import ast
 import multiprocessing
 import os
 from sys import platform
@@ -90,9 +91,16 @@ if OCR_WEB_SERVICE_THREADS > 1:
 if OCR_WEB_SERVICE_WORKERS > 1:
     LIBRE_OFFICE_PORT_CAP = DEFAULT_LIBRE_OFFICE_SERVER_PORT + OCR_WEB_SERVICE_WORKERS
 
-LIBRE_OFFICE_LISTENER_PORT_RANGE: range | str = os.environ.get("OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE",
-                                                               range(DEFAULT_LIBRE_OFFICE_SERVER_PORT,
-                                                                     LIBRE_OFFICE_PORT_CAP))
+LIBRE_OFFICE_LISTENER_PORT_RANGE: range = range(DEFAULT_LIBRE_OFFICE_SERVER_PORT, LIBRE_OFFICE_PORT_CAP)
+
+_tmp_range = os.environ.get("OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE")
+
+if _tmp_range:
+    try:
+        start, end = ast.literal_eval(_tmp_range)
+        LIBRE_OFFICE_LISTENER_PORT_RANGE = range(start, end)
+    except (ValueError, SyntaxError):
+        raise ValueError(f"Invalid OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE: {_tmp_range}")
 
 LIBRE_OFFICE_NETWORK_INTERFACE: str = "localhost"
 

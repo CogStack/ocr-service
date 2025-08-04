@@ -6,7 +6,7 @@ import sys
 import xml.sax
 from datetime import datetime
 from sys import platform
-from typing import List
+from typing import Any, List
 
 import filetype
 import psutil
@@ -29,7 +29,14 @@ def get_app_info() -> dict:
             "config": ""}
 
 
-def build_response(text, success: bool = True, log_message: str = "", footer: dict = {}, metadata: dict = {}) -> dict:
+def build_response(
+    text,
+    success: bool = True,
+    log_message: str = "",
+    footer: dict = {},
+    metadata: dict = {}
+) -> dict[str, Any]:
+
     metadata["log_message"] = log_message
 
     if len(text) > 0:
@@ -96,7 +103,7 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
         int: _description_ . pid, process ID
     """
 
-    pid: int = None
+    pid: int = -1
 
     if "soffice" in process_name:
         soffice_process_name = "soffice"
@@ -113,7 +120,7 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
     return pid
 
 
-def sync_port_mapping(worker_id: int = None, worker_pid: int = None):
+def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
     open_mode = "r+"
 
     if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):

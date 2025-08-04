@@ -12,7 +12,7 @@ python-multipart==0.0.20
 uvicorn==0.35.0
 uvicorn[standard]==0.35.0
 tesserocr==2.8.0
-pypdfium2==3.21.1
+pypdfium2[full]==4.30.0
 uharfbuzz==0.50.2
 pyxml2pdf==0.3.4
 matplotlib==3.10.3
