@@ -148,6 +148,9 @@ jobs:
         shell: bash
 
       - name: Run tests
+        # Since we are using a virtual env we have to make sure we use the right python version
+        env:
+          LIBRE_OFFICE_PYTHON_PATH: ${{ github.workspace }}/venv/bin/python
         run: |
           source venv/bin/activate
           python${{ matrix.python-version }} -m unittest ocr_service/tests/process.py
