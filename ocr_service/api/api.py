@@ -1,19 +1,17 @@
-import json
-import sys
-import logging
-import uuid
-import traceback
 import base64
+import json
+import logging
+import sys
+import traceback
+import uuid
+from multiprocessing import Pool
+from typing import Any, Optional
 
-from typing import Optional
-
-from ocr_service.processor.processor import Processor
-from fastapi import APIRouter, Request, UploadFile, File
+from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from multiprocessing import Pool
-
-from config import CPU_THREADS, TESSERACT_TIMEOUT, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE
+from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
+from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
 sys.path.append("..")
@@ -29,7 +27,7 @@ def info() -> JSONResponse:
 
 
 @api.post("/process")
-async def process(request: Request, file: Optional[UploadFile]) -> Response:
+async def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> Response:
     """
      Processes raw binary input stream, file, or
         JSON containing the binary_data field in base64 format
@@ -38,14 +36,14 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
         Response: json with the result of the OCR processing
     """
 
-    footer = {}
+    footer: dict = {}
     file_name: str = ""
     stream: bytes = b""
-
-    global log
+    output_text: str = ""
+    doc_metadata: dict = {}
 
     if file:
-        file_name: str = file.filename if file.filename else ""
+        file_name = file.filename if file.filename else ""
         stream = await file.read()
         log.info(f"Processing file given via 'file' parameter, file name: {file_name}")
     else:
@@ -58,10 +56,16 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
-            if isinstance(record, dict) and "binary_data" in record:
-                stream = base64.b64decode(record["binary_data"])
+            if isinstance(record, dict) and "binary_data" in record.keys():
+                stream = record.get("binary_data", {})
+                try:
+                    if stream not in [None, "", {}]:
+                        stream = base64.b64decode(stream)
+                except Exception:
+                    log.warning("Binary_data field could not be base64 decoded")
+                    stream = record.get("binary_data", {})
+
                 footer = record.get("footer", {})
-                log.info("Footer found in the request.")
             else:
                 stream = raw_body
 
@@ -71,42 +75,46 @@ async def process(request: Request, file: Optional[UploadFile]) -> Response:
             log.warning("Stream does not contain valid JSON.")
 
     processor: Processor = request.app.state.processor
-    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)  # type: ignore
 
-    code = 200 if len(output_text) > 0 else 500
+    if stream:
+        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
 
-    response = build_response(output_text,
-                              footer=footer,
-                              metadata=doc_metadata)
+    code = 200 if len(output_text) > 0 or not stream else 500
 
-    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
-        response = json.dumps({"result": response})
-    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
-        response = json.dumps({"result": response}).encode("utf-8")
+    response: dict[Any, Any] | bytes | str = build_response(
+        output_text,
+        footer=footer,
+        metadata=doc_metadata
+    )
 
-    return Response(content=response, status_code=code)
+    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
+
+    return Response(content=response, status_code=code, media_type="application/json")
 
 
 @api.post("/process_file")
 async def process_file(request: Request, file: UploadFile = File(...)) -> Response:
 
     file_name: str = file.filename if file.filename else ""
-    stream = await file.read()
+    stream: bytes = await file.read()
     log.info(f"Processing file: {file_name}")
 
     processor: Processor = request.app.state.processor
 
-    output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    output_text: str = ""
+    doc_metadata: dict = {}
 
-    code = 200 if len(output_text) > 0 else 500
+    if stream:
+        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
 
-    response = build_response(output_text,
-                              metadata=doc_metadata)
+    code = 200 if len(output_text) > 0 or not stream else 500
 
-    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
-        response = json.dumps({"result": response})
-    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
-        response = json.dumps({"result": response}).encode("utf-8")
+    response: dict[Any, Any] | bytes | str = build_response(
+        output_text,
+        metadata=doc_metadata
+    )
+
+    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
 
     return Response(content=response, status_code=code)
 

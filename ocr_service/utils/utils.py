@@ -1,19 +1,17 @@
 import fcntl
 import json
+import logging
 import os
 import sys
-import psutil
-import logging
-
-from sys import platform
-from typing import List
+import xml.sax
 from datetime import datetime
+from sys import platform
+from typing import Any, List
 
 import filetype
-import xml.sax
+import psutil
 
-from config import OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH, \
-                   LIBRE_OFFICE_LISTENER_PORT_RANGE
+from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH
 
 sys.path.append("..")
 
@@ -31,7 +29,14 @@ def get_app_info() -> dict:
             "config": ""}
 
 
-def build_response(text, success: bool = True, log_message: str = "", footer: dict = {}, metadata: dict = {}) -> dict:
+def build_response(
+    text,
+    success: bool = True,
+    log_message: str = "",
+    footer: dict = {},
+    metadata: dict = {}
+) -> dict[str, Any]:
+
     metadata["log_message"] = log_message
 
     if len(text) > 0:
@@ -86,19 +91,19 @@ def terminate_hanging_process(process_id: int) -> None:
 
 def get_process_id_by_process_name(process_name: str = "") -> int:
     """ Looks for specific process in process_name
-    Used mostly for making sure that the 'soffice' process times out 
+    Used mostly for making sure that the 'soffice' process times out
     forcefully (it has a habit of hanging or getting stuck so
     we manually shut it down and restart it).
 
     Args:
-        process_name (str, optional): _description_. Defaults to "", 
+        process_name (str, optional): _description_. Defaults to "",
         actual process name or process path
 
     Returns:
         int: _description_ . pid, process ID
     """
 
-    pid: int = None
+    pid: int = -1
 
     if "soffice" in process_name:
         soffice_process_name = "soffice"
@@ -115,7 +120,7 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
     return pid
 
 
-def sync_port_mapping(worker_id: int = None, worker_pid: int = None):
+def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
     open_mode = "r+"
 
     if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):

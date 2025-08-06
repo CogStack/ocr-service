@@ -98,7 +98,7 @@ Supports most document formats: pdf, html, doc(x), rtf, odt and also the image f
 
 Using `curl` to send the document to server instance running on localhost on `8090` port:
 
-```curl -F file="@ocr_service/tests/resources/docs/generic/pat_id_1.rtf" http://localhost:8090/api/process/ | jq```
+```curl -F file="@ocr_service/tests/resources/docs/generic/pat_id_1.rtf" http://localhost:8090/api/process | jq```
 
 output
 
