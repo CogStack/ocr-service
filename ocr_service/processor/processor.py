@@ -392,6 +392,10 @@ class Processor:
                 doc_metadata["confidence"] = round(sum([page["confidence"] for page in tess_data]) / image_count, 4)
 
             output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
+
+            # make sure it is UTF-8 valid, replace invalid characters
+            output_text = str(output_text).encode("utf-8", errors="replace").decode("utf-8")
+
         except Exception:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
 
