@@ -69,8 +69,6 @@ OCR_CONVERT_GRAYSCALE_IMAGES: bool = True
 # dpi used for images in TESSERACT and other stuff
 OCR_IMAGE_DPI: int = int(os.environ.get("OCR_SERVICE_IMAGE_DPI", 200))
 
-# possible values: json (stringified output), dict (dict means no json.dumps() is applied to the output)
-OCR_SERVICE_RESPONSE_OUTPUT_TYPE: str = str(os.environ.get("OCR_SERVICE_RESPONSE_OUTPUT_TYPE", "json"))
 
 # LIBRE OFFICE SECTION
 

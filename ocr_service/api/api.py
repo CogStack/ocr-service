@@ -10,7 +10,7 @@ from typing import Any, Optional
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 
-from config import CPU_THREADS, LOG_LEVEL, OCR_SERVICE_RESPONSE_OUTPUT_TYPE, TESSERACT_TIMEOUT
+from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
 from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
@@ -87,12 +87,9 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
         metadata=doc_metadata
     )
 
-    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
-        response = json.dumps({"result": response})
-    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
-        response = json.dumps({"result": response}).encode("utf-8")
+    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
 
-    return Response(content=response, status_code=code)
+    return Response(content=response, status_code=code, media_type="application/json")
 
 
 @api.post("/process_file")
@@ -117,10 +114,7 @@ async def process_file(request: Request, file: UploadFile = File(...)) -> Respon
         metadata=doc_metadata
     )
 
-    if OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "json":
-        response = json.dumps({"result": response})
-    elif OCR_SERVICE_RESPONSE_OUTPUT_TYPE == "dict":
-        response = json.dumps({"result": response}).encode("utf-8")
+    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
 
     return Response(content=response, status_code=code)
 
