@@ -1,10 +1,11 @@
 import logging
-import time
 import os
+import time
 import unittest
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from ocr_service.app import create_app
 from ocr_service.utils.utils import sync_port_mapping
 

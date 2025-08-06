@@ -1,20 +1,18 @@
+import logging
 import os
 import subprocess
 import sys
 import time
-import logging
-import psutil
-
-from typing import Any
-from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from threading import Thread, Event
+from threading import Event, Thread
+from typing import Any
 
-from config import DEBUG_MODE, LIBRE_OFFICE_EXEC_PATH, LIBRE_OFFICE_LISTENER_PORT_RANGE, \
-                   LIBRE_OFFICE_NETWORK_INTERFACE, \
-                   LIBRE_OFFICE_PYTHON_PATH, LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL, \
-                   OCR_WEB_SERVICE_THREADS, OCR_WEB_SERVICE_WORKERS, TMP_FILE_DIR, OCR_SERVICE_VERSION
+import psutil
+from fastapi import FastAPI
 
+from config import (DEBUG_MODE, LIBRE_OFFICE_EXEC_PATH, LIBRE_OFFICE_LISTENER_PORT_RANGE,
+                    LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL, LIBRE_OFFICE_PYTHON_PATH,
+                    OCR_SERVICE_VERSION, OCR_WEB_SERVICE_THREADS, OCR_WEB_SERVICE_WORKERS, TMP_FILE_DIR)
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import get_assigned_port

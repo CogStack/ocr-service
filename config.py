@@ -1,6 +1,6 @@
-import os
+import ast
 import multiprocessing
-
+import os
 from sys import platform
 
 OCR_SERVICE_VERSION: str = "0.3.0"
@@ -91,9 +91,16 @@ if OCR_WEB_SERVICE_THREADS > 1:
 if OCR_WEB_SERVICE_WORKERS > 1:
     LIBRE_OFFICE_PORT_CAP = DEFAULT_LIBRE_OFFICE_SERVER_PORT + OCR_WEB_SERVICE_WORKERS
 
-LIBRE_OFFICE_LISTENER_PORT_RANGE: range | str = os.environ.get("OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE",
-                                                               range(DEFAULT_LIBRE_OFFICE_SERVER_PORT,
-                                                                     LIBRE_OFFICE_PORT_CAP))
+LIBRE_OFFICE_LISTENER_PORT_RANGE: range = range(DEFAULT_LIBRE_OFFICE_SERVER_PORT, LIBRE_OFFICE_PORT_CAP)
+
+_tmp_range = os.environ.get("OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE")
+
+if _tmp_range:
+    try:
+        start, end = ast.literal_eval(_tmp_range)
+        LIBRE_OFFICE_LISTENER_PORT_RANGE = range(start, end)
+    except (ValueError, SyntaxError):
+        raise ValueError(f"Invalid OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE: {_tmp_range}")
 
 LIBRE_OFFICE_NETWORK_INTERFACE: str = "localhost"
 
@@ -110,13 +117,14 @@ LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL: int = 10
 # Windows: C:/Windows/py.exe
 # Linux(Ubuntu): /usr/bin/python3.12 (forcefully uses python3.12,
 #  to point to the default python on your system just use /usr/bin/python3)
-LIBRE_OFFICE_PYTHON_PATH: str = "/Applications/LibreOffice.app/Contents/Resources/python"
+LIBRE_OFFICE_PYTHON_PATH: str = os.environ.get("LIBRE_OFFICE_PYTHON_PATH",
+                                               "/Applications/LibreOffice.app/Contents/Resources/python")
 
 # DO NOT CHANGE THIS UNLESS YOU ARE DEVELOPING OR RUNNING THIS APP LOCALLY
 # Description: this sets the path to the LibreOffice executable,
 #              unoserver uses it to start a daemon in the background
 #              that listens to any incoming conversion requests
-#
+
 # MacOS X: /Applications/LibreOffice.app/Contents/MacOS/soffice
 # Windows: %ProgramFiles%/LibreOffice/Program/soffice
 # Linux(Ubuntu): /usr/bin/soffice
@@ -141,3 +149,8 @@ elif platform == "darwin":
     LIBRE_OFFICE_EXEC_PATH = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
     LIBRE_OFFICE_PYTHON_PATH = "/Applications/LibreOffice.app/Contents/Resources/python"
     TESSDATA_PREFIX = "/opt/homebrew/share/tessdata"
+
+# overwrite if defined:
+if "LIBRE_OFFICE_PYTHON_PATH" in os.environ:
+    LIBRE_OFFICE_EXEC_PATH = os.environ.get("LIBRE_OFFICE_EXEC_PATH",
+                                            "/Applications/LibreOffice.app/Contents/MacOS/soffice")
