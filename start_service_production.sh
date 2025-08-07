@@ -1,10 +1,6 @@
 #!/bin/bash
 
-# set default config values
-set -a
-echo "Reading env vars from ./env/ocr_service.env"
-source ./env/ocr_service.env
-set +a
+# if ran manually execute "export_env_vars.sh"
 
 # start the OCR_SERVICE
 echo "Starting up OCR app using uvicorn OCR_SERVICE ..."
