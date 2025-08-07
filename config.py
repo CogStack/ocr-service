@@ -150,5 +150,4 @@ elif platform == "darwin":
 
 # overwrite if defined:
 if "LIBRE_OFFICE_PYTHON_PATH" in os.environ:
-    LIBRE_OFFICE_EXEC_PATH = os.environ.get("LIBRE_OFFICE_EXEC_PATH",
-                                            "/Applications/LibreOffice.app/Contents/MacOS/soffice")
+    LIBRE_OFFICE_PYTHON_PATH = os.environ.get("LIBRE_OFFICE_PYTHON_PATH", "/usr/bin/python3.12")

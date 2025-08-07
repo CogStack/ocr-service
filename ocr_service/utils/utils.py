@@ -60,6 +60,11 @@ def delete_tmp_files(file_paths: List[str]) -> None:
             os.remove(file_path)
 
 
+def is_file_type_html(stream: bytes) -> bool:
+    head = stream[:2048].decode(errors="ignore").lower()
+    return "<html" in head or "<!doctype html" in head
+
+
 def is_file_type_xml(stream: bytes) -> bool:
     try:
         xml.sax.parseString(stream, xml.sax.ContentHandler())

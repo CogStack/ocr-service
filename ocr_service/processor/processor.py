@@ -21,7 +21,7 @@ from tesserocr import PyTessBaseAPI
 from config import (CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT,
                     LIBRE_OFFICE_PYTHON_PATH, LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE,
                     TESSDATA_PREFIX, TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
-from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, setup_logging,
+from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, is_file_type_html, setup_logging,
                                      terminate_hanging_process)
 
 sys.path.append("..")
@@ -332,7 +332,7 @@ class Processor:
                     _img = imgf.copy()
                 images = [_img]
                 _doc_metadata["pages"] = 1
-            elif is_file_type_xml(stream):
+            elif is_file_type_xml(stream) and not is_file_type_html(stream):
                 doc_metadata["content-type"] = "text/xml"
                 pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
 

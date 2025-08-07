@@ -73,6 +73,10 @@ def start_office_converter_servers() -> dict[str, Any]:
             process = start_office_server(port_num)
             loffice_processes[str(port_num)] = process
             break
+        else:
+            process = start_office_server(port_num)
+            loffice_processes[str(port_num)] = process
+            break
 
     return loffice_processes
 
