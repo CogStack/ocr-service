@@ -43,7 +43,7 @@ RUN apt-add-repository multiverse && \
 RUN apt-get install apt-fast -y --no-install-recommends
 
 # install req packages
-RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev pyrhon3.12-venv
+RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv
 RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
     apt-fast install -y --no-install-recommends \
     gnupg \
