@@ -113,7 +113,6 @@ ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Install uwsgi from PyPI source using the global tools
-RUN python3.12 -m pip install --no-cache-dir --break-system-packages --no-build-isolation -r ./requirements.txt
 RUN python3.12 -m venv "$VIRTUAL_ENV" && "$VIRTUAL_ENV/bin/python" && "$VIRTUAL_ENV/bin/pip" install --no-cache-dir -r ./requirements.txt
 
 # compile the python files
