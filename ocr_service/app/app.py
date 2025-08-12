@@ -3,10 +3,10 @@ import os
 import subprocess
 import sys
 import time
-from contextlib import asynccontextmanager
 from threading import Event, Thread
 from typing import Any
 
+from fastapi.responses import ORJSONResponse
 import psutil
 from fastapi import FastAPI
 
@@ -18,6 +18,9 @@ from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import get_assigned_port
 
 sys.path.append("..")
+
+# guard so LibreOffice startup runs only once per worker
+_started: bool = False
 
 
 def start_office_server(port_num) -> dict[str, Any]:
@@ -108,53 +111,59 @@ def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
         time.sleep(LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL)
 
 
-@asynccontextmanager
-async def office_process_lifespan(app: FastAPI):
-    """
-        :description: Lifespan context manager to start and stop LibreOffice unoserver processes
-        :param app: FastAPI application instance
-    """
-
-    # start LibreOffice unoserver processes
-    loffice_processes = start_office_converter_servers()
-    processor = Processor()
-    processor.loffice_process_list.update(loffice_processes)
-    app.state.processor = processor
-
-    # start persistent background thread for monitoring
-    thread_event: Event = Event()
-
-    proc_listener_thread = Thread(
-                target=monitor_office_processes,
-                args=(thread_event, processor),
-                name="loffice_proc_listener",
-                daemon=True
-            )
-    proc_listener_thread.start()
-
-    try:
-        yield
-    finally:
-        # shutdown: kill processes & stop monitoring
-        thread_event.set()
-        for port, proc in processor.loffice_process_list.items():
-            logging.info(f"shutting down libreoffice process on port {port}")
-            proc["process"].kill()
-
-
 def create_app() -> FastAPI:
     """
         :description: Creates FastAPI application with API router and starts libreoffice unoserver processes
         :return: FastAPI application instance
     """
 
+    global _started
+
     try:
         app = FastAPI(title="OCR Service",
                       description="OCR Service API",
                       version=OCR_SERVICE_VERSION,
-                      debug=DEBUG_MODE,
-                      lifespan=office_process_lifespan)
+                      default_response_class=ORJSONResponse,
+                      debug=DEBUG_MODE)
         app.include_router(api)
+
+        # start once per worker
+        if not _started:
+            _started = True
+            # Start LibreOffice unoserver processes
+            loffice_processes = start_office_converter_servers()
+            processor = Processor()
+            processor.loffice_process_list.update(loffice_processes)
+            app.state.processor = processor
+
+            # Start monitor thread
+            thread_event = Event()
+            proc_listener_thread = Thread(
+                target=monitor_office_processes,
+                args=(thread_event, processor),
+                name="loffice_proc_listener",
+                daemon=True
+            )
+            proc_listener_thread.start()
+
+            import atexit
+
+            def cleanup():
+                thread_event.set()
+                if proc_listener_thread.is_alive():
+                    proc_listener_thread.join(timeout=5)
+                for port, proc in processor.loffice_process_list.items():
+                    p = proc["process"]
+                    try:
+                        logging.info(f"shutting down libreoffice process on port {port}")
+                        p.terminate()
+                        p.wait(timeout=3)
+                    except Exception:
+                        try:
+                            p.kill()
+                        except Exception as e:
+                            logging.error("error in when shutting down libreoffice process: " + str(e))
+            atexit.register(cleanup)
 
     except Exception:
         raise

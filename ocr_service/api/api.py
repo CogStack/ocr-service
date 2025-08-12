@@ -1,14 +1,14 @@
 import base64
-import json
 import logging
 import sys
 import traceback
+import orjson
 import uuid
 from multiprocessing import Pool
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from fastapi import APIRouter, File, Request, UploadFile
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import Response, ORJSONResponse
 
 from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
 from ocr_service.processor.processor import Processor
@@ -21,13 +21,18 @@ api = APIRouter(prefix="/api")
 log = setup_logging("api", log_level=LOG_LEVEL)
 
 
+@api.get("/health", response_class=ORJSONResponse)
+def health() -> ORJSONResponse:
+    return ORJSONResponse(content={"status": "ok"})
+
+
 @api.get("/info")
-def info() -> JSONResponse:
-    return JSONResponse(content=get_app_info())
+def info() -> ORJSONResponse:
+    return ORJSONResponse(content=get_app_info())
 
 
 @api.post("/process")
-async def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> Response:
+def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> ORJSONResponse:
     """
      Processes raw binary input stream, file, or
         JSON containing the binary_data field in base64 format
@@ -44,15 +49,15 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
 
     if file:
         file_name = file.filename if file.filename else ""
-        stream = await file.read()
+        stream = file.file.read()
         log.info(f"Processing file given via 'file' parameter, file name: {file_name}")
     else:
         file_name = uuid.uuid4().hex
         log.info(f"Processing binary as data-binary, generated file name: {file_name}")
-        raw_body = await request.body()
+        raw_body = request._body
 
         try:
-            record = json.loads(raw_body)
+            record = orjson.loads(raw_body)
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
@@ -70,7 +75,7 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
                 stream = raw_body
 
             log.info("Stream contains valid JSON.")
-        except json.JSONDecodeError:
+        except orjson.JSONDecodeError:
             stream = raw_body
             log.warning("Stream does not contain valid JSON.")
 
@@ -81,22 +86,16 @@ async def process(request: Request, file: Optional[UploadFile] = File(default=No
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
-    response: dict[Any, Any] | bytes | str = build_response(
-        output_text,
-        footer=footer,
-        metadata=doc_metadata
-    )
+    response: dict[Any, Any] = {"result": build_response(output_text, footer=footer, metadata=doc_metadata)}
 
-    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
-
-    return Response(content=response, status_code=code, media_type="application/json")
+    return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 
 
 @api.post("/process_file")
-async def process_file(request: Request, file: UploadFile = File(...)) -> Response:
+def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONResponse:
 
     file_name: str = file.filename if file.filename else ""
-    stream: bytes = await file.read()
+    stream: bytes = file.file.read()
     log.info(f"Processing file: {file_name}")
 
     processor: Processor = request.app.state.processor
@@ -109,23 +108,18 @@ async def process_file(request: Request, file: UploadFile = File(...)) -> Respon
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
-    response: dict[Any, Any] | bytes | str = build_response(
-        output_text,
-        metadata=doc_metadata
-    )
+    response: dict[Any, Any] = {"result": build_response(output_text, metadata=doc_metadata)}
 
-    response = json.dumps({"result": response}, ensure_ascii=False).encode("utf-8")
-
-    return Response(content=response, status_code=code)
+    return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 
 
 @api.post("/process_bulk")
-async def process_bulk(request: Request) -> Response:
+def process_bulk(request: Request, files: List[UploadFile] = File(...)) -> Response:
     """
-        Processes multiple files in a single request.
+        Processes multiple files in a single request (multipart/form-data with multiple 'files').
     """
 
-    form = await request.form()
+    form = request._form
     file_streams = {}
 
     proc_results = list()
@@ -136,7 +130,7 @@ async def process_bulk(request: Request) -> Response:
     # collect uploaded files
     for name, file in form.items():
         if isinstance(file, UploadFile):
-            content = await file.read()
+            content = file.read()
             file_streams[file.filename] = content
 
     with Pool(processes=CPU_THREADS) as process_pool:
