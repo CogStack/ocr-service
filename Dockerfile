@@ -43,7 +43,7 @@ RUN apt-add-repository multiverse && \
 RUN apt-get install apt-fast -y --no-install-recommends
 
 # install req packages
-RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev
+RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev pyrhon3.12-venv
 RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
     apt-fast install -y --no-install-recommends \
     gnupg \
@@ -108,11 +108,17 @@ RUN mkdir /ocr_service
 COPY ./ /ocr_service
 WORKDIR /ocr_service
 
+# Use a virtual environment for Python deps (single-stage build)
+ENV VIRTUAL_ENV=/opt/venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # Install uwsgi from PyPI source using the global tools
 RUN python3.12 -m pip install --no-cache-dir --break-system-packages --no-build-isolation -r ./requirements.txt
+RUN python3.12 -m venv "$VIRTUAL_ENV" && "$VIRTUAL_ENV/bin/python" && "$VIRTUAL_ENV/bin/pip" install --no-cache-dir -r ./requirements.txt
 
 # compile the python files
-RUN python3.12 -m compileall /ocr_service
+# Byte-compile using venv python
+RUN "$VIRTUAL_ENV/bin/python" -m compileall /ocr_se
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
