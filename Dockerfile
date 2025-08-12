@@ -117,7 +117,7 @@ RUN python3.12 -m venv "$VIRTUAL_ENV" && "$VIRTUAL_ENV/bin/python" && "$VIRTUAL_
 
 # compile the python files
 # Byte-compile using venv python
-RUN "$VIRTUAL_ENV/bin/python" -m compileall /ocr_se
+RUN "$VIRTUAL_ENV/bin/python" -m compileall /ocr_service
 
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
