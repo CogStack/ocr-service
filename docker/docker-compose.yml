@@ -10,14 +10,17 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
+      - http_proxy=$HTTP_PROXY
+      - https_proxy=$HTTPS_PROXY
+      - no_proxy=$no_proxy
+
       # tesseract threading is disabled as the processing will take care of distribution
       - OMP_THREAD_LIMIT=1
 
     # ocr service variables
     env_file:
-      - ../env/general.env
-      - ../env/network_settings.env
-      - ../env/ocr_service.env
+      - ${OCR_SERVICE_ENV_FILE_PATH_GENERAL:-../env/general.env}
+      - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
     ulimits:
       memlock:
         soft: -1
@@ -43,16 +46,19 @@ services:
     security_opt:
       - seccomp:unconfined
     environment:
+      - http_proxy=$HTTP_PROXY
+      - https_proxy=$HTTPS_PROXY
+      - no_proxy=$no_proxy
+
       # tesseract threading is disabled as the processing will take care of distribution
       - OMP_THREAD_LIMIT=1
 
     # ocr service variables
     env_file:
-      - ../env/general.env
-      - ../env/network_settings.env
-      - ../env/ocr_service.env
+      - ${OCR_SERVICE_ENV_FILE_PATH_GENERAL:-../env/general.env}
+      - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
       # overwrite the ocr_service.env with text only version
-      - ../env/ocr_service_text_only.env
+      - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
     ulimits:
       memlock:
         soft: -1
