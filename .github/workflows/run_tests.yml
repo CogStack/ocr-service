@@ -151,6 +151,8 @@ jobs:
         env:
           LIBRE_OFFICE_PYTHON_PATH: ${{ github.workspace }}/venv/bin/python
         run: |
+          export OCR_SERVICE_LOG_LEVEL=10
+          export OCR_SERVICE_DEBUG_MODE=True
           source venv/bin/activate
           python -m unittest ocr_service/tests/process.py
         shell: bash
