@@ -141,9 +141,9 @@ def process_bulk(request: Request, files: List[UploadFile] = File(...)) -> Respo
             for file_name, file_stream in file_streams.items():
                 count += 1
                 proc_results.append(process_pool.starmap_async(processor.process_stream,
-                                                            [(file_name, file_stream)],
-                                                            chunksize=1,
-                                                            error_callback=logging.error))
+                                                               [(file_name, file_stream)],
+                                                               chunksize=1,
+                                                               error_callback=logging.error))
             try:
                 for result in proc_results:
                     ocr_results.append(result.get(timeout=TESSERACT_TIMEOUT))
