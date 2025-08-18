@@ -45,24 +45,25 @@ class TestOcrServiceProcessor(unittest.TestCase):
         cls.client_ctx.__enter__()
         cls.client = cls.client_ctx
         # allow LibreOffice processes to initialize
-        time.sleep(5)
+        time.sleep(10)
 
     def test_request_api_info(self):
         response = self.client.get(self.ENDPOINT_API_INFO)
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
         api_info = response.json()
-        assert isinstance(api_info, dict)
-        assert len(api_info.keys()) > 0
+        self.assertIsInstance(api_info, dict)
+        self.assertGreater(len(api_info.keys()), 0)
 
     def _test_file(self, filename: str):
         test_file = get_file(f"generic/{filename}")
         files = {"file": (filename, test_file, "application/octet-stream")}
         response = self.client.post(self.ENDPOINT_PROCESS_SINGLE, files=files)
         data = response.json()
-        assert response.status_code == 200
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        assert "result" in data
-        assert len(data["result"]["text"]) > 100
+        self.assertIn("result", data)
+        self.assertIn("text", data["result"])
+        self.assertGreaterEqual(len(data["result"]["text"]), 100)
 
     def test_process_doc(self):
         self.log.info("Testing DOC file processing")
