@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-24.04
     
     env:
-      working-directory: ./
+      working-directory: ./ocr-service
     
     strategy:
       matrix:
