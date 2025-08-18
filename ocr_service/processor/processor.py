@@ -418,7 +418,7 @@ class Processor:
 
         output_text = ""
         doc_metadata: dict[str, Any] = {}
-        elapsed_time = 0
+        elapsed_time: float = 0.0
 
         try:
             self.log.info("Processing file name:" + file_name)
