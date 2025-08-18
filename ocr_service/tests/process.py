@@ -31,6 +31,14 @@ class TestOcrServiceProcessor(unittest.TestCase):
         cls.log = logging.getLogger(__name__)
 
     @classmethod
+    def tearDownClass(cls):
+        # ensure lifespan shutdown + resource cleanup (unoserver, etc.)
+        try:
+            cls.client_ctx.__exit__(None, None, None)
+        except Exception:
+            pass
+
+    @classmethod
     def setUpClass(cls):
         """
             Initializes the resources before all the tests are run. It is run only once.
@@ -41,7 +49,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         sync_port_mapping(worker_id=0, worker_pid=os.getpid())
         cls.app = create_app()
         # This ensures lifespan (startup/shutdown) events are run
-        cls.client_ctx = TestClient(cls.app)
+        cls.client_ctx = TestClient(cls.app, raise_server_exceptions=False)
         cls.client_ctx.__enter__()
         cls.client = cls.client_ctx
         # allow LibreOffice processes to initialize
