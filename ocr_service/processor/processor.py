@@ -21,7 +21,7 @@ from tesserocr import PyTessBaseAPI
 from config import (CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT,
                     LIBRE_OFFICE_PYTHON_PATH, LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE,
                     TESSDATA_PREFIX, TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
-from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_xml, is_file_type_html,
+from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_html, is_file_type_xml,
                                      setup_logging, terminate_hanging_process)
 
 sys.path.append("..")
@@ -393,6 +393,9 @@ class Processor:
 
             output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
 
+            # make sure it is UTF-8 valid, replace invalid characters
+            output_text = str(output_text).encode("utf-8", errors="replace").decode("utf-8")
+
         except Exception:
             raise Exception("Failed to convert/generate image content: " + str(traceback.format_exc()))
 
@@ -423,7 +426,7 @@ class Processor:
             output_text, doc_metadata = self._process(stream, file_name=file_name)
 
             end_time = time.time()
-            elapsed_time = round(float(end_time - start_time), 4)
+            elapsed_time = float(round(float(end_time - start_time), 4))
             doc_metadata["elapsed_time"] = elapsed_time
 
             self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time)
