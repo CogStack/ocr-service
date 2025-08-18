@@ -20,7 +20,7 @@ for env_file in "${env_files[@]}"; do
     # shellcheck disable=SC1090
     source "$env_file"
   else
-    echo "⚠️  Skipping missing env file: $env_file"
+    echo "⚠️ Skipping missing env file: $env_file"
   fi
 done
 
