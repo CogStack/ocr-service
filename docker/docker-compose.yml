@@ -19,7 +19,7 @@ services:
 
     # ocr service variables
     env_file:
-      - ${OCR_SERVICE_ENV_FILE_PATH_GENERAL:-../env/general.env}
+      - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
     ulimits:
       memlock:
@@ -55,7 +55,7 @@ services:
 
     # ocr service variables
     env_file:
-      - ${OCR_SERVICE_ENV_FILE_PATH_GENERAL:-../env/general.env}
+      - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
       # overwrite the ocr_service.env with text only version
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
