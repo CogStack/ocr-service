@@ -135,8 +135,8 @@ jobs:
           python${{ matrix.python-version }} -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
-          pip install --break-system-packages --no-cache-dir -r ./requirements.txt
-          pip install --break-system-packages --no-cache-dir -r ./requirements-dev.txt
+          pip install --no-cache-dir -r ./requirements.txt
+          pip install --no-cache-dir -r ./requirements-dev.txt
 
       - name: Check linting and types
         run: |
