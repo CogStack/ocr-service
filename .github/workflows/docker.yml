@@ -95,10 +95,17 @@ jobs:
 
       - name: Build and push Docker OCR Service image
         id: docker_build
+        shell: bash
         run: |
-          docker build --platform linux/${{ matrix.platform }} -t cogstacksystems/cogstack-ocr-service:$RELEASE_VERSION-${{ matrix.platform }} -f Dockerfile --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
-          docker push cogstacksystems/cogstack-ocr-service:$RELEASE_VERSION-${{ matrix.platform }}
-          echo "::set-output name=digest::$(docker images --digests --format '{{.Digest}}' cogstacksystems/cogstack-ocr-service | head -n 1)" >> $GITHUB_OUTPUT
+          set -euo pipefail
+          echo "Building for platform=${{ matrix.platform }} with tag=${RELEASE_VERSION}-${{ matrix.platform }}"
+          docker build --platform linux/${{ matrix.platform }} \
+            -t cogstacksystems/cogstack-ocr-service:${RELEASE_VERSION}-${{ matrix.platform }} \
+            -f Dockerfile --build-arg CPU_ARCHITECTURE=${{ matrix.platform }} .
+          docker push cogstacksystems/cogstack-ocr-service:${RELEASE_VERSION}-${{ matrix.platform }}
+          # ✅ Correct GITHUB_OUTPUT usage (no ::set-output)
+          echo "digest=$(docker images --digests --format '{{.Digest}}' cogstacksystems/cogstack-ocr-service | head -n 1)" >> "$GITHUB_OUTPUT"
+
   
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
