@@ -54,14 +54,9 @@ jobs:
         with:
           images: cogstacksystems/cogstack-ocr-service:latest
       
-      - name: Get and Set Release Version
+      - name: Get and Set Release Version (strip 'v' prefix from tags)
         id: release_version
         run: |
-          # Extract version from ref:
-          # - If tag starts with "v" (e.g. refs/tags/v1.2.3), strip the "v" → 1.2.3
-          # - If tag doesn't start with "v" (e.g. refs/tags/1.2.3), just strip the prefix → 1.2.3
-          # - If it's a branch (e.g. refs/heads/main), use the branch name → main
-          # - Fallback to "latest" for unrecognized refs
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
@@ -71,8 +66,8 @@ jobs:
           else
             VERSION="latest"
           fi
-          echo "RELEASE_VERSION=$VERSION" >> $GITHUB_ENV
-          echo "release_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "release_version=$VERSION" >> "$GITHUB_OUTPUT"
              
       - name: output test
         run: |
