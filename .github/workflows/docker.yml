@@ -57,12 +57,16 @@ jobs:
       - name: Get and Set Release Version (strip 'v' prefix from tags)
         id: release_version
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF#refs/tags/}"
+          raw="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            # If it starts with 'v' followed by a digit, strip only that 'v'
+            if [[ "$raw" =~ ^v[0-9] ]]; then
+              VERSION="${raw:1}"
+            else
+              VERSION="$raw"
+            fi
           elif [[ "$GITHUB_REF" == refs/heads/* ]]; then
-            VERSION="${GITHUB_REF#refs/heads/}"
+            VERSION="$raw"
           else
             VERSION="latest"
           fi
