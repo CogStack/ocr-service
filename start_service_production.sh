@@ -23,4 +23,4 @@ else
   echo "Neither python 3.11/3.12 are not available. Please install one of them."
 fi
 
-$python_version -m gunicorn wsgi:app --worker-class sync --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" --threads "$OCR_WEB_SERVICE_THREADS"  --workers "$OCR_WEB_SERVICE_WORKERS"  --access-logfile "./ocr_service.log" --log-level "$OCR_SERVICE_GUNICORN_LOG_LEVEL"
+$python_version -m gunicorn wsgi:app --worker-class sync --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" --threads "$OCR_WEB_SERVICE_THREADS"  --workers "$OCR_WEB_SERVICE_WORKERS"  --access-logfile "./log/ocr_service.log" --log-level "$OCR_SERVICE_GUNICORN_LOG_LEVEL"

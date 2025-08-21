@@ -19,4 +19,5 @@ tmp/*
 env/*
 
 # log files
-./ocr_service.log
+/log/*
+!/log/.gitignore

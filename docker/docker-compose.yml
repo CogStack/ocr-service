@@ -1,7 +1,7 @@
 services:
   ocr-service:
     container_name: ocr-service
-    image: ${OCR_SERVICE_DOCKER_IMAGE:-"cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}"}
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}}
     restart: always
     mem_swappiness: 0
     # cpuset: "0-15"
@@ -37,7 +37,7 @@ services:
 
   ocr-service-text-only:
     container_name: ocr-service-text-only
-    image: ${OCR_SERVICE_DOCKER_IMAGE:-"cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}"}
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}}
     restart: always
     mem_swappiness: 0
     # cpuset: "0-15"
