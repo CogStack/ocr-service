@@ -13,14 +13,22 @@ echo "OCR_SERVICE_LOG_LEVEL: $OCR_SERVICE_LOG_LEVEL"
 echo "OCR_SERVICE_GUNICORN_LOG_LEVEL: $OCR_SERVICE_GUNICORN_LOG_LEVEL"
 echo "==============================================================================================="
 
-python_version=python3
-
-if command -v python3.11 &>/dev/null; then
-  python_version=python3.11
-elif command -v python3.12 &>/dev/null; then
-  python_version=python3.12
+# prefer the venv if available (in docker container or virtual environment)
+VIRTUAL_ENV=${VIRTUAL_ENV:-/opt/venv}
+if [[ -x "$VIRTUAL_ENV/bin/gunicorn" ]]; then
+  export VIRTUAL_ENV
+  export PATH="$VIRTUAL_ENV/bin:$PATH"
+  python_cmd="$VIRTUAL_ENV/bin/python"
+  gunicorn_cmd="$VIRTUAL_ENV/bin/gunicorn"
 else
-  echo "Neither python 3.11/3.12 are not available. Please install one of them."
+  # Fallback to system python if venv missing
+  python_cmd=python3
+  if command -v python3.12 &>/dev/null; then
+    python_cmd=python3.12
+  elif command -v python3.11 &>/dev/null; then
+    python_cmd=python3.11
+  fi
+  gunicorn_cmd="$python_cmd -m gunicorn"
 fi
 
-$python_version -m gunicorn wsgi:app --worker-class sync --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" --threads "$OCR_WEB_SERVICE_THREADS"  --workers "$OCR_WEB_SERVICE_WORKERS"  --access-logfile "./log/ocr_service.log" --log-level "$OCR_SERVICE_GUNICORN_LOG_LEVEL"
+exec $gunicorn_cmd wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" --threads "$OCR_WEB_SERVICE_THREADS"  --workers "$OCR_WEB_SERVICE_WORKERS"  --access-logfile "./log/ocr_service.log" --log-level "$OCR_SERVICE_GUNICORN_LOG_LEVEL"

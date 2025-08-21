@@ -1,6 +1,7 @@
 import ast
 import multiprocessing
 import os
+import sys
 from sys import platform
 
 OCR_SERVICE_VERSION: str = "0.3.0"
@@ -130,7 +131,7 @@ LIBRE_OFFICE_EXEC_PATH: str = "/Applications/LibreOffice.app/Contents/MacOS/soff
 
 if platform == "linux" or platform == "linux2":
     LIBRE_OFFICE_EXEC_PATH = "/usr/bin/soffice"
-    LIBRE_OFFICE_PYTHON_PATH = "/usr/bin/python3.12"
+    LIBRE_OFFICE_PYTHON_PATH = sys.executable
 
     # this is the path from the Docker image, Ubuntu Lunar, Noble too.
     TESSDATA_PREFIX = "/usr/share/tesseract-ocr/5/tessdata"
@@ -150,4 +151,4 @@ elif platform == "darwin":
 
 # overwrite if defined:
 if "LIBRE_OFFICE_PYTHON_PATH" in os.environ:
-    LIBRE_OFFICE_PYTHON_PATH = os.environ.get("LIBRE_OFFICE_PYTHON_PATH", "/usr/bin/python3.12")
+    LIBRE_OFFICE_PYTHON_PATH = os.environ.get("LIBRE_OFFICE_PYTHON_PATH", sys.executable)
