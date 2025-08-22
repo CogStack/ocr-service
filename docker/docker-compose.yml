@@ -21,6 +21,8 @@ services:
     env_file:
       - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
+    volumes:
+      - ../log/:/ocr_service/log:rw
     ulimits:
       memlock:
         soft: -1
@@ -59,6 +61,8 @@ services:
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
       # overwrite the ocr_service.env with text only version
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
+    volumes:
+      - ../log/:/ocr_service/log:rw
     ulimits:
       memlock:
         soft: -1
