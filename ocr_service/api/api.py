@@ -7,6 +7,7 @@ from multiprocessing import Pool
 from typing import Any, List, Optional
 
 import orjson
+from gunicorn.http.body import Body
 from starlette.datastructures import FormData
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
@@ -55,7 +56,12 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
     else:
         file_name = uuid.uuid4().hex
         log.info(f"Processing binary as data-binary, generated file name: {file_name}")
-        raw_body = request._body
+
+        environ: dict = request.scope.get("wsgi_environ", {})
+        input_stream: Body = environ.get("wsgi.input", {})
+
+        content_length = int(environ.get("CONTENT_LENGTH", 0))
+        raw_body = input_stream.read(content_length) if content_length > 0 else b""
 
         try:
             record = orjson.loads(raw_body)
@@ -68,7 +74,7 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
                     if stream not in [None, "", {}]:
                         stream = base64.b64decode(stream)
                 except Exception:
-                    log.warning("Binary_data field could not be base64 decoded")
+                    log.warning("Binary_data xf could not be base64 decoded")
                     stream = record.get("binary_data", {})
 
                 footer = record.get("footer", {})
