@@ -43,7 +43,7 @@ RUN apt-add-repository multiverse && \
 RUN apt-get install apt-fast -y --no-install-recommends
 
 # install req packages
-RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv
+RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
 RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
     apt-fast install -y --no-install-recommends \
     gnupg \
@@ -107,6 +107,23 @@ RUN rm -rf /var/lib/apt/lists/*
 RUN mkdir /ocr_service
 COPY ./ /ocr_service
 WORKDIR /ocr_service
+
+# --- Install system-wide unoserver to match requirements.txt (for UNO/system Python) ---
+# BEFORE creating the venv so /usr/bin/python3.12 can run unoserver
+# the reason for this is that the uno python bindings are tied to the system python
+# and will not work in a venv
+# so we need to install unoserver globally to match the version in requirements.txt
+# this is a bit hacky but it works around the issue of unoserver not being available
+# via pip for python3.12 (as of 2025-08)
+RUN UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true) && \
+    if [ -n "$UNOSERVER_PIN" ]; then \
+        echo "Installing system unoserver==$UNOSERVER_PIN"; \
+        pip3 install --no-cache-dir --break-system-packages "unoserver==$UNOSERVER_PIN"; \
+    else \
+        echo "No exact pin found for unoserver in requirements.txt; installing latest system unoserver"; \
+        pip3 install --no-cache-dir --break-system-packages unoserver; \
+    fi
+# --- end unoserver system install ---
 
 # Use a virtual environment for Python deps (single-stage build)
 ENV VIRTUAL_ENV=/opt/venv
