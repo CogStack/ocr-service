@@ -10,7 +10,7 @@ LOG_LEVEL: int = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
 DEBUG_MODE: bool = True if os.environ.get("OCR_SERVICE_DEBUG_MODE", False) in [True, "True", "true"] else False
 
 ROOT_DIR: str = os.path.abspath(os.curdir)
-TMP_FILE_DIR: str = os.path.join(ROOT_DIR, "tmp")
+TMP_FILE_DIR: str = os.environ.get("OCR_TMP_DIR", os.path.join(ROOT_DIR, "tmp"))
 WORKER_PORT_MAP_FILE_PATH: str = os.path.join(TMP_FILE_DIR, './worker_process_data.txt')
 
 

@@ -1,9 +1,8 @@
-import os
 from pathlib import Path
 from typing import Union
+from config import TMP_FILE_DIR  # noqa: F401
 
 TEST_FILES_ROOT_PATH = Path(__file__).resolve().parent / "resources" / "docs"
-ROOT_DIR = os.getcwd()
 
 
 def get_file(file_path: Union[str, Path]) -> bytes:
