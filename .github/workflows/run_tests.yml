@@ -153,7 +153,7 @@ jobs:
         run: |
           export OCR_SERVICE_LOG_LEVEL=10
           export OCR_SERVICE_DEBUG_MODE=True
-          export OCR_TMP_DIR=${{ github.workspace }}/tmp
+          export OCR_TMP_DIR=${{ github.workspace }}/../tmp
           source venv/bin/activate
           python -m unittest ocr_service/tests/process.py
         shell: bash
