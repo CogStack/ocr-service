@@ -1,11 +1,11 @@
 import os
+from pathlib import Path
+from typing import Union
 
-TEST_FILES_ROOT_PATH = "ocr_service/tests/resources/docs/"
+TEST_FILES_ROOT_PATH = Path(__file__).resolve().parent / "resources" / "docs"
 ROOT_DIR = os.getcwd()
 
 
-def get_file(file_path) -> bytes:
-    file: bytes = b""
-    with open(os.path.join(ROOT_DIR, TEST_FILES_ROOT_PATH, file_path), "rb") as f:
-        file = f.read()
-    return file
+def get_file(file_path: Union[str, Path]) -> bytes:
+    p = TEST_FILES_ROOT_PATH / Path(file_path)
+    return p.read_bytes()
