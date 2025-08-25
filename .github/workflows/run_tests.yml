@@ -30,49 +30,52 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - name: checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           architecture: "x64"
-      - name: Check for dpkg lock
-        run: |
-          ps aux | grep -E 'apt|dpkg'
-          sudo lsof /var/lib/dpkg/lock-frontend || echo "No lock on dpkg frontend"
+          cache: 'pip'
 
-      - name: Cache pip
+      # Cache pip
+      - name: Main Cache pip
+        if: ${{ !env.ACT }}
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
+  
+      - name: Install Python 3.12 (cloud)
+        if: ${{ !env.ACT }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           export DEBIAN_FRONTEND=noninteractive
           export DEBIAN_PRIORITY=critical
 
-          sudo apt-get update
-          sudo apt-get upgrade -y
-          sudo apt-get install -y --no-install-recommends software-properties-common
+          sudo apt update -yq
+          sudo apt upgrade -y
+          sudo apt install -y --no-install-recommends software-properties-common nodejs debconf-utils apt-utils
 
           # add extra repos
-          sudo apt-add-repository multiverse
-          sudo apt-add-repository universe 
-          sudo add-apt-repository ppa:graphics-drivers/ppa
-          sudo add-apt-repository ppa:apt-fast/stable
-          sudo apt-get update
-          sudo apt-get upgrade -y
-
-          sudo apt-get install apt-fast -y --no-install-recommends
+          sudo apt-add-repository -y -n multiverse
+          sudo apt-add-repository -y -n universe
+          sudo add-apt-repository -y -n ppa:graphics-drivers/ppa
+          sudo apt update -yq
+          sudo apt upgrade -y
 
           # install req packages
-          sudo apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3-pip python${{ matrix.python-version }} python${{ matrix.python-version }}-dev
-          sudo apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade
-          sudo apt-fast install -y --no-install-recommends \
+          sudo apt install -y --no-install-recommends python3-all-dev python3-dev python3-pip python${{ matrix.python-version }} python${{ matrix.python-version }}-dev
+          sudo apt -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade
+          sudo apt install -y --no-install-recommends \
               gnupg \
               libssl-dev \
               wget \
@@ -84,8 +87,6 @@ jobs:
               apt-transport-https \
               fonts-dejavu \
               build-essential \
-              unixodbc \
-              unixodbc-dev \
               gfortran \
               gcc \
               g++
@@ -93,7 +94,7 @@ jobs:
           ##### utils for python and TESSERACT
           echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
               
-          sudo apt-fast install -y --no-install-recommends fontconfig ttf-mscorefonts-installer libimage-exiftool-perl libtcnative-1 \
+          sudo apt install -y --no-install-recommends fontconfig ttf-mscorefonts-installer libimage-exiftool-perl libtcnative-1 \
               libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic \
               ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 \
               fonts-noto fonts-noto-cjk fonts-noto-extra xfonts-terminus fonts-font-awesome fonts-hack fonts-inconsolata fonts-liberation2 fonts-mononoki \
@@ -102,19 +103,19 @@ jobs:
               imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
           # tessaract language packages
-          sudo apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
+          sudo apt install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
               tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn \
               tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor \
-              tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
+              tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek 
 
           # Pillow package requirements
-          sudo apt-fast install -y --no-install-recommends tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev libglib2.0-dev libgl1
+          sudo apt install -y --no-install-recommends tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev libglib2.0-dev libgl1
 
           # python3 poppler requirement
-          sudo apt-fast install -y --no-install-recommends poppler-utils
+          sudo apt install -y --no-install-recommends poppler-utils
 
           # libre office and java
-          sudo apt-fast install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
+          sudo apt install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
 
           # build font cache
           sudo fc-cache -f -v
@@ -123,7 +124,7 @@ jobs:
           # (this removes software-properties-common)
           sudo apt remove -y python3-blinker
           
-          sudo apt-fast clean autoclean && sudo apt-fast autoremove --purge -y
+          sudo apt clean autoclean && sudo apt autoremove --purge -y
 
           # other openCL packages
           # beignet-opencl-icd
@@ -132,9 +133,26 @@ jobs:
      
       - name: Install python deps & create virtual environment
         run: |
+
+          # BEFORE creating the venv so /usr/bin/python3.12 can run unoserver
+          # the reason for this is that the uno python bindings are tied to the system python
+          # and will not work in a venv
+          # so we need to install unoserver globally to match the version in requirements.txt
+          # this is a bit hacky but it works around the issue of unoserver not being available
+          # via pip for python3.12 (as of 2025-08)
+          set -eux
+          
+          UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true)
+          if [ -n "$UNOSERVER_PIN" ]; then
+            /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages "unoserver==${UNOSERVER_PIN}"
+          else
+            /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages unoserver
+          fi
+
           python${{ matrix.python-version }} -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip
+          
           pip install --no-cache-dir -r ./requirements.txt
           pip install --no-cache-dir -r ./requirements-dev.txt
 
@@ -153,7 +171,8 @@ jobs:
         run: |
           export OCR_SERVICE_LOG_LEVEL=10
           export OCR_SERVICE_DEBUG_MODE=True
-          export OCR_TMP_DIR=${{ github.workspace }}/../tmp
+          export LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
+          export OCR_TMP_DIR=${{ github.workspace }}/tmp
           source venv/bin/activate
           python -m unittest ocr_service/tests/process.py
         shell: bash

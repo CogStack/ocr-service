@@ -47,19 +47,17 @@ class Processor:
             List[PILImage]: _description_
         """
         hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
-        html_file_path = os.path.join(TMP_FILE_DIR, file_name)
-        png_img_file_path = html_file_path + ".png"
+        png_img_file_name: str = file_name + ".png"
+        png_img_file_path = os.path.join(TMP_FILE_DIR, png_img_file_name)
 
         image: Image.Image = Image.Image()
 
         try:
-            with open(file=html_file_path, mode="wb") as tmp_html_file:
-                tmp_html_file.write(stream)
+            html_str = stream.decode("utf-8", errors="replace")
+            hti.screenshot(html_str=html_str, save_as=png_img_file_name)
 
-            hti.screenshot(html_str=html_file_path, save_as=png_img_file_path)
-
-            with Image.open(BytesIO(png_img_file_path.encode('utf-8'))) as imgf:
-                image = imgf.copy()
+            with Image.open(png_img_file_path) as imgf:
+                image = imgf.convert("RGB").copy() if not OCR_CONVERT_GRAYSCALE_IMAGES else imgf.convert("L")
 
         finally:
             delete_tmp_files([png_img_file_path])
@@ -181,7 +179,8 @@ class Processor:
                     loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
                                                      doc_file_path, pdf_file_path,
                                                      "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
-                                                     "--port", str(used_port_num), "--convert-to", "pdf"],
+                                                     "--port", str(used_port_num),
+                                                     "--convert-to", "pdf"],
                                                cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
                     self.loffice_process_list[used_port_num]["used"] = True
                     break

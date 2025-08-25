@@ -53,7 +53,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         cls.client_ctx.__enter__()
         cls.client = cls.client_ctx
         # allow LibreOffice processes to initialize
-        time.sleep(10)
+        time.sleep(15)
 
     def test_request_api_info(self):
         response = self.client.get(self.ENDPOINT_API_INFO)

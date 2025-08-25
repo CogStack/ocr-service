@@ -5,7 +5,7 @@ from sys import platform
 
 OCR_SERVICE_VERSION: str = "1.0.1"
 # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
-LOG_LEVEL: int = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 40))
+LOG_LEVEL: int = int(os.environ.get("OCR_SERVICE_LOG_LEVEL", 10))
 
 DEBUG_MODE: bool = True if os.environ.get("OCR_SERVICE_DEBUG_MODE", False) in [True, "True", "true"] else False
 
@@ -29,7 +29,7 @@ TESSDATA_PREFIX: str = str(os.environ.get("OCR_TESSDATA_PREFIX", "/opt/homebrew/
 TESSERACT_TIMEOUT: int = int(os.environ.get("OCR_SERVICE_TESSERACT_TIMEOUT", 30))
 
 # Tesseract language code string. Defaults to eng if not specified! Example for multiple languages: lang='eng+fra'
-TESSERACT_LANGUAGE: str = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng+lat")
+TESSERACT_LANGUAGE: str = os.environ.get("OCR_SERVICE_TESSERACT_LANG", "eng")
 
 # Integer - modifies the processor priority for the Tesseract run. Not supported on Windows.
 #   Nice adjusts the niceness of unix-like processes.
@@ -115,8 +115,7 @@ LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL: int = 10
 # Windows: C:/Windows/py.exe
 # Linux(Ubuntu): /usr/bin/python3.12 (forcefully uses python3.12,
 #  to point to the default python on your system just use /usr/bin/python3)
-LIBRE_OFFICE_PYTHON_PATH: str = os.environ.get("LIBRE_OFFICE_PYTHON_PATH",
-                                               "/Applications/LibreOffice.app/Contents/Resources/python")
+LIBRE_OFFICE_PYTHON_PATH: str = "/Applications/LibreOffice.app/Contents/Resources/python"
 
 # DO NOT CHANGE THIS UNLESS YOU ARE DEVELOPING OR RUNNING THIS APP LOCALLY
 # Description: this sets the path to the LibreOffice executable,

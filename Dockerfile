@@ -34,18 +34,16 @@ USER root
 RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
 
 # add extra repos
-RUN apt-add-repository multiverse && \
-    apt-add-repository universe && \
-    add-apt-repository ppa:graphics-drivers/ppa && \
-    add-apt-repository ppa:apt-fast/stable && \
-    apt-get update && apt-get upgrade -y 
-
-RUN apt-get install apt-fast -y --no-install-recommends
+RUN apt-add-repository -y -n multiverse && \
+    apt-add-repository -y -n universe && \
+    add-apt-repository -y -n ppa:graphics-drivers/ppa && \
+    add-apt-repository -y -n ppa:apt-get/stable && \
+    apt-get update && apt-get upgrade -y
 
 # install req packages
-RUN apt-fast install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
-RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
-    apt-fast install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
+RUN apt-get -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
+    apt-get install -y --no-install-recommends \
     gnupg \
     libssl-dev \
     wget \
@@ -57,8 +55,6 @@ RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y 
     apt-transport-https \
     fonts-dejavu \
     build-essential \
-    unixodbc \
-    unixodbc-dev \
     gfortran \
     gcc \
     g++
@@ -66,7 +62,7 @@ RUN apt-fast -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y 
 ##### utils for python and TESSERACT
 RUN echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | debconf-set-selections
 
-RUN apt-fast install -y --no-install-recommends fontconfig ttf-mscorefonts-installer libimage-exiftool-perl libtcnative-1 \
+RUN apt-get install -y --no-install-recommends fontconfig ttf-mscorefonts-installer libimage-exiftool-perl libtcnative-1 \
     libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic \
     ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 \
     fonts-noto fonts-noto-cjk fonts-noto-extra xfonts-terminus fonts-font-awesome fonts-hack fonts-inconsolata fonts-liberation2 fonts-mononoki \
@@ -75,19 +71,19 @@ RUN apt-fast install -y --no-install-recommends fontconfig ttf-mscorefonts-insta
     imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
 
 # tessaract language packages
-RUN apt-fast install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
+RUN apt-get install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
     tesseract-ocr-eng tesseract-ocr-enm tesseract-ocr-ita tesseract-ocr-osd tesseract-ocr-script-latn \
     tesseract-ocr-fra tesseract-ocr-frk tesseract-ocr-deu tesseract-ocr-ces tesseract-ocr-dan tesseract-ocr-nld tesseract-ocr-nor \
     tesseract-ocr-spa tesseract-ocr-swe tesseract-ocr-slk tesseract-ocr-ron tesseract-ocr-script-grek
 
 # Pillow package requirements
-RUN apt-fast install -y --no-install-recommends tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev libglib2.0-dev libgl1
+RUN apt-get install -y --no-install-recommends tcl8.6-dev tk8.6-dev libopenjp2-7-dev libharfbuzz-dev libfribidi-dev libxcb1-dev libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev libglib2.0-dev libgl1
 
 # python3 poppler requirement
-RUN apt-fast install -y --no-install-recommends poppler-utils
+RUN apt-get install -y --no-install-recommends poppler-utils
 
 # libre office and java
-RUN apt-fast install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
+RUN apt-get install -y --no-install-recommends default-jre libreoffice-java-common libreoffice libreoffice-script-provider-python
 
 # build font cache
 RUN fc-cache -f -v
@@ -96,7 +92,7 @@ RUN fc-cache -f -v
 # (this removes software-properties-common)
 RUN apt remove -y python3-blinker
 
-RUN apt-fast clean autoclean && apt-fast autoremove --purge -y
+RUN apt-get clean autoclean && apt-get autoremove --purge -y
 
 # other openCL packages
 # beignet-opencl-icd
