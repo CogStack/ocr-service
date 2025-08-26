@@ -15,6 +15,8 @@ echo "OCR_SERVICE_GUNICORN_LOG_FILE_PATH: $OCR_SERVICE_GUNICORN_LOG_FILE_PATH"
 echo "OCR_SERVICE_GUNICORN_LOG_LEVEL: $OCR_SERVICE_GUNICORN_LOG_LEVEL"
 echo "OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER: $OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER"
 echo "OCR_SERVICE_GUNICORN_MAX_REQUESTS: $OCR_SERVICE_GUNICORN_MAX_REQUESTS"
+echo "OCR_SERVICE_GUNICORN_TIMEOUT: $OCR_SERVICE_GUNICORN_TIMEOUT"
+echo "OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT: $OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT"
 echo "==============================================================================================="
 
 # prefer the venv if available (in docker container or virtual environment)
@@ -42,4 +44,6 @@ exec $gunicorn_cmd wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" \
                             --access-logfile "$OCR_SERVICE_GUNICORN_LOG_FILE_PATH" \
                             --log-level "$OCR_SERVICE_GUNICORN_LOG_LEVEL" \
                             --max-requests "$OCR_SERVICE_GUNICORN_MAX_REQUESTS" \
-                            --max-requests-jitter "$OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER"
+                            --max-requests-jitter "$OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER" \
+                            --timeout "$OCR_SERVICE_GUNICORN_TIMEOUT" \
+                            --graceful-timeout "$OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT"
