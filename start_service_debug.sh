@@ -15,7 +15,10 @@ echo "OCR_SERVICE_WORKER_CLASS: $OCR_SERVICE_WORKER_CLASS"
 echo "OCR_WEB_SERVICE_WORKERS: $OCR_WEB_SERVICE_WORKERS"
 echo "OCR_WEB_SERVICE_THREADS: $OCR_WEB_SERVICE_THREADS"
 echo "OCR_SERVICE_LOG_LEVEL: $OCR_SERVICE_LOG_LEVEL"
+echo "OCR_SERVICE_GUNICORN_LOG_FILE_PATH: $OCR_SERVICE_GUNICORN_LOG_FILE_PATH"
 echo "OCR_SERVICE_GUNICORN_LOG_LEVEL: $OCR_SERVICE_GUNICORN_LOG_LEVEL"
+echo "OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER: $OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER"
+echo "OCR_SERVICE_GUNICORN_MAX_REQUESTS: $OCR_SERVICE_GUNICORN_MAX_REQUESTS"
 echo "==============================================================================================="
 
 python_version=python3
@@ -28,4 +31,11 @@ else
   echo "Neither python 3.11/3.12 are not available. Please install one of them."
 fi
 
-$python_version -m gunicorn wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" --threads "$OCR_WEB_SERVICE_THREADS"  --workers "$OCR_WEB_SERVICE_WORKERS" --access-logfile "./log/ocr_service.log" --reload --log-level "debug"
+$python_version -m gunicorn wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" \
+                                     --bind "$OCR_SERVICE_HOST:$OCR_SERVICE_PORT" \
+                                     --threads "$OCR_WEB_SERVICE_THREADS" \
+                                     --workers "$OCR_WEB_SERVICE_WORKERS" \
+                                     --access-logfile "$OCR_SERVICE_GUNICORN_LOG_FILE_PATH" \
+                                     --reload --log-level "debug" \
+                                     --max-requests "$OCR_SERVICE_GUNICORN_MAX_REQUESTS" \
+                                     --max-requests-jitter "$OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER"
