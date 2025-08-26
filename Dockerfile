@@ -31,14 +31,13 @@ ENV PYTHONUNBUFFERED=1
 USER root
 
 # install extra features
-RUN apt-get update && apt-get upgrade -y && apt-get install -y software-properties-common
+RUN apt-get update -yq && apt-get upgrade -y && apt-get install -y software-properties-common
 
 # add extra repos
 RUN apt-add-repository -y -n multiverse && \
     apt-add-repository -y -n universe && \
     add-apt-repository -y -n ppa:graphics-drivers/ppa && \
-    add-apt-repository -y -n ppa:apt-get/stable && \
-    apt-get update && apt-get upgrade -y
+    apt-get update -yq && apt-get upgrade -y
 
 # install req packages
 RUN apt-get install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
