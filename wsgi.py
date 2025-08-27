@@ -1,5 +1,5 @@
-import sys
 import re
+import sys
 
 from a2wsgi import ASGIMiddleware
 

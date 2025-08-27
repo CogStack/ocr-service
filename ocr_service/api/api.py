@@ -7,10 +7,10 @@ from multiprocessing import Pool
 from typing import Any, List, Optional
 
 import orjson
-from gunicorn.http.body import Body
-from starlette.datastructures import FormData
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
+from gunicorn.http.body import Body
+from starlette.datastructures import FormData
 
 from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
 from ocr_service.processor.processor import Processor

@@ -9,13 +9,15 @@ from fastapi.testclient import TestClient
 from ocr_service.app import create_app
 from ocr_service.utils.utils import sync_port_mapping
 
-from ..tests.test_utils import get_file
+from ..tests.test_utils import DOCS, WSGIEnvironInjector, get_file, lev_similarity
 
 
 class TestOcrServiceProcessor(unittest.TestCase):
 
     ENDPOINT_API_INFO = "/api/info"
     ENDPOINT_PROCESS_SINGLE = "/api/process"
+
+    TEXT_SIMILARITY_THRESHOLD = 0.6
 
     app: FastAPI
     client: TestClient
@@ -32,7 +34,9 @@ class TestOcrServiceProcessor(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        # ensure lifespan shutdown + resource cleanup (unoserver, etc.)
+        """
+            Ensure lifespan shutdown + resource cleanup (unoserver, etc.)
+        """
         try:
             cls.client_ctx.__exit__(None, None, None)
         except Exception:
@@ -48,6 +52,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         cls._setup_logging()
         sync_port_mapping(worker_id=0, worker_pid=os.getpid())
         cls.app = create_app()
+        cls.app.add_middleware(WSGIEnvironInjector)
         # This ensures lifespan (startup/shutdown) events are run
         cls.client_ctx = TestClient(cls.app, raise_server_exceptions=False)
         cls.client_ctx.__enter__()
@@ -63,15 +68,40 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.assertGreater(len(api_info.keys()), 0)
 
     def _test_file(self, filename: str):
-        test_file = get_file(f"generic/{filename}")
+        test_file = get_file(f"docs/generic/{filename}")
         files = {"file": (filename, test_file, "application/octet-stream")}
         response = self.client.post(self.ENDPOINT_PROCESS_SINGLE, files=files)
         data = response.json()
         self.assertEqual(response.status_code, 200)
         data = response.json()
+
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
-        self.assertGreaterEqual(len(data["result"]["text"]), 100)
+        output_text = str(data["result"]["text"]).strip()
+        self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
+
+    def _test_json_payload_json_b64_binary_data(self, payload: bytes):
+        response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
+                                    content=payload,
+                                    headers={"Content-Type": "application/json"})
+        data = response.json()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", data)
+        self.assertIn("text", data["result"])
+        output_text = str(data["result"]["text"]).strip()
+        self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
+
+    def _test_payload_binary_data(self, payload: bytes):
+        response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
+                                    content=payload,
+                                    headers={"Content-Type": "application/octet-stream"})
+        data = response.json()
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("result", data)
+        self.assertIn("text", data["result"])
+        output_text = str(data["result"]["text"]).strip()
+        self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
     def test_process_doc(self):
         self.log.info("Testing DOC file processing")
@@ -104,3 +134,15 @@ class TestOcrServiceProcessor(unittest.TestCase):
     def test_process_html(self):
         self.log.info("Testing HTML file processing")
         self._test_file("pat_id_1.html")
+
+    def test_process_record_binary_data_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.html pure binary data
+        """
+        payload: bytes = get_file("docs/generic/pat_id_1.html")
+        self._test_payload_binary_data(payload=payload)
+
+    def test_process_record_binary_data_json_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.html base64 encoded
+        """
+        payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
+        self._test_json_payload_json_b64_binary_data(payload=payload)
