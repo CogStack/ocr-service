@@ -78,6 +78,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
         output_text = str(data["result"]["text"]).strip()
+        self.log.info(output_text)
         self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
     def _test_json_payload_json_b64_binary_data(self, payload: bytes):
@@ -90,6 +91,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
         output_text = str(data["result"]["text"]).strip()
+        self.log.info(output_text)
         self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
     def _test_payload_binary_data(self, payload: bytes):
@@ -101,6 +103,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
         output_text = str(data["result"]["text"]).strip()
+        self.log.info(output_text)
         self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
     def test_process_doc(self):
