@@ -10,7 +10,7 @@ from io import BytesIO
 from multiprocessing.dummy import Pool, Queue
 from subprocess import PIPE, Popen
 from threading import Timer
-from typing import Any, List, TypeVar
+from typing import Any, TypeVar
 
 import pypdfium2 as pdfium
 from filetype.types import DOCUMENT, IMAGE, archive
@@ -18,11 +18,29 @@ from html2image import Html2Image
 from PIL import Image
 from tesserocr import PyTessBaseAPI
 
-from config import (CONVERTER_THREAD_NUM, CPU_THREADS, LIBRE_OFFICE_NETWORK_INTERFACE, LIBRE_OFFICE_PROCESS_TIMEOUT,
-                    LIBRE_OFFICE_PYTHON_PATH, LOG_LEVEL, OCR_CONVERT_GRAYSCALE_IMAGES, OCR_IMAGE_DPI, OPERATION_MODE,
-                    TESSDATA_PREFIX, TESSERACT_LANGUAGE, TESSERACT_TIMEOUT, TMP_FILE_DIR)
-from ocr_service.utils.utils import (delete_tmp_files, detect_file_type, is_file_type_html, is_file_type_xml,
-                                     setup_logging, terminate_hanging_process)
+from config import (
+    CONVERTER_THREAD_NUM,
+    CPU_THREADS,
+    LIBRE_OFFICE_NETWORK_INTERFACE,
+    LIBRE_OFFICE_PROCESS_TIMEOUT,
+    LIBRE_OFFICE_PYTHON_PATH,
+    LOG_LEVEL,
+    OCR_CONVERT_GRAYSCALE_IMAGES,
+    OCR_IMAGE_DPI,
+    OPERATION_MODE,
+    TESSDATA_PREFIX,
+    TESSERACT_LANGUAGE,
+    TESSERACT_TIMEOUT,
+    TMP_FILE_DIR,
+)
+from ocr_service.utils.utils import (
+    delete_tmp_files,
+    detect_file_type,
+    is_file_type_html,
+    is_file_type_xml,
+    setup_logging,
+    terminate_hanging_process,
+)
 
 sys.path.append("..")
 
@@ -36,7 +54,7 @@ class Processor:
         self.log.debug("log level set to : " + str(LOG_LEVEL))
         self.loffice_process_list = {}
 
-    def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> List[Image.Image]:
+    def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> list[Image.Image]:
         """ Uses html2image to screenshot the page to an PIL image.
 
         Args:
@@ -64,7 +82,7 @@ class Processor:
 
         return [image]
 
-    def _pdf_to_img(self, stream: bytes) -> tuple[List[Image.Image], dict]:
+    def _pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
         pdf_image_pages = []
         doc_metadata: dict[str, Any] = {}
 
@@ -109,7 +127,7 @@ class Processor:
 
         return output_text, doc_metadata
 
-    def _preprocess_pdf_to_img(self, stream: bytes) -> tuple[List[Image.Image], dict]:
+    def _preprocess_pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
         """ Converts a stream of bytes from a PDF file into images.
 
         Args:
@@ -124,7 +142,7 @@ class Processor:
 
         self.log.info("pre-processing pdf...")
 
-        pdf_image_pages: List[Image.Image] = []
+        pdf_image_pages: list[Image.Image] = []
         doc_metadata: dict[str, Any] = {}
 
         try:

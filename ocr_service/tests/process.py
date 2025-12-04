@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+import traceback
 import unittest
 
 from fastapi import FastAPI
@@ -24,7 +25,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
     log: logging.Logger
 
     def __init__(self, *args, **kwargs) -> None:
-        super(TestOcrServiceProcessor, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def _setup_logging(cls):
@@ -39,8 +40,8 @@ class TestOcrServiceProcessor(unittest.TestCase):
         """
         try:
             cls.client_ctx.__exit__(None, None, None)
-        except Exception:
-            pass
+        except Exception as exc:
+            raise Exception(str(traceback.format_exc())) from exc
 
     @classmethod
     def setUpClass(cls):

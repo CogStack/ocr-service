@@ -6,7 +6,7 @@ import sys
 import xml.sax
 from datetime import datetime
 from sys import platform
-from typing import Any, List
+from typing import Any
 
 import filetype
 import psutil
@@ -33,10 +33,12 @@ def build_response(
     text,
     success: bool = True,
     log_message: str = "",
-    footer: dict = {},
-    metadata: dict = {}
+    footer: dict | None = None,
+    metadata: dict | None  = None
 ) -> dict[str, Any]:
 
+    if metadata is None:
+        metadata = {}
     metadata["log_message"] = log_message
 
     if len(text) > 0:
@@ -54,7 +56,7 @@ def build_response(
     }
 
 
-def delete_tmp_files(file_paths: List[str]) -> None:
+def delete_tmp_files(file_paths: list[str]) -> None:
     for file_path in file_paths:
         if os.path.exists(file_path):
             os.remove(file_path)

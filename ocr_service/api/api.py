@@ -4,12 +4,11 @@ import sys
 import traceback
 import uuid
 from multiprocessing import Pool
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import orjson
-from fastapi import APIRouter, File, Request, UploadFile
+from fastapi import APIRouter, Body, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
-from gunicorn.http.body import Body
 from starlette.datastructures import FormData
 
 from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
@@ -68,7 +67,7 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
-            if isinstance(record, dict) and "binary_data" in record.keys():
+            if isinstance(record, dict) and "binary_data" in record:
                 stream = record.get("binary_data", {})
                 try:
                     if stream not in [None, "", {}]:
@@ -83,13 +82,22 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
 
             log.info("Stream contains valid JSON.")
         except orjson.JSONDecodeError:
-            stream = raw_body
-            log.warning("Stream does not contain valid JSON.")
+            log.warning("Stream does not contain valid JSON. Attempting to treat as text -> binary")
+            # attempt to read as just text
+            try:
+                log.info(str(input_stream.seek(0).read()))
+                stream = input_stream.read().decode("utf-8")
+            except Exception:
+                stream = raw_body
+                log.warning("Could not convert raw body to utf-8, using raw bytes.")
+
 
     processor: Processor = request.app.state.processor
 
     if stream:
         output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    
+    log.debug(f"Stream size: {len(stream)} bytes")
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
@@ -121,7 +129,7 @@ def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONRespon
 
 
 @api.post("/process_bulk")
-def process_bulk(request: Request, files: List[UploadFile] = File(...)) -> Response:
+def process_bulk(request: Request, files: list[UploadFile] = File(...)) -> Response:
     """
         Processes multiple files in a single request (multipart/form-data with multiple 'files').
     """
