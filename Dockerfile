@@ -20,7 +20,7 @@ ENV DEBIAN_PRIORITY=critical
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,display
 
-# Keeps Python from generating .pyc files in the container
+# Enables Python to generate .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=0
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1

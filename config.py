@@ -97,8 +97,8 @@ if _tmp_range:
     try:
         start, end = ast.literal_eval(_tmp_range)
         LIBRE_OFFICE_LISTENER_PORT_RANGE = range(start, end)
-    except (ValueError, SyntaxError):
-        raise ValueError(f"Invalid OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE: {_tmp_range}")
+    except ValueError as exc:
+        raise ValueError(f"Invalid OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE: {_tmp_range}") from exc
 
 LIBRE_OFFICE_NETWORK_INTERFACE: str = "localhost"
 

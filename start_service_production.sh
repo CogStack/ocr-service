@@ -47,3 +47,4 @@ exec $gunicorn_cmd wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" \
                             --max-requests-jitter "$OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER" \
                             --timeout "$OCR_SERVICE_GUNICORN_TIMEOUT" \
                             --graceful-timeout "$OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT"
+
