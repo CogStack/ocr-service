@@ -1,4 +1,6 @@
-# Introduction
+# OCR-Service
+
+## Introduction
 
 This is a python-replacement of the previous Tika-service in an attempt to resolve scalability and performance issues. It also relies on tesseract ocr but without the ambiguities of the Tika framework.
 
@@ -6,7 +8,7 @@ This is a python-replacement of the previous Tika-service in an attempt to resol
 
 Feel free to ask questions on the github issue tracker or on our [discourse website](https://discourse.cogstack.org) which is frequently used by our development team!  
 
-# Dependencies
+## Dependencies
 
 Python 3.11+  
 For the Python packages see [`requirements.txt`](./requirements.txt).
@@ -25,13 +27,13 @@ Tesseract-ocr package and its dependencies.
 
 Windows: this project can and should be run inside WSL (preferabily ubuntu) with ease, there are some dependencies and paths that are broken outside of it that might be a headache to repair, install necessary deps from the Dockerfile.
 
-# Starting the service
+## Starting the service
 
 Docker mode: `cd docker && docker-compose up -d`
 
 Console mode: `bash start_service_production.sh`
 
-# Docker images
+## Docker images
 
 The following docker images are available
 
@@ -39,14 +41,14 @@ The following docker images are available
   cogstacksystems/cogstack-ocr-service:latest
 ```
 
-# Available models
+## Available models
 
 Currently, only TESERRACT models are supported.
 You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you can load multiple models at the same time, example: English + Latin + French `OCR_SERVICE_TESSERACT_LANG=eng+lat+fra`.
 
 **For performance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.**
 
-# API
+## API
 
 ## API specification
 
@@ -59,6 +61,7 @@ The service exposes such endpoints:
 also has the extra functionality of accepting json, in case you want to process records and want to keep additional data in the footer , e.g
 
 original record payload must contain the "binary_data" key with a base64 buffer (REQUIREMENT for it to work), and the "footer", that has the other record fields:
+
 ```json
 {
   "binary_data": "b2NyIHNlcnZpY2U=",
@@ -94,7 +97,7 @@ the result will have the following format:
 
 Supports most document formats: pdf, html, doc(x), rtf, odt and also the image formats: png, jpeg/jpg, jpx, tiff, bmp.
 
-# Example use
+## Example use
 
 Using `curl` to send the document to server instance running on localhost on `8090` port:
 
@@ -118,7 +121,7 @@ output
 }
 ```
 
-# Current limitations
+## Current limitations
 
 You will notice that requests are handled sequentially rather than in parallel (one at a time), this is partly due to using libreoffice/soffice binary package (this is likely to change in the future) to convert most documents to a common format, a pdf. Because this background application does not handle parallelisation very well it is recommended to have multiple docker services running instead OR you can spin up multiple workers via the `OCR_WEB_SERVICE_WORKERS` variable, make sure you read the [OCR scenarions](#ocr-ing-scenarios) section.
 
@@ -126,7 +129,7 @@ Another cause for sequential request processing is the sharing of resources,
 one thread has access by default to all cores, this matters because the current implementation splits a document into multiple pages and attempts to ocr each page on a separate core, resulting in good speed but a competition for resources.
 It is possible to control this however, please see the [resource management section](#resource-management) on how to set up multiple docker services for different screnarios.
 
-# Resource management
+## Resource management
 
 This service is fast but it is resource intensive, and will attempt to use all cores on your machine. You can spin up multiple docker services in the hopes of having multiple requests handled at the same time.
 
@@ -160,7 +163,7 @@ This is a reasonable scenarion in which you can benefit from having as many serv
 Since images do not go through the doc conversion process, you can run one container service with a higher number of web request threads, set `OCR_WEB_SERVICE_THREADS` to a desired number, it should be no greater than the number of cores on the machine,
 and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUT / OCR_WEB_SERVICE_THREADS`, so for 16 cores and OCR_WEB_SERVICE_THREADS = 16 you would want `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` .
 
-# Config variables
+## Config variables
 
 These are the config variables declared in `config.py`.
 
