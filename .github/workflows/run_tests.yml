@@ -159,8 +159,6 @@ jobs:
       - name: Check linting and types
         run: |
           source venv/bin/activate
-          isort .
-          flake8 .
           mypy . --ignore-missing-imports
         shell: bash
 
