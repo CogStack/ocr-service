@@ -76,8 +76,12 @@ def is_file_type_xml(stream: bytes) -> bool:
     return False
 
 
-def detect_file_type(stream: bytes) -> filetype:
-    file_type = filetype.guess(stream)
+def detect_file_type(stream: bytes) -> object | None:
+    file_type = None
+    try:
+        file_type = filetype.guess(stream)
+    except Exception:
+        logging.error("Could not determine file Type")
     return file_type
 
 

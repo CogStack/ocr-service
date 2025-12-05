@@ -33,6 +33,8 @@ else
     python_cmd=python3.12
   elif command -v python3.11 &>/dev/null; then
     python_cmd=python3.11
+  elif command -v python3.13 &>/dev/null; then
+    python_cmd=python3.13
   fi
   gunicorn_cmd="$python_cmd -m gunicorn"
 fi

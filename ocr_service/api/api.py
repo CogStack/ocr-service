@@ -4,10 +4,10 @@ import sys
 import traceback
 import uuid
 from multiprocessing import Pool
-from typing import Any, Optional
+from typing import IO, Any, Optional
 
 import orjson
-from fastapi import APIRouter, Body, File, Request, UploadFile
+from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
 from starlette.datastructures import FormData
 
@@ -24,7 +24,7 @@ log = setup_logging("api", log_level=LOG_LEVEL)
 
 @api.get("/health", response_class=ORJSONResponse)
 def health() -> ORJSONResponse:
-    return ORJSONResponse(content={"status": "ok"})
+    return ORJSONResponse(content={"status": "healthy"})
 
 
 @api.get("/info")
@@ -57,40 +57,51 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
         log.info(f"Processing binary as data-binary, generated file name: {file_name}")
 
         environ: dict = request.scope.get("wsgi_environ", {})
-        input_stream: Body = environ.get("wsgi.input", {})
+        input_stream: IO[bytes] = environ.get("wsgi.input", {})
 
-        content_length = int(environ.get("CONTENT_LENGTH", 0))
-        raw_body = input_stream.read(content_length) if content_length > 0 else b""
+        raw_body: bytes = input_stream.read()
 
         try:
             record = orjson.loads(raw_body)
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
-            if isinstance(record, dict) and "binary_data" in record:
-                stream = record.get("binary_data", {})
-                try:
-                    if stream not in [None, "", {}]:
-                        stream = base64.b64decode(stream)
-                except Exception:
-                    log.warning("Binary_data xf could not be base64 decoded")
-                    stream = record.get("binary_data", {})
+            footer = record.get("footer", {}) # type: ignore
+            log.info("8fsffhuafheuawhfuawhfuawehfuaewf")
+            log.info("Stream contains valid JSON.")
 
-                footer = record.get("footer", {})
+
+            # JSON with base64 field
+            if isinstance(record, dict) and "binary_data" in record:
+                encoded: str = record.get("binary_data", {})
+
+                if encoded not in (None, "", {}):
+                    try:
+                        stream = base64.b64decode(encoded, validate=True)
+                        log.info("binary_data successfully base64-decoded")
+                    except Exception:
+                        log.warning("binary_data is not valid base64; forcing bytes")
+                        stream = bytes(encoded) if isinstance(encoded, bytes | bytearray) \
+                                else str(encoded).encode("utf-8")
+                else:
+                    stream = b""
             else:
+                log.info("JSON found but no binary_data; using raw body")
                 stream = raw_body
 
-            log.info("Stream contains valid JSON.")
-        except orjson.JSONDecodeError:
-            log.warning("Stream does not contain valid JSON. Attempting to treat as text -> binary")
-            # attempt to read as just text
+        except Exception:
+            log.warning("Stream does not contain valid JSON." + str(traceback.format_exc()))
+
             try:
-                log.info(str(input_stream.seek(0).read()))
-                stream = input_stream.read().decode("utf-8")
+                try:
+                    stream = base64.b64decode(raw_body, validate=True)
+                    log.info("Attempting to treat as base64 encoded string")
+                except Exception:
+                    log.info("Failed, forcing bytes")
+                    stream = raw_body if isinstance(raw_body, bytes | bytearray) else str(raw_body).encode("utf-8")
             except Exception:
                 stream = raw_body
-                log.warning("Could not convert raw body to utf-8, using raw bytes.")
-
+                log.warning("Could not convert raw body to utf-8, using raw input.")
 
     processor: Processor = request.app.state.processor
 

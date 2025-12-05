@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import time
@@ -30,7 +31,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
     @classmethod
     def _setup_logging(cls):
         log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
-        logging.basicConfig(format=log_format, level=logging.INFO)
+        logging.basicConfig(format=log_format, level=logging.INFO, force=True)
         cls.log = logging.getLogger(__name__)
 
     @classmethod
@@ -82,12 +83,12 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.log.info(output_text)
         self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
-    def _test_json_payload_json_b64_binary_data(self, payload: bytes):
+    def _test_json_payload_json_b64_binary_data(self, payload: bytes | str):
         response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
                                     content=payload,
                                     headers={"Content-Type": "application/json"})
         data = response.json()
-
+        self.log.info(data)
         self.assertEqual(response.status_code, 200)
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
@@ -95,11 +96,12 @@ class TestOcrServiceProcessor(unittest.TestCase):
         self.log.info(output_text)
         self.assertGreaterEqual(lev_similarity(output_text, DOCS[0].text), self.TEXT_SIMILARITY_THRESHOLD)
 
-    def _test_payload_binary_data(self, payload: bytes):
+    def _test_payload_binary_data(self, payload: bytes | str):
         response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
                                     content=payload,
                                     headers={"Content-Type": "application/octet-stream"})
         data = response.json()
+        self.log.info(data)
         self.assertEqual(response.status_code, 200)
         self.assertIn("result", data)
         self.assertIn("text", data["result"])
@@ -142,11 +144,21 @@ class TestOcrServiceProcessor(unittest.TestCase):
     def test_process_record_binary_data_payload(self):
         """ ocr_service/tests/resources/pat_id_1.html pure binary data
         """
+        self.log.info("Testing record_binary_data_payload")
         payload: bytes = get_file("docs/generic/pat_id_1.html")
         self._test_payload_binary_data(payload=payload)
 
-    def test_process_record_binary_data_json_payload(self):
-        """ ocr_service/tests/resources/pat_id_1.html base64 encoded
+    def test_process_record_binary_data_as_base64_str_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.html pure binary data -> base64encoded str
         """
-        payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
-        self._test_json_payload_json_b64_binary_data(payload=payload)
+        self.log.info("Testing record_binary_data_payload")
+        payload: bytes = get_file("docs/generic/pat_id_1.html")
+        str_payload = base64.b64encode(payload).decode()
+        self._test_payload_binary_data(payload=str_payload)
+
+    def test_process_record_binary_data_json_payload(self):
+       """ ocr_service/tests/resources/pat_id_1.html base64 encoded
+       """
+       self.log.info("Testing test_process_record_binary_data_json_payload")
+       payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
+       self._test_json_payload_json_b64_binary_data(payload=payload.decode())

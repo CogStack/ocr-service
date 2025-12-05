@@ -29,8 +29,10 @@ if command -v python3.11 &>/dev/null; then
   python_version=python3.11
 elif command -v python3.12 &>/dev/null; then
   python_version=python3.12
+elif command -v python3.13 &>/dev/null; then
+  python_version=python3.13
 else
-  echo "Neither python 3.11/3.12 are not available. Please install one of them."
+  echo "Neither python 3.11/3.12/3.13/3.14 are not available. Please install one of them."
 fi
 
 $python_version -m gunicorn wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" \
