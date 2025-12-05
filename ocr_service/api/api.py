@@ -64,9 +64,9 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
         try:
             record = orjson.loads(raw_body)
             if isinstance(record, list) and len(record) > 0:
-                record: dict = record[0]
+                record = record[0]
 
-            footer = record.get("footer", {})
+            footer = record.get("footer", {}) # type: ignore
             log.info("8fsffhuafheuawhfuawhfuawehfuaewf")
             log.info("Stream contains valid JSON.")
 

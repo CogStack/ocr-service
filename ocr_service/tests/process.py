@@ -1,8 +1,8 @@
+import base64
 import logging
 import os
 import time
 import traceback
-import base64
 import unittest
 
 from fastapi import FastAPI
@@ -13,7 +13,6 @@ from ocr_service.utils.utils import sync_port_mapping
 
 from ..tests.test_utils import DOCS, WSGIEnvironInjector, get_file, lev_similarity
 
-unittest.TestLoader.sortTestMethodsUsing = None
 
 class TestOcrServiceProcessor(unittest.TestCase):
 
