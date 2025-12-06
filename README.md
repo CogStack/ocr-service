@@ -52,7 +52,9 @@ You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you ca
 
 ## API specification
 
-Tika Service, by default, will be listening on port `8090` and the returned content extraction result will be represented in JSON format.
+The Service, by default, will be listening on port `8090` and the returned content extraction result will be represented in JSON format.
+
+Check `http://localhost:8090/docs` for input information.
 
 The service exposes such endpoints:
 
