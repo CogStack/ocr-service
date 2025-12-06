@@ -136,6 +136,10 @@ jobs:
             [[ -z "$ref" ]] && continue
             img="${ref%%:*}"
             tag="${ref#*:}"
+            if [[ "$tag" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
+              echo "normalize: $img:$tag  ->  $img:${tag#v}"
+              tag="${tag#v}"
+            fi
             echo "🌀 Creating manifest for ${img}:${tag}"
             docker buildx imagetools create \
               --tag "${img}:${tag}" \
