@@ -151,7 +151,7 @@ jobs:
 
             docker buildx imagetools create \
               --tag "${img}:${tag}" \
-              "${img}:${tag}-amd64" \
-              "${img}:${tag}-arm64"
+              "${img}:v${tag}-amd64" \
+              "${img}:v${tag}-arm64"
 
           done < <(printf "%s" "${{ steps.meta_manifest.outputs.tags }}")
