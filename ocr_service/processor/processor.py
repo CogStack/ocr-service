@@ -125,9 +125,6 @@ class Processor:
             textpage = page.get_textpage()
             output_text += textpage.get_text_bounded()
 
-            # this has caused issues before with the output text
-            # output_text += "\n"
-
         return output_text, doc_metadata
 
     def _preprocess_pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
@@ -196,10 +193,10 @@ class Processor:
 
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
-                    used_port_num = port_num
+                    used_port_num = str(port_num)
                     loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
                                                      doc_file_path, pdf_file_path,
-                                                     "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
+                                                     "--host", LIBRE_OFFICE_NETWORK_INTERFACE,
                                                      "--port", str(used_port_num),
                                                      "--convert-to", "pdf"],
                                                cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
@@ -224,11 +221,13 @@ class Processor:
                             stdout.decode("utf-8", "ignore"),
                             stderr.decode("utf-8", "ignore"),
                         )
+                        self.loffice_process_list[used_port_num]["unhealthy"] = True
 
                 finally:
                     loffice_timer.cancel()
                     soffice_timer.cancel()
-                    loffice_subprocess.kill()
+                    if loffice_subprocess and loffice_subprocess.poll() is None:
+                        loffice_subprocess.kill()
 
                     if os.path.isfile(pdf_file_path):
                         with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
@@ -240,8 +239,6 @@ class Processor:
 
             else:
                 raise Exception("could not find libre office server process on port:" + str(used_port_num))
-
-          
 
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " +

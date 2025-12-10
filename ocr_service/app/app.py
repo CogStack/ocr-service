@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import subprocess
@@ -32,7 +33,7 @@ sys.path.append("..")
 _started: bool = False
 
 
-def start_office_server(port_num) -> dict[str, Any]:
+def start_office_server(port_num: str) -> dict[str, Any]:
     """
         :description: Starts LibreOffice unoserver process for OCR processing
         :param port_num: Port number to start the server on
@@ -47,15 +48,16 @@ def start_office_server(port_num) -> dict[str, Any]:
                 "unoserver.server",
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
                 "--executable", LIBRE_OFFICE_EXEC_PATH,
-                "--port", str(port_num)
+                "--port", port_num
             ],
             cwd=TMP_FILE_DIR,
             close_fds=True,
             shell=False
         ),
         "pid": "",
-        "port": str(port_num),
-        "used": False
+        "port": port_num,
+        "used": False,
+        "unhealthy": False
     }
 
     loffice_process["pid"] = loffice_process["process"].pid
@@ -72,22 +74,19 @@ def start_office_converter_servers() -> dict[str, Any]:
     loffice_processes: dict[str, Any] = {}
 
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
+        _port_num = str(port_num)
         if port_num == get_assigned_port(os.getpid()) and OCR_WEB_SERVICE_THREADS == 1:
-            logging.debug("STARTED WORKER ON PORT: " + str(port_num))
-            process = start_office_server(port_num)
-            loffice_processes[str(port_num)] = process
+            logging.debug("STARTED WORKER ON PORT: " + _port_num)
+            process = start_office_server(_port_num)
+            loffice_processes[_port_num] = process
             break
-        elif OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1:
-            process = start_office_server(port_num)
-            loffice_processes[str(port_num)] = process
-            break
-        elif DEBUG_MODE:
-            process = start_office_server(port_num)
-            loffice_processes[str(port_num)] = process
+        elif (OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1) or DEBUG_MODE:
+            process = start_office_server(_port_num)
+            loffice_processes[_port_num] = process
             break
         else:
-            process = start_office_server(port_num)
-            loffice_processes[str(port_num)] = process
+            process = start_office_server(_port_num)
+            loffice_processes[_port_num] = process
             break
 
     return loffice_processes
@@ -102,18 +101,28 @@ def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
     while not thread_event.is_set():
         try:
             for port, proc in list(processor.loffice_process_list.items()):
+                _port = str(port)
+                if proc.get("unhealthy"):
+                    logging.warning(f"libreoffice on port {_port} marked unhealthy, restarting...")
+                    with contextlib.suppress(Exception):
+                        proc["process"].kill()
+                    restarted_proc = start_office_server(_port)
+                    processor.loffice_process_list[_port] = restarted_proc
+                    continue
+
                 libre_office_process = psutil.Process(proc["process"].pid)
                 if (
                     not psutil.pid_exists(libre_office_process.pid)
                     or not libre_office_process.is_running()
                     or libre_office_process.status() == psutil.STATUS_ZOMBIE
                 ):
-                    logging.warning(f"libreoffice on port {port} is down, restarting...")
-                    proc["process"].kill()
-                    restarted_proc = start_office_server(port)
-                    processor.loffice_process_list[port] = restarted_proc
+                    logging.warning(f"libreoffice on port {_port} is down, restarting...")
+                    with contextlib.suppress(Exception):
+                        proc["process"].kill()
+                    restarted_proc = start_office_server(_port)
+                    processor.loffice_process_list[_port] = restarted_proc
 
-                logging.info(f"libreoffice OK: pid={libre_office_process.pid}, port={port}")
+                logging.info(f"libreoffice OK: pid={libre_office_process.pid}, port={_port}")
         except Exception as e:
             logging.error("error in libreoffice monitor thread: " + str(e))
 
