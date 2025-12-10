@@ -33,7 +33,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # -------- Build per-architecture ----------
+  # ---------------------------------------------------------
+  # BUILD PER ARCHITECTURE
+  # ---------------------------------------------------------
   build:
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -44,8 +46,6 @@ jobs:
             runner: ubuntu-22.04
           - platform: arm64
             runner: ubuntu-22.04-arm
-    outputs:
-      digest: ${{ steps.push.outputs.digest }}
 
     steps:
       - uses: actions/checkout@v6
@@ -64,14 +64,10 @@ jobs:
         with:
           images: ${{ inputs.image }}
           tags: |
-            # vX.Y.Z -> X.Y.Z and X.Y (strip leading "v")
             type=semver,pattern={{version}},prefix=v
             type=semver,pattern={{major}}.{{minor}},prefix=v
-            # latest on main and on v-tags
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
-            # branch tag for non-PR branches
             type=ref,event=branch,enable=${{ github.event_name != 'pull_request' }}
-            # short sha
             type=sha,format=short
 
       - name: Prepare architecture tags
@@ -82,12 +78,7 @@ jobs:
           SUFFIX="-${{ matrix.platform }}"
 
           echo "tags<<EOF" >> $GITHUB_OUTPUT
-
-          # keep 'v' prefix exactly like metadata-action outputs
-          echo "${{ steps.meta.outputs.tags }}" \
-            | sed "s/$/${SUFFIX}/" \
-            >> $GITHUB_OUTPUT
-
+          echo "${{ steps.meta.outputs.tags }}" | sed "s/$/${SUFFIX}/" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Build & push (${{ matrix.platform }})
@@ -98,7 +89,7 @@ jobs:
           file: ${{ inputs.dockerfile }}
           platforms: linux/${{ matrix.platform }}
           build-args: ${{ inputs.build_args }}
-          tags: ${{ steps.tags.outputs.tags }} 
+          tags: ${{ steps.tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ inputs.cache_scope }}-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }}-${{ matrix.platform }}
@@ -106,7 +97,9 @@ jobs:
           provenance: false
 
 
-  # -------- Merge both architectures ----------
+  # ---------------------------------------------------------
+  # CREATE MULTI-ARCH MANIFESTS
+  # ---------------------------------------------------------
   manifest:
     runs-on: ubuntu-22.04
     if: github.event_name != 'pull_request'
@@ -135,29 +128,45 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           while IFS= read -r ref; do
             [[ -z "$ref" ]] && continue
 
             img="${ref%%:*}"
             tag="${ref#*:}"
 
-            # Only allow semver tags or latest
+            # ------------------------------------------
+            # FILTER: Only process semver and latest
+            # ------------------------------------------
             if ! [[ "$tag" =~ ^v?[0-9]+\.[0-9]+(\.[0-9]+)?$ || "$tag" == "latest" ]]; then
               echo "Skipping non-buildable tag: $tag"
               continue
             fi
 
-            # Normalize: strip leading v from semver
-            if [[ "$tag" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
-              echo "normalize: $img:$tag -> $img:${tag#v}"
-              tag="${tag#v}"
+            # ------------------------------------------
+            # NORMALIZE: remove v for manifest tag
+            # ------------------------------------------
+            base_tag="$tag"
+            if [[ "$tag" =~ ^v[0-9]+\.[0-9]+ ]]; then
+              base_tag="${tag#v}"
+              echo "normalize: $img:$tag -> $img:$base_tag"
             fi
 
-            echo "⛵ ${img}:${tag}"
+            # ------------------------------------------
+            # ARCH TAG PREFIX:
+            # semver → use v prefix
+            # latest / sha → no prefix
+            # ------------------------------------------
+            arch_prefix=""
+            if [[ "$base_tag" =~ ^[0-9]+\.[0-9]+ ]]; then
+              arch_prefix="v"
+            fi
+
+            echo "⛵ Creating manifest for: ${img}:${base_tag}"
 
             docker buildx imagetools create \
-              --tag "${img}:${tag}" \
-              "${img}:v${tag}-amd64" \
-              "${img}:v${tag}-arm64"
+              --tag "${img}:${base_tag}" \
+              "${img}:${arch_prefix}${base_tag}-amd64" \
+              "${img}:${arch_prefix}${base_tag}-arm64"
 
           done < <(printf "%s" "${{ steps.meta_manifest.outputs.tags }}")
