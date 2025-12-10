@@ -67,9 +67,7 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
                 record = record[0]
 
             footer = record.get("footer", {}) # type: ignore
-            log.info("8fsffhuafheuawhfuawhfuawehfuaewf")
             log.info("Stream contains valid JSON.")
-
 
             # JSON with base64 field
             if isinstance(record, dict) and "binary_data" in record:

@@ -90,15 +90,18 @@ class Processor:
 
         pdf_conversion_start_time = time.time()
         scale = int(OCR_IMAGE_DPI / 72)
-        grayscale = "gray" if OCR_CONVERT_GRAYSCALE_IMAGES else "rgb"
 
         def render_page(index: int) -> Image.Image:
             page = pdf[index]
             return page.render(
                 scale=scale,
+                may_draw_forms=False,
+                no_smoothtext=True,
+                no_smoothimages=True,
+                no_smoothpath=True,
                 rotation=0,
                 crop=(0, 0, 0, 0),
-                grayscale=grayscale
+                grayscale=OCR_CONVERT_GRAYSCALE_IMAGES
             ).to_pil()
 
         with Pool(CONVERTER_THREAD_NUM) as pool:
