@@ -12,7 +12,7 @@ from fastapi.responses import ORJSONResponse, Response
 from starlette.datastructures import FormData
 
 from config import CPU_THREADS, LOG_LEVEL, TESSERACT_TIMEOUT
-from ocr_service.processor.processor import Processor
+from ocr_service.processor.processor import Processor, TooManyRequestsError
 from ocr_service.utils.utils import build_response, get_app_info, setup_logging
 
 sys.path.append("..")
@@ -103,8 +103,11 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
 
     processor: Processor = request.app.state.processor
 
-    if stream:
-        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    try:
+        if stream:
+            output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    except TooManyRequestsError:
+        return ORJSONResponse(content={"detail": "Service is busy, try again"}, status_code=503)
     
     log.debug(f"Stream size: {len(stream)} bytes")
 
@@ -127,8 +130,11 @@ def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONRespon
     output_text: str = ""
     doc_metadata: dict = {}
 
-    if stream:
-        output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    try:
+        if stream:
+            output_text, doc_metadata = processor.process_stream(stream=stream, file_name=file_name)
+    except TooManyRequestsError:
+        return ORJSONResponse(content={"detail": "Service is busy, try again"}, status_code=503)
 
     code = 200 if len(output_text) > 0 or not stream else 500
 
