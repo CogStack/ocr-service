@@ -161,10 +161,6 @@ def create_app() -> FastAPI:
                 thread_event.set()
                 if proc_listener_thread.is_alive():
                     proc_listener_thread.join(timeout=5)
-                try:
-                    processor.close()
-                except Exception as e:
-                    logging.error("error closing processor resources: " + str(e))
                 for port, proc in processor.loffice_process_list.items():
                     p = proc["process"]
                     try:
