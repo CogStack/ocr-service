@@ -141,7 +141,13 @@ jobs:
             img="${ref%%:*}"
             tag="${ref#*:}"
 
-            # Normalize: remove v
+            # Only allow semver tags or latest
+            if ! [[ "$tag" =~ ^v?[0-9]+\.[0-9]+(\.[0-9]+)?$ || "$tag" == "latest" ]]; then
+              echo "Skipping non-buildable tag: $tag"
+              continue
+            fi
+
+            # Normalize: strip leading v from semver
             if [[ "$tag" =~ ^v[0-9]+\.[0-9]+(\.[0-9]+)?$ ]]; then
               echo "normalize: $img:$tag -> $img:${tag#v}"
               tag="${tag#v}"
