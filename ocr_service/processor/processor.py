@@ -97,7 +97,7 @@ class Processor:
                 scale=scale,
                 may_draw_forms=False,
                 no_smoothtext=True,
-                no_smoothimages=True,
+                no_smoothimage=True,
                 no_smoothpath=True,
                 rotation=0,
                 crop=(0, 0, 0, 0),
