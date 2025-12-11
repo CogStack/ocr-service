@@ -182,7 +182,7 @@ class Processor:
             # generate unique id
             uid = uuid.uuid4().hex
 
-            doc_file_path = os.path.join(TMP_FILE_DIR, file_name + "_" + str(uid))
+            doc_file_path = os.path.join(TMP_FILE_DIR, str(uid) + "_" + file_name)
             pdf_file_path = doc_file_path + ".pdf"
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
