@@ -32,7 +32,6 @@ sys.path.append("..")
 # guard so LibreOffice startup runs only once per worker
 _started: bool = False
 
-
 def start_office_server(port_num: str) -> dict[str, Any]:
     """
         :description: Starts LibreOffice unoserver process for OCR processing
@@ -42,6 +41,7 @@ def start_office_server(port_num: str) -> dict[str, Any]:
 
     # used in unoserver 2.1>=
     uno_port = str(int(port_num) + 1000)  # e.g. XML-RPC 9900, UNO 10900
+    user_installation = f"{TMP_FILE_DIR}/lo_profile_{port_num}"
 
     loffice_process: dict[str, Any] = {
         "process": subprocess.Popen(
@@ -51,7 +51,8 @@ def start_office_server(port_num: str) -> dict[str, Any]:
                 "unoserver.server",
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
                 "--executable", LIBRE_OFFICE_EXEC_PATH,
-                "--port", port_num
+                "--port", port_num,
+                "--user-installation", user_installation,
             ],
             cwd=TMP_FILE_DIR,
             close_fds=True,
@@ -62,6 +63,8 @@ def start_office_server(port_num: str) -> dict[str, Any]:
         "used": False,
         "unhealthy": False
     }
+
+    logging.error("LIBRE_OFFICE_STARTED PID: " + str(loffice_process["process"].pid) + " PORT: " + str(port_num))
 
     loffice_process["pid"] = loffice_process["process"].pid
 
@@ -75,19 +78,20 @@ def start_office_converter_servers() -> dict[str, Any]:
     """
 
     loffice_processes: dict[str, Any] = {}
+    assigned_port = get_assigned_port(os.getpid())
+    _port = str(assigned_port)
 
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
         _port_num = str(port_num)
-        if port_num == get_assigned_port(os.getpid()) and OCR_WEB_SERVICE_THREADS == 1:
-            logging.debug("STARTED WORKER ON PORT: " + _port_num)
+        logging.debug(
+            "STARTED WORKER ON PORT: %s PID: %s ASSIGNED PORT: %s",
+            _port_num, os.getpid(), assigned_port,
+        )
+        if port_num == assigned_port and OCR_WEB_SERVICE_THREADS == 1:
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
             break
         elif (OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1) or DEBUG_MODE:
-            process = start_office_server(_port_num)
-            loffice_processes[_port_num] = process
-            break
-        else:
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
             break

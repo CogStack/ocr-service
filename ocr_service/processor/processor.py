@@ -383,12 +383,14 @@ class Processor:
                 images = [_img]
                 _doc_metadata["pages"] = 1
             elif is_file_type_xml(stream) and not is_file_type_html(stream):
+                self.log.info("Detected XML content; converting to pdf")
                 doc_metadata["content-type"] = "text/xml"
                 pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
                 # if we get no content still then just run it through libreoffice converter
                 if not pdf_stream:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif is_file_type_html(stream):
+                self.log.info("Detected HTML content; converting to pdf via unoserver/LO")
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif is_file_content_plain_text(stream):
                 self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")
@@ -396,9 +398,25 @@ class Processor:
                 _doc_metadata["pages"] = 1
                 pdf_stream = b""
             else:
+                self.log.info("Unknown file type; attempting to convert to pdf via unoserver/LO ")
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
+            # ── LO fallback: no PDF, but maybe we can still return text ──
+            if (not pdf_stream or len(pdf_stream) == 0) and not output_text and (
+                is_file_content_plain_text(stream)
+                or is_file_type_html(stream)
+                or is_file_type_xml(stream)
+                or is_file_type_rtf(stream)
+            ):
+                self.log.warning(
+                    "No PDF produced for %s; falling back to plain-text extraction",
+                    file_name,
+                )
+                output_text = stream.decode("utf-8", "ignore")
+                _doc_metadata["pages"] = 1
+                pdf_stream = b""
+        
             if pdf_stream is not None and len(pdf_stream) > 0:
                 if OPERATION_MODE == "OCR":
                     images, _doc_metadata = self._preprocess_pdf_to_img(pdf_stream)

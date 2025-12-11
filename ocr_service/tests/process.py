@@ -54,11 +54,13 @@ class TestOcrServiceProcessor(unittest.TestCase):
         cls._setup_logging()
         sync_port_mapping(worker_id=0, worker_pid=os.getpid())
         cls.app = create_app()
+        
         cls.app.add_middleware(WSGIEnvironInjector)
         # This ensures lifespan (startup/shutdown) events are run
         cls.client_ctx = TestClient(cls.app, raise_server_exceptions=False)
         cls.client_ctx.__enter__()
         cls.client = cls.client_ctx
+
         # allow LibreOffice processes to initialize
         time.sleep(15)
 
@@ -148,11 +150,35 @@ class TestOcrServiceProcessor(unittest.TestCase):
         payload: bytes = get_file("docs/generic/pat_id_1.html")
         self._test_payload_binary_data(payload=payload)
 
-    def test_process_record_binary_data_as_base64_str_payload(self):
+    def test_process_record_binary_data_html_as_base64_str_payload(self):
         """ ocr_service/tests/resources/pat_id_1.html pure binary data -> base64encoded str
         """
         self.log.info("Testing record_binary_data_payload")
         payload: bytes = get_file("docs/generic/pat_id_1.html")
+        str_payload = base64.b64encode(payload).decode()
+        self._test_payload_binary_data(payload=str_payload)
+
+    def test_process_record_binary_data_rtf_as_base64_str_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.rtf pure binary data -> base64encoded str
+        """
+        self.log.info("Testing record_binary_data_payload")
+        payload: bytes = get_file("docs/generic/pat_id_1.rtf")
+        str_payload = base64.b64encode(payload).decode()
+        self._test_payload_binary_data(payload=str_payload)
+
+    def test_process_record_binary_data_docx_as_base64_str_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.rtf pure binary data -> base64encoded str
+        """
+        self.log.info("Testing record_binary_data_payload")
+        payload: bytes = get_file("docs/generic/pat_id_1.rtf")
+        str_payload = base64.b64encode(payload).decode()
+        self._test_payload_binary_data(payload=str_payload)
+
+    def test_process_record_binary_data_pdf_as_base64_str_payload(self):
+        """ ocr_service/tests/resources/pat_id_1.pdf pure binary data -> base64encoded str
+        """
+        self.log.info("Testing record_binary_data_payload")
+        payload: bytes = get_file("docs/generic/pat_id_1.pdf")
         str_payload = base64.b64encode(payload).decode()
         self._test_payload_binary_data(payload=str_payload)
 

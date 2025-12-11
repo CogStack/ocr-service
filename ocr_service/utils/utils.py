@@ -313,7 +313,7 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
         fcntl.lockf(f, fcntl.LOCK_UN)
 
 
-def get_assigned_port(current_worker_pid: int) -> int | bool:
+def get_assigned_port(current_worker_pid: int) -> int:
     port_mapping: dict = {}
 
     open_mode = "r+"
@@ -327,7 +327,7 @@ def get_assigned_port(current_worker_pid: int) -> int | bool:
                     if int(worker_pid) == int(current_worker_pid):
                         return int(port_num)
 
-    return False
+    return int(LIBRE_OFFICE_LISTENER_PORT_RANGE[0])
 
 
 def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:
