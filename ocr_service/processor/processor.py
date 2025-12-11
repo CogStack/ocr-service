@@ -40,6 +40,7 @@ from ocr_service.utils.utils import (
     is_file_type_html,
     is_file_type_rtf,
     is_file_type_xml,
+    normalise_file_name_with_ext,
     setup_logging,
     terminate_hanging_process,
 )
@@ -344,6 +345,8 @@ class Processor:
         images = []
         doc_metadata: dict = {}
 
+        file_name = normalise_file_name_with_ext(file_name, stream, file_type)
+
         if file_type is not None:
             doc_metadata["content-type"] = str(file_type.mime)  # type: ignore
         else:
@@ -359,7 +362,7 @@ class Processor:
 
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
-            elif file_type in DOCUMENT or type(file_type) is archive.Rtf:
+            elif file_type in DOCUMENT or type(file_type) is archive.Rtf or is_file_type_rtf(stream):
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
                 _img = None
@@ -370,12 +373,10 @@ class Processor:
             elif is_file_type_xml(stream) and not is_file_type_html(stream):
                 doc_metadata["content-type"] = "text/xml"
                 pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
-
                 # if we get no content still then just run it through libreoffice converter
-                if pdf_stream is None:
+                if not pdf_stream:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name)
-            elif is_file_type_html(stream) or is_file_type_xml(stream) \
-                or type(file_type) is archive.Rtf or is_file_type_rtf(stream):
+            elif is_file_type_html(stream):
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif is_file_content_plain_text(stream):
                 self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")

@@ -165,10 +165,7 @@ def process_bulk(request: Request, files: list[UploadFile] = File(...)) -> Respo
                 file_streams[file.filename] = content
 
         with Pool(processes=CPU_THREADS) as process_pool:
-            count = 0
-
             for file_name, file_stream in file_streams.items():
-                count += 1
                 proc_results.append(process_pool.starmap_async(processor.process_stream,
                                                                [(file_name, file_stream)],
                                                                chunksize=1,

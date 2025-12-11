@@ -1,3 +1,4 @@
+import contextlib
 import fcntl
 import json
 import logging
@@ -11,9 +12,9 @@ from typing import Any
 
 import filetype
 import psutil
+from filetype.types import archive, document
 
 from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH
-import contextlib
 
 sys.path.append("..")
 
@@ -106,6 +107,45 @@ def detect_file_type(stream: bytes) -> object | None:
     return file_type
 
 
+def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type) -> str:
+    """
+        Used to make sure LibreOffice sees a sane base name with a real extension.
+        And also if you want file naming consistency across various file types.
+
+        Args:
+            file_name (str): original file name
+            stream (bytes): file content
+            file_type: detected file type from 'filetype' library
+        Returns:
+            str: normalised file name with extension
+    """
+
+    name = file_name or "document"
+    base, ext = os.path.splitext(name)
+
+    if not base:
+        base = "document"
+
+    # 1) if caller already provided an extension, keep it
+    if ext:
+        return base + ext
+
+    # 2) let filetype guess it from content
+    guessed_ext = filetype.guess_extension(stream)
+    if guessed_ext:
+        return f"{base}.{guessed_ext}"
+
+    # 3) fallbacks for texty formats our filetype may not catch
+    if is_file_type_html(stream):
+        return base + ".html"
+    if is_file_type_xml(stream):
+        return base + ".xml"
+    if is_file_type_rtf(stream):
+        return base + ".rtf"
+
+    # last resort
+    return base + ".txt"
+
 def terminate_hanging_process(process_id: int) -> None:
     """ Kills process given process id.
 
@@ -190,7 +230,7 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
         if len(text) > 0:
             port_mapping = json.loads(text)
 
-        port_mapping[str((LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id))] = str(worker_pid)
+        port_mapping[str(LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id)] = str(worker_pid)
         output = json.dumps(port_mapping, indent=1)
         f.seek(0)
         f.truncate(0)
