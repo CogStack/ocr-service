@@ -13,6 +13,7 @@ import filetype
 import psutil
 
 from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH
+import contextlib
 
 sys.path.append("..")
 
@@ -112,12 +113,35 @@ def terminate_hanging_process(process_id: int) -> None:
         process_id (int, optional): _description_. Defaults to None.
     """
 
-    if process_id is not None:
-        process = psutil.Process(process_id)
-        process.kill()
-        logging.warning("killed pid:" + str(process_id))
-    else:
+    if not process_id:
         logging.warning("No process ID given or process ID is empty")
+        return
+
+    try:
+        parent = psutil.Process(process_id)
+    except psutil.NoSuchProcess:
+        logging.warning(f"Process {process_id} does not exist")
+        return
+
+    children = parent.children(recursive=True)
+
+    # First try terminate
+    for p in children + [parent]:
+        with contextlib.suppress(Exception):
+            p.terminate()
+
+    gone, alive = psutil.wait_procs(children + [parent], timeout=3)
+
+    # Force kill anything still alive
+    for p in alive:
+        with contextlib.suppress(Exception):
+            p.kill()
+
+    logging.warning(
+        "Killed process tree rooted at pid=%s (children=%s)",
+        process_id,
+        [c.pid for c in children],
+    )
 
 
 def get_process_id_by_process_name(process_name: str = "") -> int:

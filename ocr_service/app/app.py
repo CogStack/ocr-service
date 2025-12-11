@@ -25,7 +25,7 @@ from config import (
 )
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
-from ocr_service.utils.utils import get_assigned_port
+from ocr_service.utils.utils import get_assigned_port, terminate_hanging_process
 
 sys.path.append("..")
 
@@ -105,7 +105,7 @@ def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
                 if proc.get("unhealthy"):
                     logging.warning(f"libreoffice on port {_port} marked unhealthy, restarting...")
                     with contextlib.suppress(Exception):
-                        proc["process"].kill()
+                        terminate_hanging_process(proc["process"].pid)
                     restarted_proc = start_office_server(_port)
                     processor.loffice_process_list[_port] = restarted_proc
                     continue
@@ -118,7 +118,7 @@ def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
                 ):
                     logging.warning(f"libreoffice on port {_port} is down, restarting...")
                     with contextlib.suppress(Exception):
-                        proc["process"].kill()
+                        terminate_hanging_process(proc["process"].pid)
                     restarted_proc = start_office_server(_port)
                     processor.loffice_process_list[_port] = restarted_proc
 
@@ -178,7 +178,7 @@ def create_app() -> FastAPI:
                         p.wait(timeout=3)
                     except Exception:
                         try:
-                            p.kill()
+                            terminate_hanging_process(p.pid)
                         except Exception as e:
                             logging.error("error in when shutting down libreoffice process: " + str(e))
             atexit.register(cleanup)
