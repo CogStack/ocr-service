@@ -34,6 +34,7 @@ from config import (
     TMP_FILE_DIR,
 )
 from ocr_service.utils.utils import (
+    INPUT_FILTERS,
     delete_tmp_files,
     detect_file_type,
     is_file_content_plain_text,
@@ -179,12 +180,17 @@ class Processor:
         pdf_file_path = ""
         used_port_num = None
 
+        ext = os.path.splitext(file_name)[1].lower()
+
+        # unoserver 3.0+ (TBD)
+        input_filter = INPUT_FILTERS.get(ext)
+
         try:
             # generate unique id
             uid = uuid.uuid4().hex
 
             doc_file_path = os.path.join(TMP_FILE_DIR, str(uid) + "_" + file_name)
-            pdf_file_path = doc_file_path + ".pdf"
+            pdf_file_path =  doc_file_path[:-len(ext)] + ".pdf"
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
                 tmp_doc_file.write(stream)
@@ -197,11 +203,17 @@ class Processor:
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
                     used_port_num = str(port_num)
-                    loffice_subprocess = Popen(args=[LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
-                                                     doc_file_path, pdf_file_path,
-                                                     "--host", LIBRE_OFFICE_NETWORK_INTERFACE,
-                                                     "--port", str(used_port_num),
-                                                     "--convert-to", "pdf"],
+                    _args = [LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
+                                doc_file_path, pdf_file_path,
+                                "--host", LIBRE_OFFICE_NETWORK_INTERFACE,
+                                "--port", str(used_port_num),
+                                "--convert-to", "pdf"]
+
+                    #if input_filter:
+                    #    _args += ["--filter", input_filter]
+
+                    self.log.debug("starting unoserver subprocess with args: " + str(_args))
+                    loffice_subprocess = Popen(args=_args,
                                                cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
                     self.loffice_process_list[used_port_num]["used"] = True
                     break

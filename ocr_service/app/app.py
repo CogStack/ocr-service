@@ -40,6 +40,9 @@ def start_office_server(port_num: str) -> dict[str, Any]:
         :return: Dictionary with process information
     """
 
+    # used in unoserver 2.1>=
+    uno_port = str(int(port_num) + 1000)  # e.g. XML-RPC 9900, UNO 10900
+
     loffice_process: dict[str, Any] = {
         "process": subprocess.Popen(
             args=[

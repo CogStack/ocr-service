@@ -12,12 +12,87 @@ from typing import Any
 
 import filetype
 import psutil
-from filetype.types import archive, document
 
 from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH
 
 sys.path.append("..")
 
+INPUT_FILTERS: dict[str, str] = {
+    # ── Writer / text ──
+    ".odt":   "writer8",
+    ".ott":   "writer8_template",
+    ".fodt":  "OpenDocument Text Flat XML",
+    ".sxw":   "StarOffice XML (Writer)",
+    ".stw":   "writer_StarOffice_XML_Writer_Template",
+    ".hwp":   "writer_MIZI_Hwp_97",
+    ".psw":   "PocketWord File",
+    ".rtf":   "Rich Text Format",
+    ".doc":   "MS Word 97",
+    ".wps":   "MS Word 97",
+    ".dot":   "MS Word 97 Vorlage",
+    ".docx":  "MS Word 2007 XML",
+    ".dotx":  "MS Word 2007 XML Template",
+    ".dotm":  "MS Word 2007 XML Template",
+    ".html":  "HTML (StarWriter)",   # picked Writer as the default
+    ".htm":   "HTML (StarWriter)",
+    ".xhtml": "HTML (StarWriter)",
+    ".txt":   "Text",                # treat as Writer text, not Calc CSV
+
+    # ── Calc / spreadsheets ──
+    ".ods":   "calc8",
+    ".ots":   "calc8_template",
+    ".fods":  "OpenDocument Spreadsheet Flat XML",
+    ".sxc":   "StarOffice XML (Calc)",
+    ".stc":   "calc_StarOffice_XML_Calc_Template",
+
+    ".csv":   "Text - txt - csv (StarCalc)",
+    ".tsv":   "Text - txt - csv (StarCalc)",
+    ".tab":   "Text - txt - csv (StarCalc)",
+    ".dbf":   "dBase",
+
+    ".wk1":   "Lotus",
+    ".wks":   "Lotus",
+    ".123":   "Lotus",
+    ".wb2":   "Quattro Pro 6.0",
+
+    ".xls":   "MS Excel 97",
+    ".xlc":   "MS Excel 97",
+    ".xlm":   "MS Excel 97",
+    ".xlw":   "MS Excel 97",
+    ".xlk":   "MS Excel 97",
+    ".et":    "MS Excel 97",
+
+    ".xlt":   "MS Excel 97 Vorlage/Template",
+    ".ett":   "MS Excel 97 Vorlage/Template",
+
+    ".xlsx":  "Calc Office Open XML",
+    ".xlsm":  "Calc Office Open XML",
+    ".xltx":  "Calc Office Open XML Template",
+    ".xltm":  "Calc Office Open XML Template",
+    ".xlsb":  "Calc MS Excel 2007 Binary",
+
+    ".gnumeric": "Gnumeric Spreadsheet",
+    ".gnm":      "Gnumeric Spreadsheet",
+    ".parquet":  "Apache Parquet Spreadsheet",
+    ".cwk":      "Claris_Resolve_Calc",
+    ".numbers":  "Apple Numbers",
+
+    # ── Impress / presentations ──
+    ".odp":   "impress8",
+    ".otp":   "impress8_template",
+    ".sxi":   "StarOffice XML (Impress)",
+    ".sti":   "impress_StarOffice_XML_Impress_Template",
+    ".ppt":   "MS PowerPoint 97",
+    ".pptx":  "Impress MS PowerPoint 2007 XML",
+    ".key":   "Apple Keynote",
+
+    # ── Draw / graphics ──
+    ".odg":   "draw8",
+    ".std":   "draw_StarOffice_XML_Draw_Template",
+
+    # ── Math / formulas ──
+    ".odf":   "math8",
+}
 
 def get_app_info() -> dict:
     """ Returns general information about the application.
