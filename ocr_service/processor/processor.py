@@ -36,7 +36,9 @@ from config import (
 from ocr_service.utils.utils import (
     delete_tmp_files,
     detect_file_type,
+    is_file_content_plain_text,
     is_file_type_html,
+    is_file_type_rtf,
     is_file_type_xml,
     setup_logging,
     terminate_hanging_process,
@@ -372,6 +374,14 @@ class Processor:
                 # if we get no content still then just run it through libreoffice converter
                 if pdf_stream is None:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name)
+            elif is_file_type_html(stream) or is_file_type_xml(stream) \
+                or type(file_type) is archive.Rtf or is_file_type_rtf(stream):
+                pdf_stream = self._preprocess_doc(stream, file_name=file_name)
+            elif is_file_content_plain_text(stream):
+                self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")
+                output_text = stream.decode("utf-8", "ignore")
+                _doc_metadata["pages"] = 1
+                pdf_stream = b""
             else:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)

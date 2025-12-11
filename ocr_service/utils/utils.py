@@ -2,6 +2,7 @@ import fcntl
 import json
 import logging
 import os
+import string
 import sys
 import xml.sax
 from datetime import datetime
@@ -61,11 +62,26 @@ def delete_tmp_files(file_paths: list[str]) -> None:
         if os.path.exists(file_path):
             os.remove(file_path)
 
+PRINTABLE = set(bytes(string.printable, "ascii")) | {9, 10, 13}
+
+def is_file_content_plain_text(stream: bytes, threshold: float = 0.95) -> bool:
+    if not stream:
+        return False
+
+    sample = stream[:4096]
+
+    # If it can't be decoded as UTF-8 at all, treat as binary
+    try:
+        sample.decode("utf-8")
+    except UnicodeDecodeError:
+        return False
+
+    printable = sum(1 for b in sample if b in PRINTABLE)
+    return printable / len(sample) >= threshold
 
 def is_file_type_html(stream: bytes) -> bool:
     head = stream[:2048].decode(errors="ignore").lower()
     return "<html" in head or "<!doctype html" in head
-
 
 def is_file_type_xml(stream: bytes) -> bool:
     try:
@@ -74,6 +90,10 @@ def is_file_type_xml(stream: bytes) -> bool:
     except Exception:
         logging.warning("Could not determine if file is XML.")
     return False
+
+def is_file_type_rtf(stream: bytes) -> bool:
+    head = stream[:32].lstrip()
+    return head.startswith(b"{\\rtf")
 
 
 def detect_file_type(stream: bytes) -> object | None:
