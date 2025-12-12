@@ -490,7 +490,6 @@ class Processor:
                     is_rtf=check_rtf(),
                 )
                 _doc_metadata["pages"] = 1
-                _doc_metadata["fallback"] = "plain-text"
                 doc_metadata["content-type"] = "text/plain"
                 pdf_stream = b""
         
