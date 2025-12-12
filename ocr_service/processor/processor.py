@@ -203,14 +203,24 @@ class Processor:
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
                     used_port_num = str(port_num)
-                    _args = [LIBRE_OFFICE_PYTHON_PATH, "-m", "unoserver.converter",
-                                doc_file_path, pdf_file_path,
-                                "--host", LIBRE_OFFICE_NETWORK_INTERFACE,
-                                "--port", str(used_port_num),
-                                "--convert-to", "pdf"]
+                    # unoserver >=3 exposes the CLI via converter_main (unoconvert)
+                    converter_bootstrap = "from unoserver.client import converter_main; converter_main()"
+                    _args = [
+                        LIBRE_OFFICE_PYTHON_PATH,
+                        "-c",
+                        converter_bootstrap,
+                        doc_file_path,
+                        pdf_file_path,
+                        "--host",
+                        LIBRE_OFFICE_NETWORK_INTERFACE,
+                        "--port",
+                        str(used_port_num),
+                        "--convert-to",
+                        "pdf"
+                    ]
 
-                    #if input_filter:
-                    #    _args += ["--filter", input_filter]
+                    if input_filter:
+                        _args += ["--input-filter", input_filter]
 
                     self.log.debug("starting unoserver subprocess with args: " + str(_args))
                     loffice_subprocess = Popen(args=_args,
@@ -402,19 +412,19 @@ class Processor:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
-            # ── LO fallback: no PDF, but maybe we can still return text ──
-            if (not pdf_stream or len(pdf_stream) == 0) and not output_text and (
-                is_file_content_plain_text(stream)
-                or is_file_type_html(stream)
-                or is_file_type_xml(stream)
-                or is_file_type_rtf(stream)
-            ):
-                self.log.warning(
-                    "No PDF produced for %s; falling back to plain-text extraction",
-                    file_name,
-                )
-                output_text = stream.decode("utf-8", "ignore")
-                _doc_metadata["pages"] = 1
+           # # ── LO fallback: no PDF, but maybe we can still return text ──
+           # if (not pdf_stream or len(pdf_stream) == 0) and not output_text and (
+           #     is_file_content_plain_text(stream)
+           #     or is_file_type_html(stream)
+           #     or is_file_type_xml(stream)
+           #     or is_file_type_rtf(stream)
+           # ):
+           #     self.log.warning(
+           #         "No PDF produced for %s; falling back to plain-text extraction",
+           #         file_name,
+           #     )
+           #     output_text = stream.decode("utf-8", "ignore")
+           #     _doc_metadata["pages"] = 1
                 pdf_stream = b""
         
             if pdf_stream is not None and len(pdf_stream) > 0:
