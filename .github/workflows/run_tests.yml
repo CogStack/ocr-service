@@ -49,13 +49,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
   
-      - name: Install Python 3.12 (cloud)
-        if: ${{ !env.ACT }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-          cache: 'pip'
-
       - name: Prepare apt cache
         if: ${{ !env.ACT }}
         run: |
@@ -81,7 +74,6 @@ jobs:
           export DEBIAN_PRIORITY=critical
 
           sudo apt update -yq
-          sudo apt upgrade -y
           sudo apt install -y --no-install-recommends software-properties-common nodejs debconf-utils apt-utils
 
           # add extra repos
@@ -191,5 +183,5 @@ jobs:
           export LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
           export OCR_TMP_DIR=${{ github.workspace }}/tmp
           source venv/bin/activate
-          python -m unittest ocr_service/tests/process.py
+          python -m unittest discover -s ocr_service/tests -p 'test_*.py'
         shell: bash

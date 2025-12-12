@@ -13,9 +13,11 @@ from threading import Timer
 from typing import Any, TypeVar
 
 import pypdfium2 as pdfium
+from bs4 import BeautifulSoup
 from filetype.types import DOCUMENT, IMAGE, archive
 from html2image import Html2Image
 from PIL import Image
+from striprtf.striprtf import rtf_to_text
 from tesserocr import PyTessBaseAPI
 
 from config import (
@@ -85,6 +87,35 @@ class Processor:
             delete_tmp_files([png_img_file_path])
 
         return [image]
+
+    def _extract_text_fallback(self, stream: bytes, *, is_html: bool, is_xml: bool, is_rtf: bool) -> str:
+        """Best-effort text extraction when LO conversion fails."""
+        text = ""
+
+        if is_html or is_xml:
+            parser = "html.parser" if is_html else "xml"
+            try:
+                soup = BeautifulSoup(stream, parser)
+            except Exception:
+                self.log.warning("Failed to parse HTML/XML during fallback with %s; retrying with html.parser", parser)
+                try:
+                    soup = BeautifulSoup(stream, "html.parser")
+                    text = soup.get_text(separator="\n")
+                except Exception:
+                    self.log.warning("Failed to parse HTML/XML during fallback; using raw decode")
+            else:
+                text = soup.get_text(separator="\n")
+
+        if not text and is_rtf:
+            try:
+                text = rtf_to_text(stream.decode("utf-8", "ignore"))
+            except Exception:
+                self.log.warning("Failed to parse RTF during fallback; using raw decode")
+
+        if not text:
+            text = stream.decode("utf-8", "ignore")
+
+        return text.strip()
 
     def _pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
         pdf_image_pages = []
@@ -366,6 +397,36 @@ class Processor:
         images = []
         doc_metadata: dict = {}
 
+        # Lazily evaluate text-type detection only when needed to avoid work on non-text files.
+        _is_html: bool | None = None
+        _is_xml: bool | None = None
+        _is_rtf: bool | None = None
+        _is_plain_text: bool | None = None
+
+        def check_html() -> bool:
+            nonlocal _is_html
+            if _is_html is None:
+                _is_html = is_file_type_html(stream)
+            return _is_html
+
+        def check_xml() -> bool:
+            nonlocal _is_xml
+            if _is_xml is None:
+                _is_xml = is_file_type_xml(stream)
+            return _is_xml
+
+        def check_rtf() -> bool:
+            nonlocal _is_rtf
+            if _is_rtf is None:
+                _is_rtf = is_file_type_rtf(stream)
+            return _is_rtf
+
+        def check_plain_text() -> bool:
+            nonlocal _is_plain_text
+            if _is_plain_text is None:
+                _is_plain_text = is_file_content_plain_text(stream)
+            return _is_plain_text
+
         file_name = normalise_file_name_with_ext(file_name, stream, file_type)
 
         if file_type is not None:
@@ -383,7 +444,7 @@ class Processor:
 
             if type(file_type) is archive.Pdf:
                 pdf_stream = stream
-            elif file_type in DOCUMENT or type(file_type) is archive.Rtf or is_file_type_rtf(stream):
+            elif file_type in DOCUMENT or type(file_type) is archive.Rtf or check_rtf():
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
             elif file_type in IMAGE:
                 _img = None
@@ -391,17 +452,17 @@ class Processor:
                     _img = imgf.copy()
                 images = [_img]
                 _doc_metadata["pages"] = 1
-            elif is_file_type_xml(stream) and not is_file_type_html(stream):
+            elif check_xml() and not check_html():
                 self.log.info("Detected XML content; converting to pdf")
                 doc_metadata["content-type"] = "text/xml"
                 pdf_stream = self._preprocess_xml_to_pdf(stream, file_name=file_name)
                 # if we get no content still then just run it through libreoffice converter
                 if not pdf_stream:
                     pdf_stream = self._preprocess_doc(stream, file_name=file_name)
-            elif is_file_type_html(stream):
+            elif check_html():
                 self.log.info("Detected HTML content; converting to pdf via unoserver/LO")
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
-            elif is_file_content_plain_text(stream):
+            elif check_plain_text():
                 self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")
                 output_text = stream.decode("utf-8", "ignore")
                 _doc_metadata["pages"] = 1
@@ -411,19 +472,26 @@ class Processor:
                 # if the file has no type attempt to convert it to pdf anyways
                 pdf_stream = self._preprocess_doc(stream, file_name=file_name)
 
-           # # ── LO fallback: no PDF, but maybe we can still return text ──
-           # if (not pdf_stream or len(pdf_stream) == 0) and not output_text and (
-           #     is_file_content_plain_text(stream)
-           #     or is_file_type_html(stream)
-           #     or is_file_type_xml(stream)
-           #     or is_file_type_rtf(stream)
-           # ):
-           #     self.log.warning(
-           #         "No PDF produced for %s; falling back to plain-text extraction",
-           #         file_name,
-           #     )
-           #     output_text = stream.decode("utf-8", "ignore")
-           #     _doc_metadata["pages"] = 1
+            # ── LO fallback: no PDF, but maybe we can still return text ──
+            if (not pdf_stream or len(pdf_stream) == 0) and not output_text and (
+                check_plain_text()
+                or check_html()
+                or check_xml()
+                or check_rtf()
+            ):
+                self.log.warning(
+                    "No PDF produced for %s; falling back to plain-text extraction",
+                    file_name,
+                )
+                output_text = self._extract_text_fallback(
+                    stream,
+                    is_html=check_html(),
+                    is_xml=check_xml(),
+                    is_rtf=check_rtf(),
+                )
+                _doc_metadata["pages"] = 1
+                _doc_metadata["fallback"] = "plain-text"
+                doc_metadata["content-type"] = "text/plain"
                 pdf_stream = b""
         
             if pdf_stream is not None and len(pdf_stream) > 0:
