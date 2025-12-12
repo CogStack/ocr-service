@@ -26,5 +26,5 @@ httpx==0.28.1
 defusedxml==0.7.1
 olefile==0.47
 
-# we can only use version 1.6 of unoserver due to issues with processing/converting certain file types (like RTF and DOCX to XML)
-unoserver==1.6
+# unoserver>=3 switched to the unoconvert client CLI; tested with 3.6
+unoserver==3.6

@@ -141,7 +141,7 @@ jobs:
           # this is a bit hacky but it works around the issue of unoserver not being available
           # via pip for python3.12 (as of 2025-08)
           set -eux
-          
+
           UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true)
           if [ -n "$UNOSERVER_PIN" ]; then
             /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages "unoserver==${UNOSERVER_PIN}"

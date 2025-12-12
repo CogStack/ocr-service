@@ -203,7 +203,6 @@ class Processor:
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
                     used_port_num = str(port_num)
-                    # unoserver >=3 exposes the CLI via converter_main (unoconvert)
                     converter_bootstrap = "from unoserver.client import converter_main; converter_main()"
                     _args = [
                         LIBRE_OFFICE_PYTHON_PATH,
