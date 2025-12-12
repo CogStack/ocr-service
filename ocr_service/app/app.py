@@ -50,9 +50,12 @@ def start_office_server(port_num: str) -> dict[str, Any]:
                 "-m",
                 "unoserver.server",
                 "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
+                "--uno-interface", LIBRE_OFFICE_NETWORK_INTERFACE,
                 "--executable", LIBRE_OFFICE_EXEC_PATH,
                 "--port", port_num,
+                "--uno-port", uno_port,
                 "--user-installation", user_installation,
+               # "--logfile", f"loffice_{port_num}.log"
             ],
             cwd=TMP_FILE_DIR,
             close_fds=True,
@@ -64,7 +67,7 @@ def start_office_server(port_num: str) -> dict[str, Any]:
         "unhealthy": False
     }
 
-    logging.error("LIBRE_OFFICE_STARTED PID: " + str(loffice_process["process"].pid) + " PORT: " + str(port_num))
+    logging.info("LIBRE_OFFICE_STARTED PID: " + str(loffice_process["process"].pid) + " PORT: " + str(port_num))
 
     loffice_process["pid"] = loffice_process["process"].pid
 
@@ -83,7 +86,7 @@ def start_office_converter_servers() -> dict[str, Any]:
 
     for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
         _port_num = str(port_num)
-        logging.debug(
+        logging.info(
             "STARTED WORKER ON PORT: %s PID: %s ASSIGNED PORT: %s",
             _port_num, os.getpid(), assigned_port,
         )
