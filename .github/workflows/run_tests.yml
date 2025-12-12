@@ -49,12 +49,24 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
   
-      - name: Install Python 3.12 (cloud)
+      - name: Prepare apt cache
         if: ${{ !env.ACT }}
-        uses: actions/setup-python@v5
+        run: |
+          sudo mkdir -p /var/cache/apt/archives/partial
+          sudo chown -R $USER:$USER /var/cache/apt/archives
+
+      - name: Cache apt downloads
+        if: ${{ !env.ACT }}
+        uses: actions/cache@v4
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          path: /var/cache/apt/archives
+          key: ${{ runner.os }}-apt-${{ hashFiles('.github/workflows/run_tests.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-apt-
+
+      - name: Remove cached apt locks
+        if: ${{ !env.ACT }}
+        run: sudo rm -f /var/cache/apt/archives/lock
 
       - name: Install dependencies
         run: |
@@ -62,7 +74,6 @@ jobs:
           export DEBIAN_PRIORITY=critical
 
           sudo apt update -yq
-          sudo apt upgrade -y
           sudo apt install -y --no-install-recommends software-properties-common nodejs debconf-utils apt-utils
 
           # add extra repos
@@ -124,12 +135,12 @@ jobs:
           # (this removes software-properties-common)
           sudo apt remove -y python3-blinker
           
-          sudo apt clean autoclean && sudo apt autoremove --purge -y
-
           # other openCL packages
           # beignet-opencl-icd
 
-          sudo rm -rf /var/lib/apt/lists/*
+          # keep apt caches so the actions/cache step can reuse downloads
+          sudo rm -f /var/cache/apt/archives/lock
+          sudo chown -R $USER:$USER /var/cache/apt/archives
      
       - name: Install python deps & create virtual environment
         run: |
@@ -141,7 +152,7 @@ jobs:
           # this is a bit hacky but it works around the issue of unoserver not being available
           # via pip for python3.12 (as of 2025-08)
           set -eux
-          
+
           UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true)
           if [ -n "$UNOSERVER_PIN" ]; then
             /usr/bin/python3 -m pip install --no-cache-dir --break-system-packages "unoserver==${UNOSERVER_PIN}"
@@ -172,5 +183,5 @@ jobs:
           export LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
           export OCR_TMP_DIR=${{ github.workspace }}/tmp
           source venv/bin/activate
-          python -m unittest ocr_service/tests/process.py
+          python -m unittest discover -s ocr_service/tests -p 'test_*.py'
         shell: bash

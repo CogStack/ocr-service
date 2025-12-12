@@ -21,10 +21,12 @@ fastapi==0.116.1
 orjson==3.11.2
 a2wsgi==1.10.10
 httpx==0.28.1
+beautifulsoup4==4.12.3
+striprtf==0.0.26
 
 # Pillow package dependencies
 defusedxml==0.7.1
 olefile==0.47
 
-# we can only use version 1.6 of unoserver due to issues with processing/converting certain file types (like RTF and DOCX to XML)
-unoserver==1.6
+# unoserver>=3 switched to the unoconvert client CLI; tested with 3.6
+unoserver==3.6
