@@ -25,12 +25,13 @@ from config import (
 )
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
-from ocr_service.utils.utils import get_assigned_port, terminate_hanging_process
+from ocr_service.utils.utils import cleanup_stale_lo_profiles, get_assigned_port, terminate_hanging_process
 
 sys.path.append("..")
 
 # guard so LibreOffice startup runs only once per worker
 _started: bool = False
+
 
 def start_office_server(port_num: str) -> dict[str, Any]:
     """
@@ -158,6 +159,8 @@ def create_app() -> FastAPI:
         # start once per worker
         if not _started:
             _started = True
+            # clean stale LibreOffice profiles before starting new processes
+            cleanup_stale_lo_profiles()
             # Start LibreOffice unoserver processes
             loffice_processes = start_office_converter_servers()
             processor = Processor()

@@ -3,8 +3,10 @@ import fcntl
 import json
 import logging
 import os
+import shutil
 import string
 import sys
+from pathlib import Path
 import xml.sax
 from datetime import datetime
 from sys import platform
@@ -13,7 +15,7 @@ from typing import Any
 import filetype
 import psutil
 
-from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, WORKER_PORT_MAP_FILE_PATH
+from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, TMP_FILE_DIR, WORKER_PORT_MAP_FILE_PATH
 
 sys.path.append("..")
 
@@ -257,6 +259,44 @@ def terminate_hanging_process(process_id: int) -> None:
         process_id,
         [c.pid for c in children],
     )
+
+
+def _active_lo_profiles() -> set[str]:
+    active: set[str] = set()
+    for proc in psutil.process_iter(attrs=["cmdline"]):
+        try:
+            cmd = proc.info.get("cmdline") or []
+            if "--user-installation" not in cmd:
+                continue
+            idx = cmd.index("--user-installation")
+            if idx + 1 >= len(cmd):
+                continue
+            profile = cmd[idx + 1]
+            profile = profile.replace("file://", "")
+            active.add(os.path.normpath(profile))
+        except Exception:
+            continue
+    return active
+
+
+def cleanup_stale_lo_profiles(tmp_dir: str = TMP_FILE_DIR) -> None:
+    """Remove LibreOffice profile folders not used by any running process."""
+    base = Path(tmp_dir)
+    if not base.exists():
+        return
+
+    active_profiles = _active_lo_profiles()
+
+    for profile_dir in base.glob("lo_profile_*"):
+        try:
+            resolved = os.path.normpath(str(profile_dir))
+            if resolved in active_profiles:
+                continue
+            if profile_dir.is_dir():
+                shutil.rmtree(profile_dir, ignore_errors=True)
+                logging.info("Removed stale LibreOffice profile: %s", profile_dir)
+        except Exception as exc:
+            logging.warning("Failed to remove stale LibreOffice profile %s: %s", profile_dir, exc)
 
 
 def get_process_id_by_process_name(process_name: str = "") -> int:
