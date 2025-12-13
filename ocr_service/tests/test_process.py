@@ -9,8 +9,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from ocr_service.app import create_app
-from ocr_service.utils.utils import sync_port_mapping
 from ocr_service.tests.utils_helpers import DOCS, WSGIEnvironInjector, get_file, lev_similarity
+from ocr_service.utils.utils import sync_port_mapping
 
 
 class TestOcrServiceProcessor(unittest.TestCase):

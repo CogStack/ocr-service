@@ -6,16 +6,22 @@ import os
 import shutil
 import string
 import sys
-from pathlib import Path
 import xml.sax
 from datetime import datetime
+from pathlib import Path
 from sys import platform
 from typing import Any
 
 import filetype
 import psutil
 
-from config import LIBRE_OFFICE_LISTENER_PORT_RANGE, OCR_SERVICE_VERSION, TESSDATA_PREFIX, TMP_FILE_DIR, WORKER_PORT_MAP_FILE_PATH
+from config import (
+    LIBRE_OFFICE_LISTENER_PORT_RANGE,
+    OCR_SERVICE_VERSION,
+    TESSDATA_PREFIX,
+    TMP_FILE_DIR,
+    WORKER_PORT_MAP_FILE_PATH,
+)
 
 sys.path.append("..")
 
