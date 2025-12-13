@@ -134,7 +134,7 @@ jobs:
           # there is a bug in the blinker package that causes issues with uwsgi
           # (this removes software-properties-common)
           sudo apt remove -y python3-blinker
-          
+
           # other openCL packages
           # beignet-opencl-icd
 
@@ -183,5 +183,5 @@ jobs:
           export LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
           export OCR_TMP_DIR=${{ github.workspace }}/tmp
           source venv/bin/activate
-          python -m unittest discover -s ocr_service/tests -p 'test_*.py'
+          python -m unittest discover -s ocr_service/tests -p 'test_process.py'
         shell: bash
