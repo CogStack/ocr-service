@@ -7,11 +7,11 @@ echo "🔧 Running $(basename "$0")..."
 
 set -a
 
-current_dir=$(pwd)
-env_dir="./env/"
+ENV_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/./env/"
 
-env_files=("env/general.env"
-           "env/ocr_service.env"
+env_files=(
+            $ENV_DIR"general.env"
+            $ENV_DIR"ocr_service.env"
           )
 
 for env_file in "${env_files[@]}"; do
