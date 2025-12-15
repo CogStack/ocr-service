@@ -19,6 +19,9 @@ x-ocr-service-common: &ocr-service-common
   # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
   cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
   shm_size: ${OCR_SERVICE_DOCKER_SHM_SIZE:-512m}
+  init: true
+  tmpfs:
+    - "${OCR_TMP_DIR:-/ocr_service/tmp}:rw,size=${OCR_SERVICE_TMPFS_SIZE:-1g}"
   deploy:
     resources:
       limits:
@@ -33,7 +36,6 @@ x-ocr-service-common: &ocr-service-common
   env_file: *ocr-env-files-full
   volumes:
     - ../models/:/ocr_service/models:ro
-    - ocr-service-tmp-vol:${OCR_TMP_DIR:-/ocr_service/tmp}
   ulimits:
     memlock:
       soft: -1
@@ -64,18 +66,9 @@ services:
   ocr-service-text-only:
     <<: *ocr-service-common
     container_name: ocr-service-text-only
-    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
-    env_file: *ocr-env-files-text
-    volumes:
-      - ../models/:/ocr_service/models:ro
-      - ocr-service-text-only-tmp-vol:${OCR_TMP_DIR:-/ocr_service/tmp}
+  image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
+  env_file: *ocr-env-files-text
+  volumes:
+    - ../models/:/ocr_service/models:ro
     ports:
       - "${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
-
-volumes:
-  ocr-service-tmp-vol:
-    name: "${VOLUME_PREFIX:-deploy_}ocr-service-tmp-vol"
-    driver: local
-  ocr-service-text-only-tmp-vol:
-    name: "${VOLUME_PREFIX:-deploy_}ocr-service-text-only-tmp-vol"
-    driver: local
