@@ -30,6 +30,9 @@ jobs:
           OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
 
       - name: Wait for health
+        env:
+          OCR_SERVICE_EXTERNAL_PORT: 18090
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
         run: |
           set -euo pipefail
           timeout=600
@@ -48,10 +51,14 @@ jobs:
           exit 1
 
       - name: Check info
+        env:
+          OCR_SERVICE_EXTERNAL_PORT: 18090
         run: |
           curl -fsS "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-18090}/api/info"
 
       - name: Check health (text-only port)
+        env:
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
         run: |
           curl -fsS "http://localhost:${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-18091}/api/health"
 
