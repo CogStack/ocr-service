@@ -8,7 +8,15 @@ services:
     mem_swappiness: 0
     # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
     cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
-    shm_size : ${OCR_SERVICE_DOCKER_SHM_SIZE:-1g}
+    shm_size : ${OCR_SERVICE_DOCKER_SHM_SIZE:-512m}
+    deploy:
+      resources:
+        limits:
+          cpus: "${OCR_SERVICE_DOCKER_CPU_MAX:-1.0}"
+          memory: "${OCR_SERVICE_DOCKER_RAM_MAX:-1g}"
+        reservations:
+          cpus: "${OCR_SERVICE_DOCKER_CPU_MIN:-0.5}"
+          memory: "${OCR_SERVICE_DOCKER_RAM_MIN:-512m}"
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
@@ -22,7 +30,7 @@ services:
       - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
     volumes:
-      - ../models/:/ocr_service/models:rw
+      - ../models/:/ocr_service/models:ro
     ulimits:
       memlock:
         soft: -1
@@ -31,9 +39,9 @@ services:
         soft: 65536
         hard: 262144
     ports:
-      - "8090:8090"
+      - "${OCR_SERVICE_EXTERNAL_PORT:-8090}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
     expose: 
-      - "8090"
+      - "${OCR_SERVICE_INTERNAL_PORT:-8090}"
     networks:
       - cognet
 
@@ -46,7 +54,15 @@ services:
     mem_swappiness: 0
     # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
     cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
-    shm_size : ${OCR_SERVICE_DOCKER_SHM_SIZE:-1g}
+    shm_size : ${OCR_SERVICE_DOCKER_SHM_SIZE:-512m}
+    deploy:
+      resources:
+        limits:
+          cpus: "${OCR_SERVICE_DOCKER_CPU_MAX:-1.0}"
+          memory: "${OCR_SERVICE_DOCKER_RAM_MAX:-1g}"
+        reservations:
+          cpus: "${OCR_SERVICE_DOCKER_CPU_MIN:-0.5}"
+          memory: "${OCR_SERVICE_DOCKER_RAM_MIN:-512m}"
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
@@ -62,7 +78,7 @@ services:
       # overwrite the ocr_service.env with text only version
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
     volumes:
-      - ../models/:/ocr_service/models:rw
+      - ../models/:/ocr_service/models:ro
     ulimits:
       memlock:
         soft: -1
@@ -71,9 +87,9 @@ services:
         soft: 65536
         hard: 262144
     ports:
-      - "8091:8090"
+      - "${OCR_SERVICE_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
     expose: 
-      - "8090"
+      - "${OCR_SERVICE_INTERNAL_PORT:-8090}"
     networks:
       - cognet
 
