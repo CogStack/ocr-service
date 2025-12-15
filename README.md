@@ -1,5 +1,10 @@
 # OCR-Service
 
+[![docker-ocr-service](https://github.com/CogStack/ocr-service/actions/workflows/docker_build.yml/badge.svg)](https://github.com/CogStack/ocr-service/actions/workflows/docker_build.yml)
+[![tests-ocr-service](https://github.com/CogStack/ocr-service/actions/workflows/run_tests.yml/badge.svg)](https://github.com/CogStack/ocr-service/actions/workflows/run_tests.yml)
+[![codeql-analysis-ocr-service](https://github.com/CogStack/ocr-service/actions/workflows/codeql.yml/badge.svg)](https://github.com/CogStack/ocr-service/actions/workflows/codeql.yml)
+[![docker-smoke-ocr-service](https://github.com/CogStack/ocr-service/actions/workflows/docker_smoke.yml/badge.svg)](https://github.com/CogStack/ocr-service/actions/workflows/docker_smoke.yml)
+
 ## Introduction
 
 This is a python-replacement of the previous Tika-service in an attempt to resolve scalability and performance issues. It also relies on tesseract ocr but without the ambiguities of the Tika framework.
