@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  ocr-service:
+    networks:
+      - cognet
+  ocr-service-text-only:
+    networks:
+      - cognet
+
+networks:
+  cognet:
+    driver: bridge
+    name: cogstack-net

@@ -1,0 +1,87 @@
+version: "3.8"
+
+x-logging-common: &ocr-logging-common
+  driver: "json-file"
+  options:
+    max-size: ${OCR_SERVICE_DOCKER_LOG_SIZE_PER_FILE:-250m}
+    max-file: ${OCR_SERVICE_DOCKER_LOG_NUM_FILES:-10}
+
+x-env-files-full: &ocr-env-files-full
+  - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
+  - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
+
+x-env-files-text: &ocr-env-files-text
+  - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
+  - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
+  - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
+
+x-ocr-service-common: &ocr-service-common
+  restart: always
+  mem_swappiness: 0
+  # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
+  cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
+  shm_size: ${OCR_SERVICE_DOCKER_SHM_SIZE:-512m}
+  deploy:
+    resources:
+      limits:
+        cpus: "${OCR_SERVICE_DOCKER_CPU_MAX:-1.0}"
+        memory: "${OCR_SERVICE_DOCKER_RAM_MAX:-1g}"
+      reservations:
+        cpus: "${OCR_SERVICE_DOCKER_CPU_MIN:-0.5}"
+        memory: "${OCR_SERVICE_DOCKER_RAM_MIN:-512m}"
+  environment:
+    - http_proxy=$HTTP_PROXY
+    - https_proxy=$HTTPS_PROXY
+    - no_proxy=$no_proxy
+
+    # tesseract threading is disabled as the processing will take care of distribution
+    - OMP_THREAD_LIMIT=1
+  env_file: *ocr-env-files-full
+  volumes:
+    - ../models/:/ocr_service/models:ro
+    - ocr-service-tmp-vol:${OCR_TMP_DIR:-/ocr_service/tmp}
+  ulimits:
+    memlock:
+      soft: -1
+      hard: -1
+    nofile:
+      soft: 65536
+      hard: 262144
+  expose:
+    - "${OCR_SERVICE_INTERNAL_PORT:-8090}"
+  networks:
+    - cognet
+  healthcheck:
+    test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${OCR_SERVICE_INTERNAL_PORT:-8090}/api/health"]
+    interval: 120s
+    timeout: 60s
+    retries: 3
+    start_period: 20s
+  logging: *ocr-logging-common
+
+services:
+  ocr-service:
+    <<: *ocr-service-common
+    container_name: ocr-service
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
+    ports:
+      - "${OCR_SERVICE_EXTERNAL_PORT:-8090}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
+
+  ocr-service-text-only:
+    <<: *ocr-service-common
+    container_name: ocr-service-text-only
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
+    env_file: *ocr-env-files-text
+    volumes:
+      - ../models/:/ocr_service/models:ro
+      - ocr-service-text-only-tmp-vol:${OCR_TMP_DIR:-/ocr_service/tmp}
+    ports:
+      - "${OCR_SERVICE_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
+
+volumes:
+  ocr-service-tmp-vol:
+    name: "${VOLUME_PREFIX:-deploy_}ocr-service-tmp-vol"
+    driver: local
+  ocr-service-text-only-tmp-vol:
+    name: "${VOLUME_PREFIX:-deploy_}ocr-service-text-only-tmp-vol"
+    driver: local
