@@ -48,6 +48,12 @@ jobs:
         run: |
           curl -fsS "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/info"
 
+      - name: Check health (text-only port)
+        env:
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: ${{ env.OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT || '8091' }}
+        run: |
+          curl -fsS "http://localhost:${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}/api/health"
+
       - name: Logs on failure
         if: failure()
         run: |
