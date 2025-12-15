@@ -25,13 +25,16 @@ jobs:
         run: |
           cd docker
           docker compose -f docker-compose.base.yml -f docker-compose.dev.yml up -d
+        env:
+          OCR_SERVICE_EXTERNAL_PORT: 18090
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
 
       - name: Wait for health
         run: |
           set -euo pipefail
           timeout=600
           interval=5
-          url="http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/health"
+          url="http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-18090}/api/health"
 
           end=$((SECONDS+timeout))
           while [ $SECONDS -lt $end ]; do
@@ -46,13 +49,11 @@ jobs:
 
       - name: Check info
         run: |
-          curl -fsS "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/info"
+          curl -fsS "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-18090}/api/info"
 
       - name: Check health (text-only port)
-        env:
-          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: ${{ env.OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT || '8091' }}
         run: |
-          curl -fsS "http://localhost:${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}/api/health"
+          curl -fsS "http://localhost:${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-18091}/api/health"
 
       - name: Logs on failure
         if: failure()
@@ -64,4 +65,4 @@ jobs:
         if: always()
         run: |
           cd docker
-          docker compose -f docker-compose.dev.yml down -v
+          make stop-all
