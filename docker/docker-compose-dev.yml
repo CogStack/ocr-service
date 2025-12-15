@@ -1,4 +1,10 @@
 services:
+  x-logging-common: &ocr-logging-common
+    driver: "json-file"
+    options:
+      max-size: ${OCR_SERVICE_DOCKER_LOG_SIZE_PER_FILE:-250m}
+      max-file: ${OCR_SERVICE_DOCKER_LOG_NUM_FILES:-10}
+
   ocr-service:
     container_name: ocr-service
     build:
@@ -44,6 +50,13 @@ services:
       - "${OCR_SERVICE_INTERNAL_PORT:-8090}"
     networks:
       - cognet
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${OCR_SERVICE_INTERNAL_PORT:-8090}/api/health"]
+      interval: 120s
+      timeout: 60s
+      retries: 3
+      start_period: 20s
+    logging: *ocr-logging-common
 
   ocr-service-text-only:
     container_name: ocr-service-text-only
@@ -92,6 +105,13 @@ services:
       - "${OCR_SERVICE_INTERNAL_PORT:-8090}"
     networks:
       - cognet
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${OCR_SERVICE_INTERNAL_PORT:-8090}/api/health"]
+      interval: 120s
+      timeout: 60s
+      retries: 3
+      start_period: 20s
+    logging: *ocr-logging-common
 
 #---------------------------------------------------------------------------#
 # Docker networks.                                                          #
