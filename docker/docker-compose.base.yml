@@ -1,5 +1,3 @@
-version: "3.8"
-
 x-logging-common: &ocr-logging-common
   driver: "json-file"
   options:
