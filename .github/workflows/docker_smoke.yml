@@ -1,4 +1,4 @@
-name: Docker Smoke
+name: docker-smoke-ocr-service
 
 on:
   pull_request:
