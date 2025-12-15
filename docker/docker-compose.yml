@@ -1,14 +1,12 @@
 services:
   ocr-service:
     container_name: ocr-service
-    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}}
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
     restart: always
     mem_swappiness: 0
-    # cpuset: "0-15"
-    shm_size: 1024mb
-    privileged: true
-    security_opt:
-      - seccomp:unconfined
+    # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
+    cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
+    shm_size: ${OCR_SERVICE_DOCKER_SHM_SIZE:-1g}
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
@@ -22,7 +20,7 @@ services:
       - ${DEPLOYMENT_ENV_FILE_PATH_GENERAL:-../env/general.env}
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_FULL_OCR:-../env/ocr_service.env}
     volumes:
-      - ../log/:/ocr_service/log:rw
+      - ../models/:/ocr_service/models:rw
     ulimits:
       memlock:
         soft: -1
@@ -39,14 +37,12 @@ services:
 
   ocr-service-text-only:
     container_name: ocr-service-text-only
-    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}-${CPU_ARCHITECTURE:-amd64}}
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
     restart: always
     mem_swappiness: 0
-    # cpuset: "0-15"
-    shm_size: 1024mb
-    privileged: true
-    security_opt:
-      - seccomp:unconfined
+    # pin CPUs; override OCR_CPUSET or bump OCR_WEB_SERVICE_WORKERS if you need more cores
+    cpuset: "${OCR_CPUSET:-0-${OCR_WEB_SERVICE_WORKERS:-1}}"
+    shm_size: ${OCR_SERVICE_DOCKER_SHM_SIZE:-1g}
     environment:
       - http_proxy=$HTTP_PROXY
       - https_proxy=$HTTPS_PROXY
@@ -62,7 +58,7 @@ services:
       # overwrite the ocr_service.env with text only version
       - ${OCR_SERVICE_ENV_FILE_PATH_CONFIG_NO_OCR_TEXT_ONLY:-../env/ocr_service_text_only.env}
     volumes:
-      - ../log/:/ocr_service/log:rw
+      - ../models/:/ocr_service/models:rw
     ulimits:
       memlock:
         soft: -1
