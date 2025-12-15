@@ -3,11 +3,14 @@ services:
     extends:
       file: docker-compose.base.yml
       service: ocr-service
-
+    networks:
+      - cognet
   ocr-service-text-only:
     extends:
       file: docker-compose.base.yml
       service: ocr-service-text-only
+    networks:
+      - cognet
 
 networks:
   cognet:

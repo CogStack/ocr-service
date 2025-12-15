@@ -28,10 +28,6 @@ x-ocr-service-common: &ocr-service-common
         cpus: "${OCR_SERVICE_DOCKER_CPU_MIN:-0.5}"
         memory: "${OCR_SERVICE_DOCKER_RAM_MIN:-512m}"
   environment:
-    - http_proxy=$HTTP_PROXY
-    - https_proxy=$HTTPS_PROXY
-    - no_proxy=$no_proxy
-
     # tesseract threading is disabled as the processing will take care of distribution
     - OMP_THREAD_LIMIT=1
   env_file: *ocr-env-files-full
@@ -51,10 +47,10 @@ x-ocr-service-common: &ocr-service-common
     - cognet
   healthcheck:
     test: ["CMD", "curl", "-fsS", "http://127.0.0.1:${OCR_SERVICE_INTERNAL_PORT:-8090}/api/health"]
-    interval: 120s
+    interval: 360s
     timeout: 60s
     retries: 3
-    start_period: 20s
+    start_period: 360s
   logging: *ocr-logging-common
 
 services:
@@ -74,7 +70,7 @@ services:
       - ../models/:/ocr_service/models:ro
       - ocr-service-text-only-tmp-vol:${OCR_TMP_DIR:-/ocr_service/tmp}
     ports:
-      - "${OCR_SERVICE_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
+      - "${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
 
 volumes:
   ocr-service-tmp-vol:

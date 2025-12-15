@@ -20,3 +20,11 @@ services:
 networks:
   cognet:
     name: cogstack-net
+
+volumes:
+  ocr-service-tmp-vol:
+    name: "${VOLUME_PREFIX:-deploy_}ocr-service-tmp-vol"
+    driver: local
+  ocr-service-text-only-tmp-vol:
+    name: "${VOLUME_PREFIX:-deploy_}ocr-service-text-only-tmp-vol"
+    driver: local

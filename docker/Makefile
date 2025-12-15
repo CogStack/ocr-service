@@ -19,7 +19,7 @@ set -a && source ../export_env_vars.sh;
 endef
 
 .PHONY: up down restart build logs logs-dev logs-text logs-text-dev health-check \
-	start start-dev start-dev-build start-prod \
+	start start-dev start-dev-build start-prod stop-dev stop-prod \
 	stop-all load-env show-env
 
 # utility commands
@@ -43,7 +43,7 @@ logs:
 	docker logs -f --tail 10000 $(CONTAINER_NAME)
 
 health-check:
-	${WITH_ENV} curl -fsSL http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/health
+	${WITH_ENV} sh -c 'curl -fsSL http://localhost:$${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/health | jq && curl -fsSL http://localhost:$${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}/api/health | jq'
 
 # start/stop services
 
@@ -61,3 +61,9 @@ start-prod:
 
 stop-all:
 	$(WITH_ENV) docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_DEV) -f $(COMPOSE_PROD) -f docker-compose.yml ${DC_DOWN_CMD}
+
+stop-dev:
+	$(WITH_ENV) docker compose -f $(COMPOSE_DEV) ${DC_DOWN_CMD}
+
+stop-prod:
+	$(WITH_ENV) docker compose -f $(COMPOSE_BASE) -f $(COMPOSE_PROD) ${DC_DOWN_CMD}
