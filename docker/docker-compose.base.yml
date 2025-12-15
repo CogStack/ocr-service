@@ -66,9 +66,9 @@ services:
   ocr-service-text-only:
     <<: *ocr-service-common
     container_name: ocr-service-text-only
-  image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
-  env_file: *ocr-env-files-text
-  volumes:
-    - ../models/:/ocr_service/models:ro
+    image: ${OCR_SERVICE_DOCKER_IMAGE:-cogstacksystems/cogstack-ocr-service:${OCR_SERVICE_IMAGE_RELEASE_VERSION:-latest}}
+    env_file: *ocr-env-files-text
+    volumes:
+      - ../models/:/ocr_service/models:ro
     ports:
       - "${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-8091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
