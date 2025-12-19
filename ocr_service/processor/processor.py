@@ -11,8 +11,6 @@ from ocr_service.processor.converter import DocumentConverter
 from ocr_service.processor.ocr_engine import OcrEngine
 from ocr_service.utils.utils import detect_file_type, normalise_file_name_with_ext, setup_logging
 
-sys.path.append("..")
-
 
 class Processor:
     """Orchestrates document conversion and OCR processing via converter and OCR engine helpers."""

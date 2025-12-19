@@ -3,7 +3,6 @@ import re
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 
 from starlette.middleware.base import BaseHTTPMiddleware
 

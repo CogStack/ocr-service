@@ -34,8 +34,6 @@ from config import (
     WORKER_PORT_MAP_FILE_PATH,
 )
 
-sys.path.append("..")
-
 INPUT_FILTERS: dict[str, str] = {
     # ── Writer / text ──
     ".odt":   "writer8",

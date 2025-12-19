@@ -2,7 +2,6 @@ import contextlib
 import logging
 import os
 import subprocess
-import sys
 import time
 from threading import Event, Thread
 from typing import Any
@@ -27,7 +26,6 @@ from ocr_service.api import api
 from ocr_service.processor.processor import Processor
 from ocr_service.utils.utils import cleanup_stale_lo_profiles, get_assigned_port, terminate_hanging_process
 
-sys.path.append("..")
 
 # guard so LibreOffice startup runs only once per worker
 _started: bool = False
