@@ -10,12 +10,11 @@ from io import BytesIO
 from multiprocessing.dummy import Pool, Queue
 from subprocess import PIPE, Popen
 from threading import Timer
-from typing import Any, TypeVar
+from typing import Any
 
 import pypdfium2 as pdfium
 from bs4 import BeautifulSoup
 from filetype.types import DOCUMENT, IMAGE, archive
-from html2image import Html2Image
 from PIL import Image
 from striprtf.striprtf import rtf_to_text
 from tesserocr import PyTessBaseAPI
@@ -47,42 +46,12 @@ from ocr_service.utils.utils import (
 
 sys.path.append("..")
 
-PILImage = TypeVar('PILImage', bound=Image.Image)
-
 class Processor:
 
     def __init__(self):
         self.log = setup_logging(component_name="processor", log_level=LOG_LEVEL)
         self.log.debug("log level set to : " + str(LOG_LEVEL))
         self.loffice_process_list = {}
-
-    def _preprocess_html_to_img(self, stream: bytes, file_name: str) -> list[Image.Image]:
-        """ Uses html2image to screenshot the page to an PIL image.
-
-        Args:
-            stream (bytes): _description_ . File byte buffer.
-            file_name (str): _description_ . File Id.
-
-        Returns:
-            List[PILImage]: _description_
-        """
-        hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
-        png_img_file_name: str = file_name + ".png"
-        png_img_file_path = os.path.join(TMP_FILE_DIR, png_img_file_name)
-
-        image: Image.Image = Image.Image()
-
-        try:
-            html_str = stream.decode("utf-8", errors="replace")
-            hti.screenshot(html_str=html_str, save_as=png_img_file_name)
-
-            with Image.open(png_img_file_path) as imgf:
-                image = imgf.convert("RGB").copy() if not OCR_CONVERT_GRAYSCALE_IMAGES else imgf.convert("L")
-
-        finally:
-            delete_tmp_files([png_img_file_path])
-
-        return [image]
 
     def _extract_text_fallback(self, stream: bytes, *, is_html: bool, is_xml: bool, is_rtf: bool) -> str:
         """Best-effort text extraction when LO conversion fails."""

@@ -14,9 +14,12 @@ from typing import Any
 
 import filetype
 import psutil
+from html2image import Html2Image
+from PIL import Image
 
 from config import (
     LIBRE_OFFICE_LISTENER_PORT_RANGE,
+    OCR_CONVERT_GRAYSCALE_IMAGES,
     OCR_SERVICE_VERSION,
     TESSDATA_PREFIX,
     TMP_FILE_DIR,
@@ -219,6 +222,32 @@ class TextChecks:
 
     def is_text_like(self) -> bool:
         return self.is_plain_text() or self.is_html() or self.is_xml() or self.is_rtf()
+
+
+def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
+    """Uses html2image to screenshot the page to a PIL image.
+       This is an old approach, kept here for future reference.
+       It requires a working installation of Chromium/Chrome/Firefox on the host system/docker container.
+       Currently not used in the main codebase as we switched to LibreOffice HTML file conversion to PDF,
+       but may be revisited in the future if we want a purer HTML to image conversion.
+    """
+    hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
+    png_img_file_name: str = file_name + ".png"
+    png_img_file_path = os.path.join(TMP_FILE_DIR, png_img_file_name)
+
+    image: Image.Image = Image.Image()
+
+    try:
+        html_str = stream.decode("utf-8", errors="replace")
+        hti.screenshot(html_str=html_str, save_as=png_img_file_name)
+
+        with Image.open(png_img_file_path) as imgf:
+            image = imgf.convert("RGB").copy() if not OCR_CONVERT_GRAYSCALE_IMAGES else imgf.convert("L")
+
+    finally:
+        delete_tmp_files([png_img_file_path])
+
+    return [image]
 
 
 def detect_file_type(stream: bytes) -> object | None:
