@@ -16,6 +16,7 @@ from filetype.types import DOCUMENT, IMAGE, archive
 from PIL import Image
 from striprtf.striprtf import rtf_to_text
 
+import config
 from config import (
     CONVERTER_THREAD_NUM,
     LIBRE_OFFICE_NETWORK_INTERFACE,
@@ -23,7 +24,6 @@ from config import (
     LIBRE_OFFICE_PYTHON_PATH,
     OCR_CONVERT_GRAYSCALE_IMAGES,
     OCR_IMAGE_DPI,
-    OPERATION_MODE,
     TMP_FILE_DIR,
 )
 from ocr_service.dto.process_context import ProcessContext
@@ -275,7 +275,7 @@ class DocumentConverter:
         return pdf_stream
 
     def _handle_image_stream(self, ctx: ProcessContext) -> list[Image.Image]:
-        if OPERATION_MODE == "NO_OCR":
+        if config.OPERATION_MODE == "NO_OCR":
             self.log.info("Detected image content; OCR skipped in NO_OCR mode")
             ctx.metadata["pages"] = 1
             ctx.metadata["ocr_skipped"] = True
@@ -288,10 +288,10 @@ class DocumentConverter:
         return [image]
 
     def _handle_pdf_stream(self, ctx: ProcessContext) -> None:
-        if OPERATION_MODE == "OCR":
+        if config.OPERATION_MODE == "OCR":
             ctx.images, pdf_metadata = self._preprocess_pdf_to_img(ctx.pdf_stream)
             ctx.metadata.update(pdf_metadata)
-        elif OPERATION_MODE == "NO_OCR":
+        elif config.OPERATION_MODE == "NO_OCR":
             ctx.output_text, pdf_metadata = self._pdf_to_text(ctx.pdf_stream)
             ctx.metadata.update(pdf_metadata)
 

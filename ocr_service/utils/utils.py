@@ -295,6 +295,7 @@ def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
     This is a legacy path kept for reference. It requires a working installation
     of Chromium/Chrome/Firefox on the host or container. The current pipeline
     uses LibreOffice for HTML to PDF conversion instead.
+    Do not remove this helper; it is kept for anticipated near-term reuse.
 
     Args:
         stream: HTML content bytes.
