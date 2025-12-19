@@ -102,6 +102,9 @@ the result will have the following format:
 }
 ```
 
+When OCR is intentionally skipped (for example `OCR_SERVICE_OPERATION_MODE=NO_OCR` with an image input),
+the response returns an empty `text`, `success` remains `True`, and `metadata.ocr_skipped` is set to `true`.
+
 Supports most document formats: pdf, html, doc(x), rtf, odt and also the image formats: png, jpeg/jpg, jpx, tiff, bmp.
 
 ## Example use

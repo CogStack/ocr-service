@@ -120,18 +120,24 @@ def build_response(
     success: bool = True,
     log_message: str = "",
     footer: dict | None = None,
-    metadata: dict | None  = None
+    metadata: dict | None  = None,
+    allow_empty_text: bool = False
 ) -> dict[str, Any]:
 
     if metadata is None:
         metadata = {}
-    metadata["log_message"] = log_message
 
     if len(text) > 0:
         success = True
+    elif allow_empty_text:
+        success = True
+        if not log_message:
+            log_message = "OCR skipped; no text generated."
     else:
         success = False
         log_message = "No text has been generated."
+
+    metadata["log_message"] = log_message
 
     return {
         "text": text,
@@ -181,6 +187,40 @@ def is_file_type_rtf(stream: bytes) -> bool:
     return head.startswith(b"{\\rtf")
 
 
+class TextChecks:
+    __slots__ = ("stream", "_is_html", "_is_xml", "_is_rtf", "_is_plain_text")
+
+    def __init__(self, stream: bytes) -> None:
+        self.stream = stream
+        self._is_html: bool | None = None
+        self._is_xml: bool | None = None
+        self._is_rtf: bool | None = None
+        self._is_plain_text: bool | None = None
+
+    def is_html(self) -> bool:
+        if self._is_html is None:
+            self._is_html = is_file_type_html(self.stream)
+        return self._is_html
+
+    def is_xml(self) -> bool:
+        if self._is_xml is None:
+            self._is_xml = is_file_type_xml(self.stream)
+        return self._is_xml
+
+    def is_rtf(self) -> bool:
+        if self._is_rtf is None:
+            self._is_rtf = is_file_type_rtf(self.stream)
+        return self._is_rtf
+
+    def is_plain_text(self) -> bool:
+        if self._is_plain_text is None:
+            self._is_plain_text = is_file_content_plain_text(self.stream)
+        return self._is_plain_text
+
+    def is_text_like(self) -> bool:
+        return self.is_plain_text() or self.is_html() or self.is_xml() or self.is_rtf()
+
+
 def detect_file_type(stream: bytes) -> object | None:
     file_type = None
     try:
@@ -190,7 +230,7 @@ def detect_file_type(stream: bytes) -> object | None:
     return file_type
 
 
-def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type) -> str:
+def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     """
         Used to make sure LibreOffice sees a sane base name with a real extension.
         And also if you want file naming consistency across various file types.
@@ -198,7 +238,6 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type) -> st
         Args:
             file_name (str): original file name
             stream (bytes): file content
-            file_type: detected file type from 'filetype' library
         Returns:
             str: normalised file name with extension
     """

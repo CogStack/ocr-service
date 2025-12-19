@@ -97,9 +97,17 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
     
     log.debug(f"Stream size: {len(stream)} bytes")
 
-    code = 200 if len(output_text) > 0 or not stream else 500
+    ocr_skipped = bool(doc_metadata.get("ocr_skipped"))
+    code = 200 if len(output_text) > 0 or not stream or ocr_skipped else 500
 
-    response: dict[Any, Any] = {"result": build_response(output_text, footer=footer, metadata=doc_metadata)}
+    response: dict[Any, Any] = {
+        "result": build_response(
+            output_text,
+            footer=footer,
+            metadata=doc_metadata,
+            allow_empty_text=ocr_skipped,
+        )
+    }
 
     return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 
@@ -122,9 +130,16 @@ def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONRespon
     except Exception:
         return ORJSONResponse(content={"detail": "Service is busy, try again"}, status_code=503)
 
-    code = 200 if len(output_text) > 0 or not stream else 500
+    ocr_skipped = bool(doc_metadata.get("ocr_skipped"))
+    code = 200 if len(output_text) > 0 or not stream or ocr_skipped else 500
 
-    response: dict[Any, Any] = {"result": build_response(output_text, metadata=doc_metadata)}
+    response: dict[Any, Any] = {
+        "result": build_response(
+            output_text,
+            metadata=doc_metadata,
+            allow_empty_text=ocr_skipped,
+        )
+    }
 
     return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 

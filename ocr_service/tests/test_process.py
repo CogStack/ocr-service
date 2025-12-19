@@ -8,7 +8,9 @@ import unittest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+import config as config_module
 from ocr_service.app import create_app
+from ocr_service.processor import processor as processor_module
 from ocr_service.tests.utils_helpers import DOCS, WSGIEnvironInjector, get_file, lev_similarity
 from ocr_service.utils.utils import sync_port_mapping
 
@@ -137,6 +139,31 @@ class TestOcrServiceProcessor(unittest.TestCase):
     def test_process_png(self):
         self.log.info("Testing PNG file processing")
         self._test_file("pat_id_1.png")
+
+    def test_process_png_no_ocr_returns_empty_text(self):
+        self.log.info("Testing PNG processing with NO_OCR mode")
+        payload: bytes = get_file("docs/generic/pat_id_1.png")
+        files = {"file": ("pat_id_1.png", payload, "application/octet-stream")}
+
+        previous_mode = processor_module.OPERATION_MODE
+        previous_config_mode = config_module.OPERATION_MODE
+        processor_module.OPERATION_MODE = "NO_OCR"
+        config_module.OPERATION_MODE = "NO_OCR"
+
+        try:
+            response = self.client.post(self.ENDPOINT_PROCESS_SINGLE, files=files)
+        finally:
+            processor_module.OPERATION_MODE = previous_mode
+            config_module.OPERATION_MODE = previous_config_mode
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("result", data)
+        self.assertIn("text", data["result"])
+        self.assertEqual(str(data["result"]["text"]), "")
+        self.assertEqual(data["result"].get("success"), "True")
+        metadata = data["result"].get("metadata", {})
+        self.assertTrue(metadata.get("ocr_skipped"))
 
     def test_process_html(self):
         self.log.info("Testing HTML file processing")
