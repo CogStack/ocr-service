@@ -1,5 +1,8 @@
 name: tests-ocr-service
 
+permissions:
+  contents: read
+
 on:
 
   push:
