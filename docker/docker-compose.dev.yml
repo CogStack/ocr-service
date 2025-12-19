@@ -4,6 +4,8 @@ services:
       file: docker-compose.base.yml
       service: ocr-service
     container_name: ocr-service-dev
+    ports:
+      - "${OCR_SERVICE_EXTERNAL_PORT:-18090}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
     build:
       context: ../
       dockerfile: "Dockerfile"
@@ -13,10 +15,16 @@ services:
       file: docker-compose.base.yml
       service: ocr-service-text-only
     container_name: ocr-service-text-only-dev
+    environment:
+      - OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT=${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-18091}
+      - OCR_SERVICE_EXTERNAL_PORT=${OCR_SERVICE_EXTERNAL_PORT:-18090}
+    ports:
+      - "${OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT:-18091}:${OCR_SERVICE_INTERNAL_PORT:-8090}"
     build:
       context: ../
       dockerfile: "Dockerfile"
 
 networks:
   cognet:
+    driver: bridge
     name: cogstack-net
