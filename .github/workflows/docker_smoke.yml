@@ -21,20 +21,20 @@ jobs:
       - name: Start stack
         run: |
           cd docker
-          make start-dev
+          make start-dev-build
 
         env:
-          OCR_SERVICE_EXTERNAL_PORT: 18090
-          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
+          OCR_SERVICE_EXTERNAL_PORT: 8090
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 8091
 
       - name: Wait for health
         env:
-          OCR_SERVICE_EXTERNAL_PORT: 18090
-          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 18091
+          OCR_SERVICE_EXTERNAL_PORT: 8090
+          OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 8091
         run: |
           set -euo pipefail
           timeout=600
-          interval=5
+          interval=10
           url="http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/health"
 
           end=$((SECONDS+timeout))
