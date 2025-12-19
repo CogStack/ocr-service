@@ -1,3 +1,11 @@
+"""Utility helpers for the OCR service.
+
+This module centralizes shared behaviors across the API and processor layers,
+including response shaping, file type detection, text heuristics, LibreOffice
+process management, and logging setup. It also contains a legacy HTML-to-image
+converter kept for reference.
+"""
+
 import contextlib
 import fcntl
 import json
@@ -106,11 +114,12 @@ INPUT_FILTERS: dict[str, str] = {
 }
 
 def get_app_info() -> dict:
-    """ Returns general information about the application.
-    Used in the /api/info url.
+    """Return general information about the application.
+
+    Used by the `/api/info` endpoint.
 
     Returns:
-        dict: _description_ . Application information stored as KVPs
+        dict: Application information (name, version, model path, config placeholder).
     """
     return {"service_app_name": "ocr-service",
             "service_version": OCR_SERVICE_VERSION,
@@ -126,6 +135,19 @@ def build_response(
     metadata: dict | None  = None,
     allow_empty_text: bool = False
 ) -> dict[str, Any]:
+    """Build a standard API response payload.
+
+    Args:
+        text: Extracted/OCR'd text.
+        success: Default success value (overridden by text/allow_empty_text).
+        log_message: Optional status message to attach to metadata.
+        footer: Optional footer payload from the original request.
+        metadata: Document metadata (content-type, pages, confidence, etc.).
+        allow_empty_text: Treat empty text as success (e.g., NO_OCR image inputs).
+
+    Returns:
+        dict[str, Any]: Normalized response structure for the API.
+    """
 
     if metadata is None:
         metadata = {}
@@ -152,6 +174,11 @@ def build_response(
 
 
 def delete_tmp_files(file_paths: list[str]) -> None:
+    """Delete temporary files if they exist.
+
+    Args:
+        file_paths: Paths to delete (missing paths are ignored).
+    """
     for file_path in file_paths:
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -159,6 +186,15 @@ def delete_tmp_files(file_paths: list[str]) -> None:
 PRINTABLE = set(bytes(string.printable, "ascii")) | {9, 10, 13}
 
 def is_file_content_plain_text(stream: bytes, threshold: float = 0.95) -> bool:
+    """Heuristic to determine whether a byte stream is likely plain text.
+
+    Args:
+        stream: Raw bytes to inspect.
+        threshold: Ratio of printable ASCII bytes required to treat as text.
+
+    Returns:
+        bool: True if the stream appears to be text-like.
+    """
     if not stream:
         return False
 
@@ -174,10 +210,26 @@ def is_file_content_plain_text(stream: bytes, threshold: float = 0.95) -> bool:
     return printable / len(sample) >= threshold
 
 def is_file_type_html(stream: bytes) -> bool:
+    """Detect HTML content by scanning the head of the stream.
+
+    Args:
+        stream: Raw bytes to inspect.
+
+    Returns:
+        bool: True if HTML markers are found.
+    """
     head = stream[:2048].decode(errors="ignore").lower()
     return "<html" in head or "<!doctype html" in head
 
 def is_file_type_xml(stream: bytes) -> bool:
+    """Detect XML content by attempting to parse the stream.
+
+    Args:
+        stream: Raw bytes to inspect.
+
+    Returns:
+        bool: True if XML parsing succeeds.
+    """
     try:
         xml.sax.parseString(stream, xml.sax.ContentHandler())
         return True
@@ -186,14 +238,24 @@ def is_file_type_xml(stream: bytes) -> bool:
     return False
 
 def is_file_type_rtf(stream: bytes) -> bool:
+    """Detect RTF content by checking for the RTF header magic bytes.
+
+    Args:
+        stream: Raw bytes to inspect.
+
+    Returns:
+        bool: True if the stream starts with the RTF header.
+    """
     head = stream[:32].lstrip()
     return head.startswith(b"{\\rtf")
 
 
 class TextChecks:
+    """Lazy, cached text-type detection helpers for a single stream."""
     __slots__ = ("stream", "_is_html", "_is_xml", "_is_rtf", "_is_plain_text")
 
     def __init__(self, stream: bytes) -> None:
+        """Initialize with the stream to inspect."""
         self.stream = stream
         self._is_html: bool | None = None
         self._is_xml: bool | None = None
@@ -201,35 +263,47 @@ class TextChecks:
         self._is_plain_text: bool | None = None
 
     def is_html(self) -> bool:
+        """Return True if the stream appears to be HTML."""
         if self._is_html is None:
             self._is_html = is_file_type_html(self.stream)
         return self._is_html
 
     def is_xml(self) -> bool:
+        """Return True if the stream appears to be XML."""
         if self._is_xml is None:
             self._is_xml = is_file_type_xml(self.stream)
         return self._is_xml
 
     def is_rtf(self) -> bool:
+        """Return True if the stream appears to be RTF."""
         if self._is_rtf is None:
             self._is_rtf = is_file_type_rtf(self.stream)
         return self._is_rtf
 
     def is_plain_text(self) -> bool:
+        """Return True if the stream appears to be plain text."""
         if self._is_plain_text is None:
             self._is_plain_text = is_file_content_plain_text(self.stream)
         return self._is_plain_text
 
     def is_text_like(self) -> bool:
+        """Return True if the stream is HTML/XML/RTF/plain text."""
         return self.is_plain_text() or self.is_html() or self.is_xml() or self.is_rtf()
 
 
 def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
-    """Uses html2image to screenshot the page to a PIL image.
-       This is an old approach, kept here for future reference.
-       It requires a working installation of Chromium/Chrome/Firefox on the host system/docker container.
-       Currently not used in the main codebase as we switched to LibreOffice HTML file conversion to PDF,
-       but may be revisited in the future if we want a purer HTML to image conversion.
+    """Render HTML to a screenshot image via html2image.
+
+    This is a legacy path kept for reference. It requires a working installation
+    of Chromium/Chrome/Firefox on the host or container. The current pipeline
+    uses LibreOffice for HTML to PDF conversion instead.
+
+    Args:
+        stream: HTML content bytes.
+        file_name: Base name used for the temporary PNG file.
+
+    Returns:
+        list[Image.Image]: A single rendered image.
     """
     hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
     png_img_file_name: str = file_name + ".png"
@@ -251,6 +325,14 @@ def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
 
 
 def detect_file_type(stream: bytes) -> object | None:
+    """Best-effort file type detection using the `filetype` library.
+
+    Args:
+        stream: Raw bytes to inspect.
+
+    Returns:
+        object | None: Detected type descriptor or None if unknown.
+    """
     file_type = None
     try:
         file_type = filetype.guess(stream)
@@ -260,15 +342,18 @@ def detect_file_type(stream: bytes) -> object | None:
 
 
 def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
-    """
-        Used to make sure LibreOffice sees a sane base name with a real extension.
-        And also if you want file naming consistency across various file types.
+    """Normalize filename and ensure an extension is present.
 
-        Args:
-            file_name (str): original file name
-            stream (bytes): file content
-        Returns:
-            str: normalised file name with extension
+    LibreOffice relies on a reasonable filename with an extension to select
+    conversion filters. This helper preserves any provided extension and
+    falls back to content-based detection when missing.
+
+    Args:
+        file_name: Original file name (may be empty or extension-less).
+        stream: File content used for extension inference.
+
+    Returns:
+        str: Normalized file name with an extension.
     """
 
     name = file_name or "document"
@@ -298,10 +383,10 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     return base + ".txt"
 
 def terminate_hanging_process(process_id: int) -> None:
-    """ Kills process given process id.
+    """Terminate a process tree by PID.
 
     Args:
-        process_id (int, optional): _description_. Defaults to None.
+        process_id: Process ID to terminate (no-op if falsy).
     """
 
     if not process_id:
@@ -336,6 +421,11 @@ def terminate_hanging_process(process_id: int) -> None:
 
 
 def _active_lo_profiles() -> set[str]:
+    """Return the set of LibreOffice profile paths used by running processes.
+
+    Returns:
+        set[str]: Normalized profile paths discovered in running soffice processes.
+    """
     active: set[str] = set()
     for proc in psutil.process_iter(attrs=["cmdline"]):
         try:
@@ -354,7 +444,11 @@ def _active_lo_profiles() -> set[str]:
 
 
 def cleanup_stale_lo_profiles(tmp_dir: str = TMP_FILE_DIR) -> None:
-    """Remove LibreOffice profile folders not used by any running process."""
+    """Remove LibreOffice profile folders not used by any running process.
+
+    Args:
+        tmp_dir: Base directory containing LibreOffice profile folders.
+    """
     base = Path(tmp_dir)
     if not base.exists():
         return
@@ -374,17 +468,15 @@ def cleanup_stale_lo_profiles(tmp_dir: str = TMP_FILE_DIR) -> None:
 
 
 def get_process_id_by_process_name(process_name: str = "") -> int:
-    """ Looks for specific process in process_name
-    Used mostly for making sure that the 'soffice' process times out
-    forcefully (it has a habit of hanging or getting stuck so
-    we manually shut it down and restart it).
+    """Return the first matching PID for a process name or path fragment.
+
+    Used primarily to locate LibreOffice/soffice processes for cleanup.
 
     Args:
-        process_name (str, optional): _description_. Defaults to "",
-        actual process name or process path
+        process_name: Substring to match against process names.
 
     Returns:
-        int: _description_ . pid, process ID
+        int: Matching process ID, or -1 if not found.
     """
 
     pid: int = -1
@@ -405,6 +497,12 @@ def get_process_id_by_process_name(process_name: str = "") -> int:
 
 
 def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
+    """Persist LibreOffice port-to-worker PID mapping for multi-worker setups.
+
+    Args:
+        worker_id: Gunicorn worker index.
+        worker_pid: Process ID for the worker.
+    """
     open_mode = "r+"
 
     if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):
@@ -428,6 +526,14 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
 
 
 def get_assigned_port(current_worker_pid: int) -> int:
+    """Return the LibreOffice port previously assigned to a worker PID.
+
+    Args:
+        current_worker_pid: PID of the current worker process.
+
+    Returns:
+        int: Assigned port, or the default base port if not found.
+    """
     port_mapping: dict = {}
 
     open_mode = "r+"
@@ -445,8 +551,14 @@ def get_assigned_port(current_worker_pid: int) -> int:
 
 
 def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:
-    """
-        :description: Configure and setup a default logging handler to print messages to stdout.
+    """Configure a logger that writes to stdout with a consistent format.
+
+    Args:
+        component_name: Logger name to configure.
+        log_level: Logging level to set on the logger and handler.
+
+    Returns:
+        logging.Logger: Configured logger instance.
     """
     root_logger = logging.getLogger(component_name)
     log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'

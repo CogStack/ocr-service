@@ -8,9 +8,8 @@ import unittest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-import config as config_module
 from ocr_service.app import create_app
-from ocr_service.processor import processor as processor_module
+from ocr_service.processor import converter
 from ocr_service.tests.utils_helpers import DOCS, WSGIEnvironInjector, get_file, lev_similarity
 from ocr_service.utils.utils import sync_port_mapping
 
@@ -20,7 +19,7 @@ class TestOcrServiceProcessor(unittest.TestCase):
     ENDPOINT_API_INFO = "/api/info"
     ENDPOINT_PROCESS_SINGLE = "/api/process"
 
-    TEXT_SIMILARITY_THRESHOLD = 0.6
+    TEXT_SIMILARITY_THRESHOLD = 0.60
 
     app: FastAPI
     client: TestClient
@@ -145,16 +144,13 @@ class TestOcrServiceProcessor(unittest.TestCase):
         payload: bytes = get_file("docs/generic/pat_id_1.png")
         files = {"file": ("pat_id_1.png", payload, "application/octet-stream")}
 
-        previous_mode = processor_module.OPERATION_MODE
-        previous_config_mode = config_module.OPERATION_MODE
-        processor_module.OPERATION_MODE = "NO_OCR"
-        config_module.OPERATION_MODE = "NO_OCR"
+        previous_mode = converter.OPERATION_MODE
+        converter.OPERATION_MODE = "NO_OCR"
 
         try:
             response = self.client.post(self.ENDPOINT_PROCESS_SINGLE, files=files)
         finally:
-            processor_module.OPERATION_MODE = previous_mode
-            config_module.OPERATION_MODE = previous_config_mode
+            converter.OPERATION_MODE = previous_mode
 
         self.assertEqual(response.status_code, 200)
         data = response.json()

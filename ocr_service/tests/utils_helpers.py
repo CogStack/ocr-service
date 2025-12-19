@@ -37,7 +37,7 @@ DOCS = [
 ]
 
 
-def get_file(file_path: Union[str, Path]) -> bytes:
+def get_file(file_path: str | Path) -> bytes:
     p = TEST_FILES_ROOT_PATH / Path(file_path)
     logging.info(f"Reading test file from: {p}")
     return p.read_bytes()
