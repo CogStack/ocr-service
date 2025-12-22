@@ -16,16 +16,7 @@ from filetype.types import DOCUMENT, IMAGE, archive
 from PIL import Image
 from striprtf.striprtf import rtf_to_text
 
-import config
-from config import (
-    CONVERTER_THREAD_NUM,
-    LIBRE_OFFICE_NETWORK_INTERFACE,
-    LIBRE_OFFICE_PROCESS_TIMEOUT,
-    LIBRE_OFFICE_PYTHON_PATH,
-    OCR_CONVERT_GRAYSCALE_IMAGES,
-    OCR_IMAGE_DPI,
-    TMP_FILE_DIR,
-)
+from ocr_service.settings import settings
 from ocr_service.dto.process_context import ProcessContext
 from ocr_service.utils.utils import INPUT_FILTERS, delete_tmp_files, terminate_hanging_process
 
@@ -82,7 +73,7 @@ class DocumentConverter:
         pdf = pdfium.PdfDocument(stream)
 
         pdf_conversion_start_time = time.time()
-        scale = int(OCR_IMAGE_DPI / 72)
+        scale = int(settings.OCR_SERVICE_IMAGE_DPI / 72)
 
         def render_page(index: int) -> Image.Image:
             page = pdf[index]
@@ -94,10 +85,10 @@ class DocumentConverter:
                 no_smoothpath=True,
                 rotation=0,
                 crop=(0, 0, 0, 0),
-                grayscale=OCR_CONVERT_GRAYSCALE_IMAGES
+                grayscale=settings.OCR_CONVERT_GRAYSCALE_IMAGES
             ).to_pil()
 
-        with Pool(CONVERTER_THREAD_NUM) as pool:
+        with Pool(settings.CONVERTER_THREAD_NUM) as pool:
             pdf_image_pages = pool.map(render_page, range(len(pdf)))
 
         pdf_conversion_end_time = time.time()
@@ -150,7 +141,7 @@ class DocumentConverter:
             # generate unique id
             uid = uuid.uuid4().hex
 
-            doc_file_path = os.path.join(TMP_FILE_DIR, str(uid) + "_" + file_name)
+            doc_file_path = os.path.join(settings.TMP_FILE_DIR, str(uid) + "_" + file_name)
             pdf_file_path = doc_file_path[:-len(ext)] + ".pdf"
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
@@ -166,13 +157,13 @@ class DocumentConverter:
                     used_port_num = str(port_num)
                     converter_bootstrap = "from unoserver.client import converter_main; converter_main()"
                     _args = [
-                        LIBRE_OFFICE_PYTHON_PATH,
+                        settings.LIBRE_OFFICE_PYTHON_PATH,
                         "-c",
                         converter_bootstrap,
                         doc_file_path,
                         pdf_file_path,
                         "--host",
-                        LIBRE_OFFICE_NETWORK_INTERFACE,
+                        settings.LIBRE_OFFICE_NETWORK_INTERFACE,
                         "--port",
                         str(used_port_num),
                         "--convert-to",
@@ -183,16 +174,27 @@ class DocumentConverter:
                         _args += ["--input-filter", input_filter]
 
                     self.log.debug("starting unoserver subprocess with args: " + str(_args))
-                    loffice_subprocess = Popen(args=_args,
-                                               cwd=TMP_FILE_DIR, close_fds=True, shell=False, stdout=PIPE, stderr=PIPE)
+                    loffice_subprocess = Popen(
+                        args=_args,
+                        cwd=settings.TMP_FILE_DIR,
+                        close_fds=True,
+                        shell=False,
+                        stdout=PIPE,
+                        stderr=PIPE,
+                    )
                     self.loffice_process_list[used_port_num]["used"] = True
                     break
 
             if loffice_subprocess is not None and used_port_num is not None:
-                loffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT), function=loffice_subprocess.kill)
-                soffice_timer = Timer(interval=float(LIBRE_OFFICE_PROCESS_TIMEOUT),
+                loffice_timer = Timer(
+                    interval=float(settings.LIBRE_OFFICE_PROCESS_TIMEOUT),
+                    function=loffice_subprocess.kill,
+                )
+                soffice_timer = Timer(
+                    interval=float(settings.LIBRE_OFFICE_PROCESS_TIMEOUT),
                                       function=terminate_hanging_process,
-                                      args=[self.loffice_process_list[used_port_num]["process"].pid])
+                    args=[self.loffice_process_list[used_port_num]["process"].pid],
+                )
                 try:
                     loffice_timer.start()
                     stdout, stderr = loffice_subprocess.communicate()
@@ -253,7 +255,7 @@ class DocumentConverter:
 
             # generate unique id
             uid = uuid.uuid4().hex
-            xml_file_path = os.path.join(TMP_FILE_DIR, file_name + "_" + str(uid) + ".xml")
+            xml_file_path = os.path.join(settings.TMP_FILE_DIR, file_name + "_" + str(uid) + ".xml")
             pdf_file_path = xml_file_path + ".pdf"
 
             with open(file=xml_file_path, mode="wb") as tmp_doc_file:
@@ -275,7 +277,7 @@ class DocumentConverter:
         return pdf_stream
 
     def _handle_image_stream(self, ctx: ProcessContext) -> list[Image.Image]:
-        if config.OPERATION_MODE == "NO_OCR":
+        if settings.OPERATION_MODE == "NO_OCR":
             self.log.info("Detected image content; OCR skipped in NO_OCR mode")
             ctx.metadata["pages"] = 1
             ctx.metadata["ocr_skipped"] = True
@@ -288,10 +290,10 @@ class DocumentConverter:
         return [image]
 
     def _handle_pdf_stream(self, ctx: ProcessContext) -> None:
-        if config.OPERATION_MODE == "OCR":
+        if settings.OPERATION_MODE == "OCR":
             ctx.images, pdf_metadata = self._preprocess_pdf_to_img(ctx.pdf_stream)
             ctx.metadata.update(pdf_metadata)
-        elif config.OPERATION_MODE == "NO_OCR":
+        elif settings.OPERATION_MODE == "NO_OCR":
             ctx.output_text, pdf_metadata = self._pdf_to_text(ctx.pdf_stream)
             ctx.metadata.update(pdf_metadata)
 

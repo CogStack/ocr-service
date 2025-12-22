@@ -25,14 +25,7 @@ import psutil
 from html2image import Html2Image
 from PIL import Image
 
-from config import (
-    LIBRE_OFFICE_LISTENER_PORT_RANGE,
-    OCR_CONVERT_GRAYSCALE_IMAGES,
-    OCR_SERVICE_VERSION,
-    TESSDATA_PREFIX,
-    TMP_FILE_DIR,
-    WORKER_PORT_MAP_FILE_PATH,
-)
+from ocr_service.settings import settings
 
 INPUT_FILTERS: dict[str, str] = {
     # ── Writer / text ──
@@ -120,8 +113,8 @@ def get_app_info() -> dict:
         dict: Application information (name, version, model path, config placeholder).
     """
     return {"service_app_name": "ocr-service",
-            "service_version": OCR_SERVICE_VERSION,
-            "service_model": TESSDATA_PREFIX,
+            "service_version": settings.OCR_SERVICE_VERSION,
+            "service_model": settings.TESSDATA_PREFIX,
             "config": ""}
 
 
@@ -304,9 +297,9 @@ def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
     Returns:
         list[Image.Image]: A single rendered image.
     """
-    hti = Html2Image(output_path=TMP_FILE_DIR, temp_path=TMP_FILE_DIR)
+    hti = Html2Image(output_path=settings.TMP_FILE_DIR, temp_path=settings.TMP_FILE_DIR)
     png_img_file_name: str = file_name + ".png"
-    png_img_file_path = os.path.join(TMP_FILE_DIR, png_img_file_name)
+    png_img_file_path = os.path.join(settings.TMP_FILE_DIR, png_img_file_name)
 
     image: Image.Image = Image.Image()
 
@@ -315,7 +308,7 @@ def preprocess_html_to_img(stream: bytes, file_name: str) -> list[Image.Image]:
         hti.screenshot(html_str=html_str, save_as=png_img_file_name)
 
         with Image.open(png_img_file_path) as imgf:
-            image = imgf.convert("RGB").copy() if not OCR_CONVERT_GRAYSCALE_IMAGES else imgf.convert("L")
+            image = imgf.convert("RGB").copy() if not settings.OCR_CONVERT_GRAYSCALE_IMAGES else imgf.convert("L")
 
     finally:
         delete_tmp_files([png_img_file_path])
@@ -442,7 +435,7 @@ def _active_lo_profiles() -> set[str]:
     return active
 
 
-def cleanup_stale_lo_profiles(tmp_dir: str = TMP_FILE_DIR) -> None:
+def cleanup_stale_lo_profiles(tmp_dir: str = settings.TMP_FILE_DIR) -> None:
     """Remove LibreOffice profile folders not used by any running process.
 
     Args:
@@ -504,10 +497,10 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
     """
     open_mode = "r+"
 
-    if not os.path.exists(WORKER_PORT_MAP_FILE_PATH):
+    if not os.path.exists(settings.WORKER_PORT_MAP_FILE_PATH):
         open_mode = "w+"
 
-    with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
+    with open(settings.WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
         fcntl.lockf(f, fcntl.LOCK_EX)
 
         port_mapping = {}
@@ -516,7 +509,7 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
         if len(text) > 0:
             port_mapping = json.loads(text)
 
-        port_mapping[str(LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id)] = str(worker_pid)
+        port_mapping[str(settings.LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id)] = str(worker_pid)
         output = json.dumps(port_mapping, indent=1)
         f.seek(0)
         f.truncate(0)
@@ -537,8 +530,8 @@ def get_assigned_port(current_worker_pid: int) -> int:
 
     open_mode = "r+"
 
-    if os.path.exists(WORKER_PORT_MAP_FILE_PATH):
-        with open(WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
+    if os.path.exists(settings.WORKER_PORT_MAP_FILE_PATH):
+        with open(settings.WORKER_PORT_MAP_FILE_PATH, encoding="utf-8", mode=open_mode) as f:
             text = f.read()
             if len(text) > 0:
                 port_mapping = json.loads(text)
@@ -546,7 +539,7 @@ def get_assigned_port(current_worker_pid: int) -> int:
                     if int(worker_pid) == int(current_worker_pid):
                         return int(port_num)
 
-    return int(LIBRE_OFFICE_LISTENER_PORT_RANGE[0])
+    return int(settings.LIBRE_OFFICE_LISTENER_PORT_RANGE[0])
 
 
 def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:

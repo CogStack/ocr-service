@@ -33,6 +33,9 @@ x-ocr-service-common: &ocr-service-common
   environment:
     # tesseract threading is disabled as the processing will take care of distribution
     - OMP_THREAD_LIMIT=1
+    - http_proxy=$HTTP_PROXY
+    - https_proxy=$HTTPS_PROXY
+    - no_proxy=$no_proxy
   env_file: *ocr-env-files-full
   volumes:
     - ../models/:/ocr_service/models:ro

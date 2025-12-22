@@ -7,8 +7,8 @@ from multiprocessing.dummy import Pool, Queue
 
 from tesserocr import PyTessBaseAPI
 
-from config import CPU_THREADS, TESSDATA_PREFIX, TESSERACT_LANGUAGE, TESSERACT_TIMEOUT
 from ocr_service.dto.process_context import ProcessContext
+from ocr_service.settings import settings
 
 
 class OcrEngine:
@@ -16,8 +16,8 @@ class OcrEngine:
         self.log = log
 
     def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
-        tess_api = PyTessBaseAPI(path=TESSDATA_PREFIX, lang=TESSERACT_LANGUAGE)  # type: ignore
-        self.log.debug("Initialised pytesseract api worker for language:" + str(TESSERACT_LANGUAGE))
+        tess_api = PyTessBaseAPI(path=settings.TESSDATA_PREFIX, lang=settings.TESSERACT_LANGUAGE)  # type: ignore
+        self.log.debug("Initialised pytesseract api worker for language:" + str(settings.TESSERACT_LANGUAGE))
         return tess_api
 
     def _process_image(self, img, img_id: int, tess_api: PyTessBaseAPI) -> tuple[str, int, dict]:
@@ -44,7 +44,7 @@ class OcrEngine:
         ocr_start_time = time.time()
         proc_results = list()
 
-        with Pool(processes=CPU_THREADS) as process_pool:
+        with Pool(processes=settings.CPU_THREADS) as process_pool:
             tess_api_q: Queue = Queue()
             for count, img in enumerate(ctx.images):
                 tess_api_q.put(self._init_tesseract_api_worker())
@@ -54,7 +54,7 @@ class OcrEngine:
                                                                error_callback=logging.error))
             try:
                 for result in proc_results:
-                    result_data = result.get(timeout=TESSERACT_TIMEOUT)
+                    result_data = result.get(timeout=settings.TESSERACT_TIMEOUT)
                     _output_text, _, _tess_data = result_data[0][0], result_data[0][1], result_data[0][2]
                     ctx.output_text += str(_output_text)
                     tess_data.append(_tess_data)

@@ -10,22 +10,10 @@ import psutil
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
 
-from config import (
-    DEBUG_MODE,
-    LIBRE_OFFICE_EXEC_PATH,
-    LIBRE_OFFICE_LISTENER_PORT_RANGE,
-    LIBRE_OFFICE_NETWORK_INTERFACE,
-    LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL,
-    LIBRE_OFFICE_PYTHON_PATH,
-    OCR_SERVICE_VERSION,
-    OCR_WEB_SERVICE_THREADS,
-    OCR_WEB_SERVICE_WORKERS,
-    TMP_FILE_DIR,
-)
 from ocr_service.api import api
 from ocr_service.processor.processor import Processor
+from ocr_service.settings import settings
 from ocr_service.utils.utils import cleanup_stale_lo_profiles, get_assigned_port, terminate_hanging_process
-
 
 # guard so LibreOffice startup runs only once per worker
 _started: bool = False
@@ -40,23 +28,23 @@ def start_office_server(port_num: str) -> dict[str, Any]:
 
     # used in unoserver 2.1>=
     uno_port = str(int(port_num) + 1000)  # e.g. XML-RPC 9900, UNO 10900
-    user_installation = f"{TMP_FILE_DIR}/lo_profile_{port_num}"
+    user_installation = f"{settings.TMP_FILE_DIR}/lo_profile_{port_num}"
 
     loffice_process: dict[str, Any] = {
         "process": subprocess.Popen(
             args=[
-                LIBRE_OFFICE_PYTHON_PATH,
+                settings.LIBRE_OFFICE_PYTHON_PATH,
                 "-m",
                 "unoserver.server",
-                "--interface", LIBRE_OFFICE_NETWORK_INTERFACE,
-                "--uno-interface", LIBRE_OFFICE_NETWORK_INTERFACE,
-                "--executable", LIBRE_OFFICE_EXEC_PATH,
+                "--interface", settings.LIBRE_OFFICE_NETWORK_INTERFACE,
+                "--uno-interface", settings.LIBRE_OFFICE_NETWORK_INTERFACE,
+                "--executable", settings.LIBRE_OFFICE_EXEC_PATH,
                 "--port", port_num,
                 "--uno-port", uno_port,
                 "--user-installation", user_installation,
                # "--logfile", f"loffice_{port_num}.log"
             ],
-            cwd=TMP_FILE_DIR,
+            cwd=settings.TMP_FILE_DIR,
             close_fds=True,
             shell=False
         ),
@@ -83,17 +71,17 @@ def start_office_converter_servers() -> dict[str, Any]:
     assigned_port = get_assigned_port(os.getpid())
     _port = str(assigned_port)
 
-    for port_num in LIBRE_OFFICE_LISTENER_PORT_RANGE:
+    for port_num in settings.LIBRE_OFFICE_LISTENER_PORT_RANGE:
         _port_num = str(port_num)
         logging.info(
             "STARTED WORKER ON PORT: %s PID: %s ASSIGNED PORT: %s",
             _port_num, os.getpid(), assigned_port,
         )
-        if port_num == assigned_port and OCR_WEB_SERVICE_THREADS == 1:
+        if port_num == assigned_port and settings.OCR_WEB_SERVICE_THREADS == 1:
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
             break
-        elif (OCR_WEB_SERVICE_WORKERS == 1 and OCR_WEB_SERVICE_THREADS > 1) or DEBUG_MODE:
+        elif (settings.OCR_WEB_SERVICE_WORKERS == 1 and settings.OCR_WEB_SERVICE_THREADS > 1) or settings.DEBUG_MODE:
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
             break
@@ -135,7 +123,7 @@ def monitor_office_processes(thread_event: Event, processor: Processor) -> None:
         except Exception as e:
             logging.error("error in libreoffice monitor thread: " + str(e))
 
-        time.sleep(LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL)
+        time.sleep(settings.LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL)
 
 
 def create_app() -> FastAPI:
@@ -149,9 +137,9 @@ def create_app() -> FastAPI:
     try:
         app = FastAPI(title="OCR Service",
                       description="OCR Service API",
-                      version=OCR_SERVICE_VERSION,
+                      version=settings.OCR_SERVICE_VERSION,
                       default_response_class=ORJSONResponse,
-                      debug=DEBUG_MODE)
+                      debug=settings.DEBUG_MODE)
         app.include_router(api)
 
         # start once per worker

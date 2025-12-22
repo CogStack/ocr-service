@@ -5,7 +5,7 @@ import time
 import traceback
 from typing import Any
 
-from config import LOG_LEVEL
+from ocr_service.settings import settings
 from ocr_service.dto.process_context import ProcessContext
 from ocr_service.processor.converter import DocumentConverter
 from ocr_service.processor.ocr_engine import OcrEngine
@@ -16,8 +16,8 @@ class Processor:
     """Orchestrates document conversion and OCR processing via converter and OCR engine helpers."""
 
     def __init__(self):
-        self.log = setup_logging(component_name="processor", log_level=LOG_LEVEL)
-        self.log.debug("log level set to : " + str(LOG_LEVEL))
+        self.log = setup_logging(component_name="processor", log_level=settings.LOG_LEVEL)
+        self.log.debug("log level set to : " + str(settings.LOG_LEVEL))
         self.loffice_process_list = {}
         self.converter = DocumentConverter(self.log, self.loffice_process_list)
         self.ocr_engine = OcrEngine(self.log)

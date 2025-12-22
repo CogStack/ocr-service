@@ -20,6 +20,8 @@ atomicwrites==1.4.1
 fastapi==0.116.1
 orjson==3.11.2
 a2wsgi==1.10.10
+pydantic==2.11.0
+pydantic-settings==2.2.1
 httpx==0.28.1
 beautifulsoup4==4.12.3
 striprtf==0.0.26

@@ -145,13 +145,13 @@ This service is fast but it is resource intensive, and will attempt to use all c
 
 Simply edit the `docker-compose.yml` file and copy the same `ocr-service` section and edit the `OCR_SERVICE_CPU_THREADS` and `OCR_SERVICE_CONVERTER_THREADS` parameters to be equal to the number_of_cores on the machine divided by the number of services, i.e for 4 services assuming 16 cores - `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 16/4` for each docker service, don't forget to rename the service name and container name : ocr-service-1/-2/-3 and to change the output ports from 8090 to something else (pref the same port range for ease of tracking 809(1/2/3)).
 
-You can now also set the `OCR_WEB_SERVICE_THREADS` to a value greater than 1, allowing you to use only one docker container that can process multiple requests, each request having access to limited CPU cores, spread evenly. It might not be advised to use this with a different value than 1 if you are processing docuemnts with a large amount of pages, because each page gets sent to one core, it will take considerably more time to process, check the below [OCR-ing scenarios](#ocr-ing-scenarios).
+`OCR_WEB_SERVICE_THREADS` is deprecated and forced to 1; use `OCR_WEB_SERVICE_WORKERS` to scale parallel requests and adjust CPU/converter threads accordingly. See the [OCR-ing scenarios](#ocr-ing-scenarios) section.
 
 ## OCR-ing scenarios
 
 The speed of the service depends on a lot of factors: the raw size of the images being ocr-ed, the number of pages of a document, and also the number of cores available, as well as a critical factor, the CPU clock, evidently both core count and core speed need to be high for optimal performance.
 
-There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_WEB_SERVICE_THREADS - web service threads (how many parallel requests it can handle, it is 1 by default), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
+There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_WEB_SERVICE_WORKERS (parallel worker processes), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
 
 Service timeouts scenarios are highly likely with higher DPI settings, please change the `OCR_SERVICE_TESSERACT_TIMEOUT` to higher values if you are experiencing response timeouts. Conversion timeouts are also likely, please change the `OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT` in this case.
 
@@ -170,21 +170,21 @@ This is a reasonable scenarion in which you can benefit from having as many serv
 
 ### Images
 
-Since images do not go through the doc conversion process, you can run one container service with a higher number of web request threads, set `OCR_WEB_SERVICE_THREADS` to a desired number, it should be no greater than the number of cores on the machine,
-and set ocr + converter threads to be the equal to  `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUT / OCR_WEB_SERVICE_THREADS`, so for 16 cores and OCR_WEB_SERVICE_THREADS = 16 you would want `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` .
+Since images do not go through the doc conversion process, you can increase `OCR_WEB_SERVICE_WORKERS` and set
+`OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = CPU_COUNT / OCR_WEB_SERVICE_WORKERS` to balance cores.
 
 ## Config variables
 
-These are the config variables declared in `config.py`.
+These are the config variables declared in `ocr_service/settings.py`.
 
 ```text
 OCR_TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tesseract model, by default the model within the Docker container is Tesseract Fast (https://github.com/tesseract-ocr/tessdata_fast), if you wish to change it for better results please go to https://github.com/tesseract-ocr/tessdata_best , download the zip from the release, extract it and change the path, don't forget to mount that folder on the container if you are using Docker.
 
 OCR_SERVICE_TESSERACT_LANG - default "eng", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
 
-OCR_WEB_SERVICE_WORKER_CLASS - default "gthread", "gthread" is best if you use multiple threads per worker, if you are only using 1 worker and 1 thread, max performance is achieved with "sync", note that with "sync" you can only ever have one thread per worker, the       "OCR_WEB_SERVICE_THREADS" will be ignored.
+OCR_WEB_SERVICE_WORKER_CLASS - default "gthread", "gthread" is best if you use multiple threads per worker, if you are only using 1 worker and 1 thread, max performance is achieved with "sync"; OCR_WEB_SERVICE_THREADS is deprecated and forced to 1.
 
-OCR_WEB_SERVICE_THREADS - default 1, this is specifically used by the web service, this can now be set to a value greater than 1 to allow multiple requests to process at the same time, of course, with split CPU resources,see OCR-ing scenarios section above
+OCR_WEB_SERVICE_THREADS - deprecated; forced to 1. Use OCR_WEB_SERVICE_WORKERS to scale parallel processing.
 
 OCR_SERVICE_LOG_LEVEL - default 40, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
 
@@ -196,7 +196,7 @@ OCR_SERVICE_TESSERACT_NICE - default -18, this is just for Linux systems, we nee
 
 OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS - extra parameters that you might want to pass to tesseract
 
-OCR_SERVICE_CPU_THREADS - defaults to whatever the core count on the machine is divided by OCR_WEB_SERVICE_THREADS , this variable is used by tesseract, each web thread will get access to a limited amount of CPUS so that resources are spread evenly
+OCR_SERVICE_CPU_THREADS - defaults to core count divided by OCR_WEB_SERVICE_WORKERS; this variable is used by tesseract to spread CPU usage per worker
 
 OCR_SERVICE_CONVERTER_THREADS - defaults to whatever the core count on the machine is, this variable is used for converting pdf docs to images
 
@@ -204,5 +204,5 @@ OCR_SERVICE_IMAGE_DPI - default 200 DPI, tesseract image DPI rendering resolutio
 
 OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT - default 10 seconds, used for converting docs to pdf. 
 
-OCR_WEB_SERVICE_WORKERS - number of worker threads (this means running multiple instances in parallel, becareful to balance load out by settings the threads to evenly distribute themselves amongst workers)
+OCR_WEB_SERVICE_WORKERS - number of worker processes running in parallel; balance CPU_THREADS and CONVERTER_THREADS accordingly
 ```
