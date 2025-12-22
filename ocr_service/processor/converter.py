@@ -16,8 +16,8 @@ from filetype.types import DOCUMENT, IMAGE, archive
 from PIL import Image
 from striprtf.striprtf import rtf_to_text
 
-from ocr_service.settings import settings
 from ocr_service.dto.process_context import ProcessContext
+from ocr_service.settings import settings
 from ocr_service.utils.utils import INPUT_FILTERS, delete_tmp_files, terminate_hanging_process
 
 

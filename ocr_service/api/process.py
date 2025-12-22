@@ -10,8 +10,8 @@ from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
 from starlette.datastructures import FormData
 
-from ocr_service.settings import settings
 from ocr_service.processor.processor import Processor
+from ocr_service.settings import settings
 from ocr_service.utils.utils import build_response, setup_logging
 
 process_api = APIRouter(prefix="/api")

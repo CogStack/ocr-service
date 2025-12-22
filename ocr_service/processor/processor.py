@@ -5,10 +5,10 @@ import time
 import traceback
 from typing import Any
 
-from ocr_service.settings import settings
 from ocr_service.dto.process_context import ProcessContext
 from ocr_service.processor.converter import DocumentConverter
 from ocr_service.processor.ocr_engine import OcrEngine
+from ocr_service.settings import settings
 from ocr_service.utils.utils import detect_file_type, normalise_file_name_with_ext, setup_logging
 
 
