@@ -57,6 +57,16 @@ jobs:
         run: |
           curl -fsS "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/info"
 
+      - name: Process sample text
+        env:
+          OCR_SERVICE_EXTERNAL_PORT: 8090
+        run: |
+          set -euo pipefail
+          response="$(curl -fsS -F file=@ocr_service/tests/resources/docs/generic/pat_id_1.txt \
+            "http://localhost:${OCR_SERVICE_EXTERNAL_PORT:-8090}/api/process")"
+          echo "$response" | grep -q '"text"' || { echo "Smoke test failed: missing text field"; exit 1; }
+          echo "$response" | grep -q "Bart Davidson" || { echo "Smoke test failed: expected substring not found"; exit 1; }
+
       - name: Check health (text-only port)
         env:
           OCR_SERVICE_TEXT_ONLY_EXTERNAL_PORT: 8091

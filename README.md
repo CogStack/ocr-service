@@ -7,7 +7,7 @@
 
 ## Introduction
 
-This is a python-replacement of the previous Tika-service in an attempt to resolve scalability and performance issues. It also relies on tesseract ocr but without the ambiguities of the Tika framework.
+This is a Python replacement for the previous Tika service, aiming to resolve scalability and performance issues. It relies on Tesseract OCR without the ambiguities of the Tika framework.
 
 ## Asking questions
 
@@ -20,23 +20,27 @@ For the Python packages see [`requirements.txt`](./requirements.txt).
 
 Pillow package deps, see <https://pillow.readthedocs.io/en/stable/installation.html>
 
-Tessaract-ocr <https://tesseract-ocr.github.io/tessdoc/Downloads.html>
+Tesseract OCR <https://tesseract-ocr.github.io/tessdoc/Downloads.html>
 
 Docker (optional, but recommended for deployments) version 21.10+
 
 ## Local development dependencies
 
-Libre office 7.4+
+LibreOffice 7.4+
 
-Tesseract-ocr package and its dependencies.
+Tesseract OCR and its dependencies.
 
-Windows: this project can and should be run inside WSL (preferabily ubuntu) with ease, there are some dependencies and paths that are broken outside of it that might be a headache to repair, install necessary deps from the Dockerfile.
+Windows: run inside WSL (preferably Ubuntu). Native Windows paths are not maintained; install dependencies from the Dockerfile.
 
 ## Starting the service
 
-Docker mode: `cd docker && docker-compose up -d`
+Docker (prebuilt image): `cd docker && docker compose -f docker-compose.base.yml up -d` (or `docker-compose`)
 
-Console mode: `bash start_service_production.sh`
+Docker (local build/dev): `cd docker && docker compose -f docker-compose.dev.yml up -d` (or `docker-compose`)
+
+Console/debug: `bash start_service_debug.sh` (loads `env/ocr_service.env`)
+
+Console/production: `bash export_env_vars.sh` then `bash start_service_production.sh`
 
 ## Docker images
 
@@ -48,7 +52,7 @@ The following docker images are available
 
 ## Available models
 
-Currently, only TESERRACT models are supported.
+Currently, only Tesseract models are supported.
 You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you can load multiple models at the same time, example: English + Latin + French `OCR_SERVICE_TESSERACT_LANG=eng+lat+fra`.
 
 **For performance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.**
@@ -61,10 +65,13 @@ The Service, by default, will be listening on port `8090` and the returned conte
 
 Check `http://localhost:8090/docs` for input information.
 
-The service exposes such endpoints:
+The service exposes:
 
+- *GET* `/api/health` - returns `{"status": "healthy"}`,
 - *GET* `/api/info` - returns information about the service with its configuration,
 - *POST* `/api/process` - processes a binary data stream with the binary document content ("Content-Type: application/octet-stream"), also accepts binary files directly via the 'file' parameter, if sending via curl. It
+- *POST* `/api/process_file` - processes a file via multipart/form-data,
+- *POST* `/api/process_bulk` - placeholder; returns `{"response": "Not yet implemented"}`,
 also has the extra functionality of accepting json, in case you want to process records and want to keep additional data in the footer , e.g
 
 original record payload must contain the "binary_data" key with a base64 buffer (REQUIREMENT for it to work), and the "footer", that has the other record fields:
@@ -109,9 +116,12 @@ Supports most document formats: pdf, html, doc(x), rtf, odt and also the image f
 
 ## Example use
 
-Using `curl` to send the document to server instance running on localhost on `8090` port:
+Using `curl` to send the document to server instance running on localhost on port `8090`:
 
-```curl -F file="@ocr_service/tests/resources/docs/generic/pat_id_1.rtf" http://localhost:8090/api/process | jq```
+```bash
+curl -F file="@ocr_service/tests/resources/docs/generic/pat_id_1.rtf" \
+  http://localhost:8090/api/process | jq
+```
 
 output
 
@@ -133,40 +143,38 @@ output
 
 ## Current limitations
 
-You will notice that requests are handled sequentially rather than in parallel (one at a time), this is partly due to using libreoffice/soffice binary package (this is likely to change in the future) to convert most documents to a common format, a pdf. Because this background application does not handle parallelisation very well it is recommended to have multiple docker services running instead OR you can spin up multiple workers via the `OCR_WEB_SERVICE_WORKERS` variable, make sure you read the [OCR scenarions](#ocr-ing-scenarios) section.
+LibreOffice conversions are single-threaded per worker. To process documents in parallel, use multiple workers or multiple service containers. See the [OCR scenarios](#ocr-ing-scenarios) section for guidance.
 
-Another cause for sequential request processing is the sharing of resources,
-one thread has access by default to all cores, this matters because the current implementation splits a document into multiple pages and attempts to ocr each page on a separate core, resulting in good speed but a competition for resources.
-It is possible to control this however, please see the [resource management section](#resource-management) on how to set up multiple docker services for different screnarios.
+Another bottleneck is resource sharing. By default a worker can use all cores and splits documents into pages to OCR on separate cores, which is fast but can cause CPU contention.
+You can control this; see the [resource management section](#resource-management) for setup guidance.
 
 ## Resource management
 
 This service is fast but it is resource intensive, and will attempt to use all cores on your machine. You can spin up multiple docker services in the hopes of having multiple requests handled at the same time.
 
-Simply edit the `docker-compose.yml` file and copy the same `ocr-service` section and edit the `OCR_SERVICE_CPU_THREADS` and `OCR_SERVICE_CONVERTER_THREADS` parameters to be equal to the number_of_cores on the machine divided by the number of services, i.e for 4 services assuming 16 cores - `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 16/4` for each docker service, don't forget to rename the service name and container name : ocr-service-1/-2/-3 and to change the output ports from 8090 to something else (pref the same port range for ease of tracking 809(1/2/3)).
+Edit `docker/docker-compose.base.yml`, duplicate the `ocr-service` service, and set
+`OCR_SERVICE_CPU_THREADS` and `OCR_SERVICE_CONVERTER_THREADS` to `cores / service_count`.
+Rename the service/container and update ports (e.g., 8091/8092/8093).
 
 `OCR_WEB_SERVICE_THREADS` is deprecated and forced to 1; use `OCR_WEB_SERVICE_WORKERS` to scale parallel requests and adjust CPU/converter threads accordingly. See the [OCR-ing scenarios](#ocr-ing-scenarios) section.
 
 ## OCR-ing scenarios
 
-The speed of the service depends on a lot of factors: the raw size of the images being ocr-ed, the number of pages of a document, and also the number of cores available, as well as a critical factor, the CPU clock, evidently both core count and core speed need to be high for optimal performance.
+The speed of the service depends on several factors: image size, page count, number of cores, and CPU clock speed. Both core count and core speed matter for optimal performance.
 
 There are three relevant configuration variables that you will need to take into account when trying to divide resources across services: OCR_WEB_SERVICE_WORKERS (parallel worker processes), OCR_SERVICE_CPU_THREADS, OCR_SERVICE_CONVERTER_THREADS. See the [config variables section](#config-variables) for a description of each setting.
 
-Service timeouts scenarios are highly likely with higher DPI settings, please change the `OCR_SERVICE_TESSERACT_TIMEOUT` to higher values if you are experiencing response timeouts. Conversion timeouts are also likely, please change the `OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT` in this case.
+Timeouts are more likely with higher DPI settings. Increase `OCR_SERVICE_TESSERACT_TIMEOUT` if you are seeing response timeouts. Increase `OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT` if conversions time out.
 
 Below are some sample scenarios you might come across.
-<br>
 
 ### Docs with high page count
 
-If your documents are composed of a large number of pages (10+) it is suggested that you limit your self to a lower number of services (depending on the resources available), as an example, for a machine with 64 cores you could could attempt to run 4 service instances, each service having access to at most 8 cores. Of course, the performance also depends on what kind of document you are ocr-ing, if it is a large scale image you might not get the same text quality with only the default 200 dpi image rendering enabled, and so you would need to increase you dpi and thus increasing the quality and also the processing time, you may wish to lower the number of services in this case and increase the core count.
-<br>
+If your documents have many pages (10+), limit the number of service instances based on available resources. For example, on a 64-core machine you could run 4 instances, each with access to 8 cores. Performance also depends on document type; large images may need higher DPI than the default 200, which improves quality but increases processing time. In that case, lower the number of services and increase core allocation.
 
 ### Single page docs
 
-This is a reasonable scenarion in which you can benefit from having as many services as possible, and limiting each service to 1 core `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1` . Spin up as many services as you want, each service will only use one CPU.
-<br>
+This is a reasonable scenario to run many services and limit each service to 1 core: `OCR_SERVICE_CPU_THREADS = OCR_SERVICE_CONVERTER_THREADS = 1`. Spin up as many services as you want; each service will use one CPU.
 
 ### Images
 
@@ -175,22 +183,27 @@ Since images do not go through the doc conversion process, you can increase `OCR
 
 ## Config variables
 
-These are the config variables declared in `ocr_service/settings.py`.
+These are the primary service settings read from the environment by `ocr_service/settings.py`.
+Defaults shown below are the code defaults; the env templates in `env/*.env` may override them.
 
 ```text
-OCR_TESSDATA_PREFIX - default "/usr/share/tessdata", this is the path to the Tesseract model, by default the model within the Docker container is Tesseract Fast (https://github.com/tesseract-ocr/tessdata_fast), if you wish to change it for better results please go to https://github.com/tesseract-ocr/tessdata_best , download the zip from the release, extract it and change the path, don't forget to mount that folder on the container if you are using Docker.
+OCR_SERVICE_OPERATION_MODE - default "OCR"; use "NO_OCR" to skip OCR and return empty text for images.
+
+OCR_SERVICE_DEBUG_MODE - default false; enables FastAPI debug mode and relaxed LibreOffice startup behavior.
+
+OCR_TMP_DIR - default "./tmp" relative to the repo; temp files and LibreOffice profiles live here.
+
+OCR_TESSDATA_PREFIX - default is OS-specific: macOS "/opt/homebrew/share/tessdata"; Linux "/usr/share/tesseract-ocr/5/tessdata" (fallback "/usr/share/tesseract-ocr/4.00/tessdata"). Override to point at custom Tesseract models.
 
 OCR_SERVICE_TESSERACT_LANG - default "eng", language we are trying to ocr, only English is tested within the unittest, therefore expect variable results with anything else
 
-OCR_WEB_SERVICE_WORKER_CLASS - default "gthread", "gthread" is best if you use multiple threads per worker, if you are only using 1 worker and 1 thread, max performance is achieved with "sync"; OCR_WEB_SERVICE_THREADS is deprecated and forced to 1.
-
 OCR_WEB_SERVICE_THREADS - deprecated; forced to 1. Use OCR_WEB_SERVICE_WORKERS to scale parallel processing.
 
-OCR_SERVICE_LOG_LEVEL - default 40, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
+OCR_SERVICE_LOG_LEVEL - default 10, possible values : 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
 
 OCR_SERVICE_PORT - default 8090
 
-OCR_SERVICE_TESSERACT_TIMEOUT - default 360 seconds, how much should we wait to OCR a document's image (not the doc itself) before timing out and cancelling the request
+OCR_SERVICE_TESSERACT_TIMEOUT - default 30 seconds, how much should we wait to OCR a document's image (not the doc itself) before timing out and cancelling the request
 
 OCR_SERVICE_TESSERACT_NICE - default -18, this is just for Linux systems, we need a high priority for our service so it gets prioritized, -19 is the highest possible, lowest is 0 -> +∞
 
@@ -198,11 +211,29 @@ OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS - extra parameters that you might want
 
 OCR_SERVICE_CPU_THREADS - defaults to core count divided by OCR_WEB_SERVICE_WORKERS; this variable is used by tesseract to spread CPU usage per worker
 
-OCR_SERVICE_CONVERTER_THREADS - defaults to whatever the core count on the machine is, this variable is used for converting pdf docs to images
+OCR_SERVICE_CONVERTER_THREADS - defaults to core count divided by OCR_WEB_SERVICE_WORKERS; used for PDF to image conversion
 
 OCR_SERVICE_IMAGE_DPI - default 200 DPI, tesseract image DPI rendering resolution, higher values might mean better text quality at the cost of processing speed
 
-OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT - default 10 seconds, used for converting docs to pdf. 
+OCR_CONVERT_GRAYSCALE_IMAGES - default true; converts images to grayscale before OCR to reduce noise.
+
+OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT - default 100 seconds, used for converting docs to pdf.
+
+OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE - optional override (e.g. "(9900, 9902)") to pin LibreOffice listener ports.
 
 OCR_WEB_SERVICE_WORKERS - number of worker processes running in parallel; balance CPU_THREADS and CONVERTER_THREADS accordingly
+
+LIBRE_OFFICE_NETWORK_INTERFACE - default "localhost"; interface used by unoserver.
+
+LIBRE_OFFICE_PYTHON_PATH / LIBRE_OFFICE_EXEC_PATH - optional overrides for LibreOffice paths.
+```
+
+Gunicorn/runtime env vars used by start scripts and docker:
+
+```text
+OCR_SERVICE_HOST - bind host (default "0.0.0.0" in env templates)
+OCR_SERVICE_WORKER_CLASS - "sync" or "gthread" (env default is "sync")
+OCR_SERVICE_GUNICORN_LOG_FILE_PATH, OCR_SERVICE_GUNICORN_LOG_LEVEL
+OCR_SERVICE_GUNICORN_MAX_REQUESTS, OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER
+OCR_SERVICE_GUNICORN_TIMEOUT, OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT
 ```
