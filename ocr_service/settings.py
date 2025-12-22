@@ -30,8 +30,8 @@ class Settings(BaseSettings):
     OCR_WEB_SERVICE_THREADS: int = Field(1, ge=1)
     OCR_WEB_SERVICE_WORKERS: int = Field(1, ge=1)
 
-    OCR_SERVICE_CPU_THREADS: int | None = Field(None, ge=1)
-    OCR_SERVICE_CONVERTER_THREADS: int | None = Field(None, ge=1)
+    OCR_SERVICE_CPU_THREADS: int = Field(1, ge=1)
+    OCR_SERVICE_CONVERTER_THREADS: int = Field(1, ge=1)
     OCR_SERVICE_IMAGE_DPI: int = Field(200, gt=0)
     OCR_CONVERT_GRAYSCALE_IMAGES: bool = Field(True)
 
@@ -41,8 +41,14 @@ class Settings(BaseSettings):
     LIBRE_OFFICE_NETWORK_INTERFACE: str = Field("localhost", min_length=1)
     LIBRE_OFFICE_PROCESSES_LISTENER_INTERVAL: int = Field(10, gt=0)
 
-    LIBRE_OFFICE_PYTHON_PATH: str | None = Field(None, min_length=1)
-    LIBRE_OFFICE_EXEC_PATH: str | None = Field(None, min_length=1)
+    LIBRE_OFFICE_PYTHON_PATH: str = Field(
+        "/Applications/LibreOffice.app/Contents/Resources/python",
+        min_length=1,
+    )
+    LIBRE_OFFICE_EXEC_PATH: str = Field(
+        "/Applications/LibreOffice.app/Contents/MacOS/soffice",
+        min_length=1,
+    )
 
     @field_validator("OCR_SERVICE_OPERATION_MODE", mode="before")
     @classmethod
@@ -104,83 +110,83 @@ class Settings(BaseSettings):
         if "LIBRE_OFFICE_EXEC_PATH" not in self.model_fields_set:
             self.LIBRE_OFFICE_EXEC_PATH = default_lo_exec
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def LOG_LEVEL(self) -> int:
         # 50 - CRITICAL, 40 - ERROR, 30 - WARNING, 20 - INFO, 10 - DEBUG, 0 - NOTSET
         return self.OCR_SERVICE_LOG_LEVEL
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def DEBUG_MODE(self) -> bool:
         return self.OCR_SERVICE_DEBUG_MODE
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def ROOT_DIR(self) -> str:
         return str(Path(__file__).resolve().parents[1])
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TMP_FILE_DIR(self) -> str:
         return self.OCR_TMP_DIR or os.path.join(self.ROOT_DIR, "tmp")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def WORKER_PORT_MAP_FILE_PATH(self) -> str:
         return os.path.join(self.TMP_FILE_DIR, "./worker_process_data.txt")
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def OPERATION_MODE(self) -> str:
         # possible vals : "OCR", "NO_OCR"
         return self.OCR_SERVICE_OPERATION_MODE
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TESSDATA_PREFIX(self) -> str:
         return self.OCR_TESSDATA_PREFIX
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TESSERACT_TIMEOUT(self) -> int:
         return self.OCR_SERVICE_TESSERACT_TIMEOUT
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TESSERACT_LANGUAGE(self) -> str:
         return self.OCR_SERVICE_TESSERACT_LANG
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TESSERACT_NICE(self) -> int:
         return self.OCR_SERVICE_TESSERACT_NICE
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def TESSERACT_CUSTOM_CONFIG_FLAGS(self) -> str:
         return self.OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def CPU_THREADS(self) -> int:
         if self.OCR_SERVICE_CPU_THREADS is not None:
             return int(self.OCR_SERVICE_CPU_THREADS)
         return int(multiprocessing.cpu_count() / self.OCR_WEB_SERVICE_WORKERS)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def CONVERTER_THREAD_NUM(self) -> int:
         if self.OCR_SERVICE_CONVERTER_THREADS is not None:
             return int(self.OCR_SERVICE_CONVERTER_THREADS)
         return int(multiprocessing.cpu_count() / self.OCR_WEB_SERVICE_WORKERS)
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def LIBRE_OFFICE_PROCESS_TIMEOUT(self) -> int:
         return self.OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def LIBRE_OFFICE_PORT_CAP(self) -> int:
         port_cap = self.DEFAULT_LIBRE_OFFICE_SERVER_PORT + 1
@@ -190,7 +196,7 @@ class Settings(BaseSettings):
             port_cap = self.DEFAULT_LIBRE_OFFICE_SERVER_PORT + self.OCR_WEB_SERVICE_WORKERS
         return port_cap
 
-    @computed_field
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def LIBRE_OFFICE_LISTENER_PORT_RANGE(self) -> range:
         if self.OCR_SERVICE_LIBRE_OFFICE_LISTENER_PORT_RANGE:
@@ -198,4 +204,4 @@ class Settings(BaseSettings):
             return range(start, end)
         return range(self.DEFAULT_LIBRE_OFFICE_SERVER_PORT, self.LIBRE_OFFICE_PORT_CAP)
 
-settings = Settings()
+settings = Settings() # type: ignore[call-arg]
