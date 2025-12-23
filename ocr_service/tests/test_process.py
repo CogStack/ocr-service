@@ -5,6 +5,7 @@ import time
 import traceback
 import unittest
 
+import orjson
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -210,3 +211,25 @@ class TestOcrServiceProcessor(unittest.TestCase):
        self.log.info("Testing test_process_record_binary_data_json_payload")
        payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
        self._test_json_payload_json_b64_binary_data(payload=payload.decode())
+
+    def test_process_record_binary_data_invalid_payload_returns_422(self):
+        self.log.info("Testing invalid record payload returns 422")
+        payload = {"binary_data": None}
+        response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
+                                    content=orjson.dumps(payload),
+                                    headers={"Content-Type": "application/json"})
+        self.assertEqual(response.status_code, 422)
+        data = response.json()
+        self.assertIn("detail", data)
+        self.assertIsInstance(data["detail"], list)
+
+    def test_process_record_binary_data_missing_binary_data_returns_422(self):
+        self.log.info("Testing missing binary_data returns 422")
+        payload = {"footer": {"source": "test"}}
+        response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
+                                    content=orjson.dumps(payload),
+                                    headers={"Content-Type": "application/json"})
+        self.assertEqual(response.status_code, 422)
+        data = response.json()
+        self.assertIn("detail", data)
+        self.assertIsInstance(data["detail"], list)

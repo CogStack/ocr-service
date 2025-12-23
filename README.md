@@ -57,8 +57,6 @@ You can load models by setting the `OCR_SERVICE_TESSERACT_LANG` variable, you ca
 
 **For performance reasons it is recommended that you load only one model at a time, as processing time will increase slightly per model loaded.**
 
-## API
-
 ## API specification
 
 The Service, by default, will be listening on port `8090` and the returned content extraction result will be represented in JSON format.
