@@ -96,7 +96,9 @@ class Settings(BaseSettings):
             default_lo_python = "/Applications/LibreOffice.app/Contents/Resources/python"
             tessdata_prefix = "/opt/homebrew/share/tessdata"
 
-        if platform in ("linux", "linux2", "darwin") and "OCR_TESSDATA_PREFIX" not in self.model_fields_set:
+        if platform in ("linux", "linux2", "darwin") and ("OCR_TESSDATA_PREFIX" in self.model_fields_set
+                                                          and not os.path.exists(self.OCR_TESSDATA_PREFIX)):
+            # overload with only if user-specified path does not exist
             self.OCR_TESSDATA_PREFIX = tessdata_prefix
 
         if "LIBRE_OFFICE_PYTHON_PATH" not in self.model_fields_set:
@@ -198,4 +200,4 @@ class Settings(BaseSettings):
             return range(start, end)
         return range(self.DEFAULT_LIBRE_OFFICE_SERVER_PORT, self.LIBRE_OFFICE_PORT_CAP)
 
-settings = Settings()
+settings = Settings() # pyright: ignore[reportCallIssue]

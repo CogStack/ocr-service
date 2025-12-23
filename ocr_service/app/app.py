@@ -43,11 +43,11 @@ def start_office_server(port_num: str) -> dict[str, Any]:
                 "--uno-port", uno_port,
                 "--user-installation", user_installation,
                # "--logfile", f"loffice_{port_num}.log"
-            ],
+            ], # type: ignore
             cwd=settings.TMP_FILE_DIR,
             close_fds=True,
             shell=False
-        ),
+        ), # type: ignore
         "pid": "",
         "port": port_num,
         "used": False,

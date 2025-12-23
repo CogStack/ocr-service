@@ -15,17 +15,18 @@ class OcrEngine:
     def __init__(self, log: logging.Logger) -> None:
         self.log = log
 
-    def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
-        tess_api = PyTessBaseAPI(path=settings.TESSDATA_PREFIX, lang=settings.TESSERACT_LANGUAGE)  # type: ignore
-        self.log.debug("Initialised pytesseract api worker for language:" + str(settings.TESSERACT_LANGUAGE))
-        return tess_api
 
-    def _process_image(self, img, img_id: int, tess_api: PyTessBaseAPI) -> tuple[str, int, dict]:
-        tess_api.SetImage(img)
-        output_str = tess_api.GetUTF8Text()
+    def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
+        tesseract_api = PyTessBaseAPI(path=settings.TESSDATA_PREFIX, lang=settings.TESSERACT_LANGUAGE)  # type: ignore
+        self.log.debug("Initialised pytesseract api worker for language:" + str(settings.TESSERACT_LANGUAGE))
+        return tesseract_api
+
+    def _process_image(self, img, img_id: int, tesseract_api: PyTessBaseAPI) -> tuple[str, int, dict]:
+        tesseract_api.SetImage(img)
+        output_str = tesseract_api.GetUTF8Text()
 
         tess_data = {}
-        confidences = tess_api.AllWordConfidences()
+        confidences = tesseract_api.AllWordConfidences()
         len_confidence = 1 if len(confidences) == 0 else len(confidences)
         tess_data["confidence"] = sum(confidences)/len_confidence
 
@@ -47,7 +48,8 @@ class OcrEngine:
         with Pool(processes=settings.CPU_THREADS) as process_pool:
             tess_api_q: Queue = Queue()
             for count, img in enumerate(ctx.images):
-                tess_api_q.put(self._init_tesseract_api_worker())
+                tesseract_api_worker = self._init_tesseract_api_worker()
+                tess_api_q.put(tesseract_api_worker)
                 proc_results.append(process_pool.starmap_async(self._process_image,
                                                                [(img, count, tess_api_q.get(),)],
                                                                chunksize=1,
