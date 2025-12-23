@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from starlette.datastructures import FormData
 
 from ocr_service.dto.process_request import ProcessRequest
+from ocr_service.dto.process_response import ProcessResponse
 from ocr_service.processor.processor import Processor
 from ocr_service.settings import settings
 from ocr_service.utils.utils import build_response, setup_logging
@@ -20,7 +21,7 @@ process_api = APIRouter(prefix="/api")
 log = setup_logging("api", log_level=settings.LOG_LEVEL)
 
 
-@process_api.post("/process")
+@process_api.post("/process", response_model=ProcessResponse, response_class=ORJSONResponse)
 def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> ORJSONResponse:
     """
      Processes raw binary input stream, file, or
@@ -117,7 +118,7 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
     return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 
 
-@process_api.post("/process_file")
+@process_api.post("/process_file", response_model=ProcessResponse, response_class=ORJSONResponse)
 def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONResponse:
 
     file_name: str = file.filename if file.filename else ""
