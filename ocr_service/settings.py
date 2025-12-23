@@ -6,14 +6,18 @@ from pathlib import Path
 from sys import platform
 from typing import Any, Literal
 
-from pydantic import Field, computed_field, field_validator
+from pydantic import AliasChoices, Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=None, extra="ignore", validate_assignment=True)
 
-    OCR_SERVICE_VERSION: str = Field("1.0.6", min_length=1)
+    OCR_SERVICE_VERSION: str = Field(
+        "dev",
+        min_length=1,
+        validation_alias=AliasChoices("OCR_SERVICE_VERSION", "OCR_SERVICE_IMAGE_RELEASE_VERSION"),
+    )
     OCR_SERVICE_LOG_LEVEL: int = Field(10, ge=0, le=50)
     OCR_SERVICE_DEBUG_MODE: bool = Field(False)
     OCR_TMP_DIR: str | None = None

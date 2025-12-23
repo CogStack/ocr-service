@@ -8,8 +8,11 @@ from typing import IO, Any, Optional
 import orjson
 from fastapi import APIRouter, File, Request, UploadFile
 from fastapi.responses import ORJSONResponse, Response
+from pydantic import ValidationError
 from starlette.datastructures import FormData
 
+from ocr_service.dto.process_request import ProcessRequest
+from ocr_service.dto.process_response import ProcessResponse
 from ocr_service.processor.processor import Processor
 from ocr_service.settings import settings
 from ocr_service.utils.utils import build_response, setup_logging
@@ -18,7 +21,7 @@ process_api = APIRouter(prefix="/api")
 log = setup_logging("api", log_level=settings.LOG_LEVEL)
 
 
-@process_api.post("/process")
+@process_api.post("/process", response_model=ProcessResponse, response_class=ORJSONResponse)
 def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> ORJSONResponse:
     """
      Processes raw binary input stream, file, or
@@ -52,26 +55,29 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
             if isinstance(record, list) and len(record) > 0:
                 record = record[0]
 
-            footer = record.get("footer", {}) # type: ignore
             log.info("Stream contains valid JSON.")
 
-            # JSON with base64 field
-            if isinstance(record, dict) and "binary_data" in record:
-                encoded: str = record.get("binary_data", {})
+            if not isinstance(record, dict):
+                return ORJSONResponse(content={"detail": "Invalid JSON payload"}, status_code=422)
 
-                if encoded not in (None, "", {}):
-                    try:
-                        stream = base64.b64decode(encoded, validate=True)
-                        log.info("binary_data successfully base64-decoded")
-                    except Exception:
-                        log.warning("binary_data is not valid base64; forcing bytes")
-                        stream = bytes(encoded) if isinstance(encoded, bytes | bytearray) \
-                                else str(encoded).encode("utf-8")
-                else:
-                    stream = b""
+            try:
+                payload = ProcessRequest.model_validate(record)
+            except ValidationError as exc:
+                return ORJSONResponse(content={"detail": exc.errors()}, status_code=422)
+
+            footer = payload.footer or {}
+            encoded: str = payload.binary_data
+
+            if encoded not in (None, "", {}):
+                try:
+                    stream = base64.b64decode(encoded, validate=True)
+                    log.info("binary_data successfully base64-decoded")
+                except Exception:
+                    log.warning("binary_data is not valid base64; forcing bytes")
+                    stream = bytes(encoded) if isinstance(encoded, bytes | bytearray) \
+                            else str(encoded).encode("utf-8")
             else:
-                log.info("JSON found but no binary_data; using raw body")
-                stream = raw_body
+                stream = b""
 
         except Exception:
             log.warning("Stream does not contain valid JSON." + str(traceback.format_exc()))
@@ -112,7 +118,7 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
     return ORJSONResponse(content=response, status_code=code, media_type="application/json")
 
 
-@process_api.post("/process_file")
+@process_api.post("/process_file", response_model=ProcessResponse, response_class=ORJSONResponse)
 def process_file(request: Request, file: UploadFile = File(...)) -> ORJSONResponse:
 
     file_name: str = file.filename if file.filename else ""
