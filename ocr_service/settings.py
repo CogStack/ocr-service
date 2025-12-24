@@ -1,3 +1,5 @@
+# mypy: disable-error-code=prop-decorator
+
 import ast
 import logging
 import multiprocessing
@@ -210,4 +212,4 @@ class Settings(BaseSettings):
             return range(start, end)
         return range(self.DEFAULT_LIBRE_OFFICE_SERVER_PORT, self.LIBRE_OFFICE_PORT_CAP)
 
-settings = Settings() # type: ignore[call-arg]
+settings = Settings() # pyright: ignore[reportCallIssue]
