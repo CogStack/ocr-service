@@ -4,7 +4,7 @@ import os
 import subprocess
 import time
 from threading import Event, Thread
-from typing import Any
+from typing import Any, cast
 
 import psutil
 from fastapi import FastAPI
@@ -30,15 +30,18 @@ def start_office_server(port_num: str) -> dict[str, Any]:
     uno_port = str(int(port_num) + 1000)  # e.g. XML-RPC 9900, UNO 10900
     user_installation = f"{settings.TMP_FILE_DIR}/lo_profile_{port_num}"
 
+    lo_python = cast(str, settings.LIBRE_OFFICE_PYTHON_PATH)
+    lo_exec = cast(str, settings.LIBRE_OFFICE_EXEC_PATH)
+
     loffice_process: dict[str, Any] = {
         "process": subprocess.Popen(
             args=[
-                settings.LIBRE_OFFICE_PYTHON_PATH,
+                lo_python,
                 "-m",
                 "unoserver.server",
                 "--interface", settings.LIBRE_OFFICE_NETWORK_INTERFACE,
                 "--uno-interface", settings.LIBRE_OFFICE_NETWORK_INTERFACE,
-                "--executable", settings.LIBRE_OFFICE_EXEC_PATH,
+                "--executable", lo_exec,
                 "--port", port_num,
                 "--uno-port", uno_port,
                 "--user-installation", user_installation,

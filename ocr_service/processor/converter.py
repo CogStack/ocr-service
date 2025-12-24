@@ -8,7 +8,7 @@ from io import BytesIO
 from multiprocessing.dummy import Pool
 from subprocess import PIPE, Popen
 from threading import Timer
-from typing import Any
+from typing import Any, cast
 
 import pypdfium2 as pdfium
 from bs4 import BeautifulSoup
@@ -155,9 +155,10 @@ class DocumentConverter:
             for port_num, loffice_process in self.loffice_process_list.items():
                 if loffice_process["used"] is False:
                     used_port_num = str(port_num)
+                    lo_python = cast(str, settings.LIBRE_OFFICE_PYTHON_PATH)
                     converter_bootstrap = "from unoserver.client import converter_main; converter_main()"
                     _args = [
-                        settings.LIBRE_OFFICE_PYTHON_PATH,
+                        lo_python,
                         "-c",
                         converter_bootstrap,
                         doc_file_path,

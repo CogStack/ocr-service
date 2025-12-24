@@ -1,3 +1,5 @@
+# mypy: disable-error-code=prop-decorator
+
 import ast
 import logging
 import multiprocessing
