@@ -21,6 +21,8 @@ from ocr_service.dto.process_context import ProcessContext
 from ocr_service.settings import settings
 from ocr_service.utils.utils import INPUT_FILTERS, delete_tmp_files, terminate_hanging_process
 
+CURRENT_PDF_FILE: pdfium.PdfDocument | None = None
+
 
 class DocumentConverter:
     def __init__(self, log, loffice_process_list: dict[str, Any]) -> None:
@@ -68,7 +70,7 @@ class DocumentConverter:
         return text.strip()
 
     @staticmethod
-    def initialize_pdf_worker(stream) -> None:
+    def initialize_pdf_worker(stream: bytes) -> None:
         # we are making this a global so that we can use it in the process pool
         # since Pypdfium2 PdfDocument objects are not thread-safe
         global CURRENT_PDF_FILE
@@ -82,7 +84,9 @@ class DocumentConverter:
         atexit.register(_close_pdf)
 
     @staticmethod
-    def render_page(page_num) -> Image.Image:
+    def render_page(page_num: int) -> Image.Image:
+        if CURRENT_PDF_FILE is None:
+            raise RuntimeError("PDF worker not initialized")
         scale = int(settings.OCR_SERVICE_IMAGE_DPI / 72)
         page = CURRENT_PDF_FILE.get_page(page_num)
         img = page.render(
