@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import atexit
+import multiprocessing
 import os
 import time
 import traceback
 import uuid
 from io import BytesIO
-from multiprocessing.dummy import Pool
 from subprocess import PIPE, Popen
 from threading import Timer
 from typing import Any
@@ -66,36 +67,61 @@ class DocumentConverter:
 
         return text.strip()
 
+    @staticmethod
+    def initialize_pdf_worker(stream) -> None:
+        # we are making this a global so that we can use it in the process pool
+        # since Pypdfium2 PdfDocument objects are not thread-safe
+        global CURRENT_PDF_FILE
+        CURRENT_PDF_FILE = pdfium.PdfDocument(stream)
+
+        def _close_pdf():
+            global CURRENT_PDF_FILE
+            if CURRENT_PDF_FILE is not None:
+                CURRENT_PDF_FILE.close()
+
+        atexit.register(_close_pdf)
+
+    @staticmethod
+    def render_page(page_num) -> Image.Image:
+        scale = int(settings.OCR_SERVICE_IMAGE_DPI / 72)
+        page = CURRENT_PDF_FILE.get_page(page_num)
+        img = page.render(
+            scale=scale,
+            may_draw_forms=False,
+            no_smoothtext=True,
+            no_smoothimage=True,
+            no_smoothpath=True,
+            rotation=0,
+            crop=(0, 0, 0, 0),
+            grayscale=settings.OCR_CONVERT_GRAYSCALE_IMAGES,
+        ).to_pil()
+        page.close()
+
+        return img
+
     def _pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
         pdf_image_pages = []
         doc_metadata: dict[str, Any] = {}
 
         pdf = pdfium.PdfDocument(stream)
+        page_count = len(pdf)
+        pdf.close()
+
+        doc_metadata["pages"] = page_count
 
         pdf_conversion_start_time = time.time()
-        scale = int(settings.OCR_SERVICE_IMAGE_DPI / 72)
 
-        def render_page(index: int) -> Image.Image:
-            page = pdf[index]
-            return page.render(
-                scale=scale,
-                may_draw_forms=False,
-                no_smoothtext=True,
-                no_smoothimage=True,
-                no_smoothpath=True,
-                rotation=0,
-                crop=(0, 0, 0, 0),
-                grayscale=settings.OCR_CONVERT_GRAYSCALE_IMAGES
-            ).to_pil()
+        ctx = multiprocessing.get_context("spawn")
 
-        with Pool(settings.CONVERTER_THREAD_NUM) as pool:
-            pdf_image_pages = pool.map(render_page, range(len(pdf)))
+        with ctx.Pool(processes=min(settings.CONVERTER_THREAD_NUM, page_count),
+                      initializer=DocumentConverter.initialize_pdf_worker,
+                      initargs=(stream,)) as pool:
+            pdf_image_pages = list(pool.imap_unordered(DocumentConverter.render_page, range(page_count), chunksize=1))
 
         pdf_conversion_end_time = time.time()
 
         self.log.info("PDF conversion to image(s) finished | Elapsed : " +
                       str(pdf_conversion_end_time - pdf_conversion_start_time) + " seconds")
-
         return pdf_image_pages, doc_metadata
 
     def _pdf_to_text(self, stream: bytes) -> tuple[str, dict]:
