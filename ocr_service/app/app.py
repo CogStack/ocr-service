@@ -41,9 +41,8 @@ def start_office_server(port_num: str) -> dict[str, Any]:
                 "--executable", settings.LIBRE_OFFICE_EXEC_PATH,
                 "--port", port_num,
                 "--uno-port", uno_port,
-                "--user-installation", user_installation,
-               # "--logfile", f"loffice_{port_num}.log"
-            ], # type: ignore
+                "--user-installation", user_installation
+            ],
             cwd=settings.TMP_FILE_DIR,
             close_fds=True,
             shell=False

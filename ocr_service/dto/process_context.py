@@ -15,6 +15,8 @@ class ProcessContext(BaseModel):
     state shared between the document conversion and OCR stages.
     """
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     stream: bytes
     """Raw document bytes provided by the caller."""
 
@@ -35,8 +37,6 @@ class ProcessContext(BaseModel):
 
     pdf_stream: bytes = b""
     """Intermediate PDF bytes used for downstream conversion/OCR."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     _checks: TextChecks | None = PrivateAttr(default=None)
     """Lazy text-type detection cache. Initialized on first access."""
