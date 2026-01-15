@@ -11,4 +11,5 @@ services:
 
 networks:
   cognet:
+    external: true
     name: cogstack-net
