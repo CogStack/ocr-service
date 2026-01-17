@@ -30,14 +30,21 @@ ENV PYTHONUNBUFFERED=1
 # default user
 USER root
 
+# Avoid AppStream/dep11 metadata downloads that are flaky during mirror sync.
+RUN rm -f /etc/apt/apt.conf.d/50appstream && \
+    printf 'Acquire::Retries "5";\nAcquire::Languages "none";\n' > /etc/apt/apt.conf.d/99apt-tuning
+
 # install extra features
-RUN apt-get update -yq && apt-get upgrade -y && apt-get install -y software-properties-common
+RUN apt-get -o Acquire::Retries=5 update -yq && \
+    apt-get upgrade -y && \
+    apt-get install -y software-properties-common
 
 # add extra repos
 RUN apt-add-repository -y -n multiverse && \
     apt-add-repository -y -n universe && \
     add-apt-repository -y -n ppa:graphics-drivers/ppa && \
-    apt-get update -yq && apt-get upgrade -y
+    apt-get -o Acquire::Retries=5 update -yq && \
+    apt-get upgrade -y
 
 # install req packages
 RUN apt-get install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
