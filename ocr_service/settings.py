@@ -103,14 +103,23 @@ class Settings(BaseSettings):
         elif platform == "win32":
             default_lo_exec = "%ProgramFiles%/LibreOffice/Program/soffice"
             default_lo_python = "C:/Windows/py.exe"
+            tessdata_prefix = os.path.join(
+                os.environ.get("ProgramFiles", "C:/Program Files"),
+                "Tesseract-OCR",
+                "tessdata",
+            )
         elif platform == "darwin":
             default_lo_exec = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
             default_lo_python = "/Applications/LibreOffice.app/Contents/Resources/python"
             tessdata_prefix = "/opt/homebrew/share/tessdata"
+            if not os.path.exists(tessdata_prefix):
+                tessdata_prefix = "/usr/local/share/tessdata"
 
-        if platform in ("linux", "linux2", "darwin") and ("OCR_TESSDATA_PREFIX" in self.model_fields_set
-                                                          and not os.path.exists(self.OCR_TESSDATA_PREFIX)):
-            # overload with only if user-specified path does not exist
+        user_set_tessdata = "OCR_TESSDATA_PREFIX" in self.model_fields_set
+        if not user_set_tessdata:
+            self.OCR_TESSDATA_PREFIX = tessdata_prefix
+        elif not os.path.exists(self.OCR_TESSDATA_PREFIX):
+            # Overload only if user-specified path does not exist.
             self.OCR_TESSDATA_PREFIX = tessdata_prefix
 
         if "LIBRE_OFFICE_PYTHON_PATH" not in self.model_fields_set:
