@@ -10,7 +10,7 @@ pypdfium2==5.2.0
 opencv-python-headless==4.12.0.88
 pyxml2pdf==0.3.4
 fastapi==0.116.1
-orjson==3.11.2
+orjson==3.11.6
 a2wsgi==1.10.10
 pydantic==2.12.5
 pydantic-settings==2.12.0
