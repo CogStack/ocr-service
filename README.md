@@ -261,7 +261,8 @@ Gunicorn/runtime env vars used by start scripts and docker:
 ```text
 OCR_SERVICE_HOST - bind host (default "0.0.0.0" in env templates)
 OCR_SERVICE_WORKER_CLASS - "sync" or "gthread" (env default is "sync")
-OCR_SERVICE_GUNICORN_LOG_FILE_PATH, OCR_SERVICE_GUNICORN_LOG_LEVEL
+OCR_SERVICE_GUNICORN_LOG_FILE_PATH - Gunicorn access log target (use "-" for stdout; default in env templates)
+OCR_SERVICE_GUNICORN_LOG_LEVEL
 OCR_SERVICE_GUNICORN_MAX_REQUESTS, OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER
 OCR_SERVICE_GUNICORN_TIMEOUT, OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT
 ```
