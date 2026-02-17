@@ -138,5 +138,15 @@ RUN python3.12 -m venv "$VIRTUAL_ENV" && "$VIRTUAL_ENV/bin/python" && "$VIRTUAL_
 # Byte-compile using venv python
 RUN "$VIRTUAL_ENV/bin/python" -m compileall /ocr_service
 
+# Run as non-root by default for Kubernetes restricted policies.
+ARG OCR_SERVICE_UID=10001
+ARG OCR_SERVICE_GID=10001
+RUN groupadd --system --gid "$OCR_SERVICE_GID" ocrsvc && \
+    useradd --system --uid "$OCR_SERVICE_UID" --gid "$OCR_SERVICE_GID" --create-home --home-dir /home/ocrsvc --shell /usr/sbin/nologin ocrsvc && \
+    mkdir -p /ocr_service/tmp /ocr_service/log && \
+    chown -R ocrsvc:ocrsvc /ocr_service/tmp /ocr_service/log /home/ocrsvc
+ENV HOME=/home/ocrsvc
+USER ocrsvc
+
 # Now run the simple api
 CMD ["/bin/bash", "start_service_production.sh"]
