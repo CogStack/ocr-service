@@ -95,6 +95,7 @@ Check `http://localhost:8090/docs` for input information.
 The service exposes:
 
 - *GET* `/api/health` - returns `{"status": "healthy"}`,
+- *GET* `/api/ready` - returns readiness for OCR processing (`200` when ready, `503` when not ready),
 - *GET* `/api/info` - returns information about the service with its configuration,
 - *POST* `/api/process` - processes a binary data stream with the binary document content ("Content-Type: application/octet-stream"), also accepts binary files directly via the 'file' parameter, if sending via curl. It
 - *POST* `/api/process_file` - processes a file via multipart/form-data,
@@ -260,7 +261,8 @@ Gunicorn/runtime env vars used by start scripts and docker:
 ```text
 OCR_SERVICE_HOST - bind host (default "0.0.0.0" in env templates)
 OCR_SERVICE_WORKER_CLASS - "sync" or "gthread" (env default is "sync")
-OCR_SERVICE_GUNICORN_LOG_FILE_PATH, OCR_SERVICE_GUNICORN_LOG_LEVEL
+OCR_SERVICE_GUNICORN_LOG_FILE_PATH - Gunicorn access log target (use "-" for stdout; default in env templates)
+OCR_SERVICE_GUNICORN_LOG_LEVEL
 OCR_SERVICE_GUNICORN_MAX_REQUESTS, OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER
 OCR_SERVICE_GUNICORN_TIMEOUT, OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT
 ```
