@@ -95,6 +95,7 @@ Check `http://localhost:8090/docs` for input information.
 The service exposes:
 
 - *GET* `/api/health` - returns `{"status": "healthy"}`,
+- *GET* `/api/ready` - returns readiness for OCR processing (`200` when ready, `503` when not ready),
 - *GET* `/api/info` - returns information about the service with its configuration,
 - *POST* `/api/process` - processes a binary data stream with the binary document content ("Content-Type: application/octet-stream"), also accepts binary files directly via the 'file' parameter, if sending via curl. It
 - *POST* `/api/process_file` - processes a file via multipart/form-data,
