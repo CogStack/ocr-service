@@ -42,6 +42,35 @@ Console/debug: `bash start_service_debug.sh` (loads `env/ocr_service.env`)
 
 Console/production: `bash export_env_vars.sh` then `bash start_service_production.sh`
 
+## Makefile commands (docker)
+
+The repository includes a helper `Makefile` at `docker/Makefile` for Docker-based workflows.
+Run commands from the `docker/` directory:
+
+```bash
+cd docker
+make <target>
+```
+
+Before running compose commands, targets source `../export_env_vars.sh` automatically.
+
+Available targets:
+
+- `make start-dev` - start local development stack (`docker-compose.dev.yml`).
+- `make start-dev-build` - build and start local development stack.
+- `make start` - start base stack (`docker-compose.base.yml` + `docker-compose.yml`).
+- `make start-prod` - start production-like stack (`docker-compose.base.yml` + `docker-compose.prod.yml`).
+- `make stop-dev` - stop and remove dev stack resources.
+- `make stop-prod` - stop and remove production-like stack resources.
+- `make stop-all` - stop and remove resources from all compose stacks.
+- `make logs` - tail logs for `ocr-service`.
+- `make logs-dev` - tail logs for `ocr-service-dev`.
+- `make logs-text` - tail logs for `ocr-service-text-only`.
+- `make logs-text-dev` - tail logs for `ocr-service-text-only-dev`.
+- `make health-check` - call both `/api/health` endpoints and print JSON output.
+- `make load-env` - load/export env vars from `../export_env_vars.sh`.
+- `make show-env` - print sorted `OCR*` environment variables currently loaded.
+
 ## Docker images
 
 The following docker images are available
