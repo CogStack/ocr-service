@@ -1,0 +1,7 @@
+1. Get the application URL by running these commands:
+  export POD_NAME=$(kubectl get pods --namespace {{ .Release.Namespace }} -l "app.kubernetes.io/name={{ include "ocr-service.name" . }},app.kubernetes.io/instance={{ .Release.Name }}" -o jsonpath="{.items[0].metadata.name}")
+  kubectl --namespace {{ .Release.Namespace }} port-forward $POD_NAME {{ .Values.service.port }}:{{ .Values.service.targetPort }}
+
+2. Check health and readiness:
+  curl -sS http://127.0.0.1:{{ .Values.service.port }}/api/health
+  curl -sS http://127.0.0.1:{{ .Values.service.port }}/api/ready

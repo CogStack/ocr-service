@@ -1,0 +1,114 @@
+replicaCount: 1
+
+image:
+  repository: cogstacksystems/cogstack-ocr-service
+  tag: "1.0.9"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: false
+  automount: false
+  annotations: {}
+  name: ""
+
+podAutomountServiceAccountToken: false
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext:
+  fsGroup: 10001
+  fsGroupChangePolicy: OnRootMismatch
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 8090
+  targetPort: 8090
+
+resources:
+  limits:
+    cpu: "1"
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 75
+  targetMemoryUtilizationPercentage: 80
+
+tmp:
+  enabled: true
+  mountPath: /ocr_service/tmp
+  emptyDir:
+    medium: ""
+    sizeLimit: 1Gi
+
+probes:
+  startup:
+    enabled: true
+    path: /api/ready
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 90
+  readiness:
+    enabled: true
+    path: /api/ready
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+  liveness:
+    enabled: true
+    path: /api/health
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+env:
+  OCR_SERVICE_HOST: "0.0.0.0"
+  OCR_SERVICE_PORT: "8090"
+  OCR_SERVICE_WORKER_CLASS: "sync"
+  OCR_WEB_SERVICE_WORKERS: "1"
+  OCR_SERVICE_LOG_LEVEL: "20"
+  OCR_SERVICE_OPERATION_MODE: "OCR"
+  OCR_SERVICE_CPU_THREADS: "1"
+  OCR_SERVICE_CONVERTER_THREADS: "1"
+  OCR_SERVICE_TESSERACT_LANG: "eng"
+  OCR_SERVICE_TESSERACT_TIMEOUT: "30"
+  OCR_SERVICE_TESSERACT_NICE: "-18"
+  OCR_SERVICE_IMAGE_DPI: "200"
+  OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT: "20"
+  OCR_SERVICE_GUNICORN_LOG_FILE_PATH: "-"
+  OCR_SERVICE_GUNICORN_LOG_LEVEL: "info"
+  OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER: "5000"
+  OCR_SERVICE_GUNICORN_MAX_REQUESTS: "50000"
+  OCR_SERVICE_GUNICORN_TIMEOUT: "300"
+  OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT: "30"
+  OCR_TMP_DIR: "/ocr_service/tmp"
+  OMP_THREAD_LIMIT: "1"
+
+extraEnv: []
+extraEnvFrom: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
