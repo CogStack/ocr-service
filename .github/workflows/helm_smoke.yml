@@ -1,0 +1,135 @@
+name: helm-smoke-ocr-service
+
+on:
+  push:
+    branches: [ "*" ]
+  pull_request:
+    branches: [ "*" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Helm lint
+        run: |
+          helm lint charts/ocr-service
+
+      - name: Helm template (default)
+        run: |
+          helm template ocr-service charts/ocr-service >/tmp/ocr-service-rendered-default.yaml
+          test -s /tmp/ocr-service-rendered-default.yaml
+
+      - name: Helm template (autoscaling enabled)
+        run: |
+          helm template ocr-service charts/ocr-service \
+            --set autoscaling.enabled=true \
+            >/tmp/ocr-service-rendered-hpa.yaml
+          test -s /tmp/ocr-service-rendered-hpa.yaml
+
+  smoke:
+    needs: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+
+      - name: Create kind cluster
+        uses: helm/kind-action@v1.10.0
+        with:
+          cluster_name: ocr-service-smoke
+          wait: 300s
+
+      - name: Install chart
+        run: |
+          set -euo pipefail
+          helm upgrade --install ocr-service ./charts/ocr-service \
+            --set image.repository=cogstacksystems/cogstack-ocr-service \
+            --set image.tag=1.0.9 \
+            --set image.pullPolicy=IfNotPresent \
+            --wait \
+            --timeout 20m
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/ocr-service --timeout=20m
+
+      - name: Start port-forward
+        run: |
+          set -euo pipefail
+          kubectl port-forward svc/ocr-service 18090:8090 >/tmp/ocr-service-port-forward.log 2>&1 &
+          echo $! >/tmp/ocr-service-port-forward.pid
+
+      - name: Wait for health
+        run: |
+          set -euo pipefail
+          timeout=900
+          interval=10
+          url="http://127.0.0.1:18090/api/health"
+
+          end=$((SECONDS+timeout))
+          while [ $SECONDS -lt $end ]; do
+            if curl -fsS "$url" >/dev/null; then
+              echo "Service healthy at $url"
+              exit 0
+            fi
+            sleep "$interval"
+          done
+
+          echo "Service failed to become healthy within ${timeout}s"
+          exit 1
+
+      - name: Check readiness
+        run: |
+          curl -fsS "http://127.0.0.1:18090/api/ready"
+
+      - name: Check info
+        run: |
+          curl -fsS "http://127.0.0.1:18090/api/info"
+
+      - name: Process sample text
+        run: |
+          set -euo pipefail
+          response="$(curl -fsS -F file=@ocr_service/tests/resources/docs/generic/pat_id_1.txt \
+            "http://127.0.0.1:18090/api/process")"
+          echo "$response" | grep -q '"text"' || { echo "Smoke test failed: missing text field"; exit 1; }
+          echo "$response" | grep -q "Bart Davidson" || { echo "Smoke test failed: expected substring not found"; exit 1; }
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          set +e
+          kubectl get pods -o wide
+          kubectl get events --sort-by=.lastTimestamp | tail -n 200
+          kubectl describe deployment ocr-service
+          kubectl describe pods -l app.kubernetes.io/instance=ocr-service
+          kubectl logs deployment/ocr-service --all-containers=true --tail=-1
+          helm status ocr-service
+          cat /tmp/ocr-service-port-forward.log || true
+
+      - name: Stop port-forward
+        if: always()
+        run: |
+          if [ -f /tmp/ocr-service-port-forward.pid ]; then
+            kill "$(cat /tmp/ocr-service-port-forward.pid)" || true
+          fi
+
+      - name: Teardown release
+        if: always()
+        run: |
+          helm uninstall ocr-service || true
