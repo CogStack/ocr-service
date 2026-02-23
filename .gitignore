@@ -11,11 +11,27 @@
 **/.venv
 .ruff_cache
 .mypy_cache
+.pytest_cache
+.pyre
+.hypothesis
+.tox
+.nox
+.coverage
+.coverage.*
+coverage.xml
+htmlcov
 venv
-**__pycache__
+**/__pycache__/
 **/venv
-*.pyc 
-.pyc
+*.py[cod]
+*.pyo
+*.pyd
+
+# Python build artifacts
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
 
 # skip the models directory
 models/*

@@ -1,9 +1,68 @@
+# VCS / repo metadata
+.git
+.gitignore
+.gitattributes
+.github
+AGENTS.md
+
+# Local env and secrets
+.env
+.env.*
+*.env
+env/
+secrets/
+*.secrets
+*.pem
+*.key
+*.jks
+*.csr
+*.srl
+*.crt
+*.p12
+
+# Runtime outputs
+tmp/
+log/
+
+# Python caches and virtual envs
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+**/.venv/
+venv/
+venv-test/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+build/
+dist/
+*.egg-info/
+pip-wheel-metadata/
+
+# Editor / OS files
 .DS_Store
-.idea
-__pycache__
-venv
-venv-test
-# skip the custom envs
-#envs
-# skip the models directory
-models
+**/.DS_Store
+.idea/
+.vscode/
+.vscode-test/
+*.code-workspace
+.fleet/
+
+# Not required in runtime image
+ocr_service/tests/
+charts/
+docs/
+docker/
+models/
+requirements-dev.txt
