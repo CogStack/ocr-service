@@ -4,7 +4,11 @@
 **/.DS_Store
 .idea
 .vscode
+.vscode-test
+*.code-workspace
+.fleet
 .venv
+**/.venv
 .ruff_cache
 .mypy_cache
 venv
@@ -25,6 +29,8 @@ models/*
 *.srl
 *.crt
 *.p12
+*.secrets
+secrets/
 
 # tmp folder
 tmp/*
@@ -36,6 +42,8 @@ docs/build/*
 .env
 env/*
 *.env
+*.env.local
+env/*.local
 **/*.env
 !*.env.template
 !**/*.env.template
