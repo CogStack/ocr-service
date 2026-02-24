@@ -32,6 +32,45 @@ Tesseract OCR and its dependencies.
 
 Windows: run inside WSL (preferably Ubuntu). Native Windows paths are not maintained; install dependencies from the Dockerfile.
 
+## Development quick start
+
+Run these commands from the repository root:
+
+```bash
+# 1) Create and activate a virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2) Install app + dev dependencies
+pip install -r requirements.txt
+pip install -r requirements-dev.txt
+
+# 3) Start service in debug/development mode
+# (loads defaults from ./env/ocr_service.env)
+bash start_service_debug.sh
+```
+
+In a second terminal, verify the service:
+
+```bash
+curl -fsS http://127.0.0.1:8090/api/health
+curl -fsS http://127.0.0.1:8090/api/ready
+curl -fsS http://127.0.0.1:8090/api/info
+```
+
+Useful development commands:
+
+```bash
+# Lint
+ruff check .
+
+# Type check
+mypy .
+
+# Tests
+python3 -m unittest discover -s ocr_service/tests -p 'test_*.py'
+```
+
 ## Starting the service
 
 Docker (prebuilt image): `cd docker && docker compose -f docker-compose.base.yml up -d` (or `docker-compose`)
