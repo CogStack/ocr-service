@@ -37,6 +37,15 @@ jobs:
             >/tmp/ocr-service-rendered-hpa.yaml
           test -s /tmp/ocr-service-rendered-hpa.yaml
 
+      - name: Helm template (env files enabled)
+        run: |
+          helm template ocr-service charts/ocr-service \
+            --set envFiles.enabled=true \
+            --set-file 'envFiles.contents[0]=env/ocr_service.env' \
+            --set-file 'envFiles.contents[1]=env/general.env' \
+            >/tmp/ocr-service-rendered-envfiles.yaml
+          test -s /tmp/ocr-service-rendered-envfiles.yaml
+
   smoke:
     needs: lint
     runs-on: ubuntu-24.04

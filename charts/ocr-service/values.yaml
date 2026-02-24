@@ -106,6 +106,18 @@ env:
   OCR_TMP_DIR: "/ocr_service/tmp"
   OMP_THREAD_LIMIT: "1"
 
+# Dynamic env-file ingestion (for repo-local ./env/*.env files).
+# Example:
+#   helm upgrade --install ocr-service ./charts/ocr-service \
+#     --set envFiles.enabled=true \
+#     --set-file envFiles.contents[0]=./env/ocr_service.env \
+#     --set-file envFiles.contents[1]=./env/general.env
+#
+# Values from env files override keys in `env` when `enabled=true`.
+envFiles:
+  enabled: false
+  contents: []
+
 extraEnv: []
 extraEnvFrom: []
 
