@@ -3,7 +3,7 @@ import logging
 import traceback
 import uuid
 from multiprocessing import Pool
-from typing import IO, Any, Optional
+from typing import IO, Any
 
 import orjson
 from fastapi import APIRouter, File, Request, UploadFile
@@ -22,7 +22,7 @@ log = setup_logging("api", log_level=settings.LOG_LEVEL)
 
 
 @process_api.post("/process", response_model=ProcessResponse, response_class=ORJSONResponse)
-def process(request: Request, file: Optional[UploadFile] = File(default=None)) -> ORJSONResponse:
+def process(request: Request, file: UploadFile | None = File(default=None)) -> ORJSONResponse:
     """
      Processes raw binary input stream, file, or
         JSON containing the binary_data field in base64 format
@@ -66,9 +66,20 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
                 return ORJSONResponse(content={"detail": exc.errors()}, status_code=422)
 
             footer = payload.footer or {}
-            encoded: str = payload.binary_data
+            encoded: str | None = payload.binary_data
 
-            if encoded not in (None, "", {}):
+            if encoded is None:
+                doc_metadata = {
+                    "ocr_skipped": True,
+                    "skip_reason": "no_binary_data",
+                }
+                log.info("binary_data is null; OCR skipped")
+            elif encoded == "":
+                return ORJSONResponse(
+                    content={"detail": "binary_data cannot be an empty string"},
+                    status_code=422,
+                )
+            else:
                 try:
                     stream = base64.b64decode(encoded, validate=True)
                     log.info("binary_data successfully base64-decoded")
@@ -76,8 +87,6 @@ def process(request: Request, file: Optional[UploadFile] = File(default=None)) -
                     log.warning("binary_data is not valid base64; forcing bytes")
                     stream = bytes(encoded) if isinstance(encoded, bytes | bytearray) \
                             else str(encoded).encode("utf-8")
-            else:
-                stream = b""
 
         except Exception:
             log.warning("Stream does not contain valid JSON." + str(traceback.format_exc()))
@@ -166,7 +175,7 @@ def process_bulk(request: Request, files: list[UploadFile] = File(...)) -> Respo
 
     if isinstance(form, FormData):
         # collect uploaded files
-        for name, file in form.items():
+        for _name, file in form.items():
             if isinstance(file, UploadFile):
                 content = file.read()
                 file_streams[file.filename] = content

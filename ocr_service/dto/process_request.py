@@ -8,5 +8,11 @@ class ProcessRequest(BaseModel):
 
     model_config = ConfigDict(extra="ignore")
 
-    binary_data: str = Field(..., description="Base64-encoded document bytes.")
+    binary_data: str | None = Field(
+        ...,
+        description=(
+            "Base64-encoded document bytes. "
+            "Use null when the record has no attachment and OCR should be skipped."
+        ),
+    )
     footer: dict[str, Any] | None = Field(default=None, description="Optional passthrough payload.")

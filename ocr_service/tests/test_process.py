@@ -212,16 +212,31 @@ class TestOcrServiceProcessor(unittest.TestCase):
        payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
        self._test_json_payload_json_b64_binary_data(payload=payload.decode())
 
-    def test_process_record_binary_data_invalid_payload_returns_422(self):
-        self.log.info("Testing invalid record payload returns 422")
+    def test_process_record_binary_data_null_payload_skips_ocr(self):
+        self.log.info("Testing null binary_data skips OCR")
         payload = {"binary_data": None}
+        response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
+                                    content=orjson.dumps(payload),
+                                    headers={"Content-Type": "application/json"})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("result", data)
+        self.assertEqual(str(data["result"]["text"]), "")
+        self.assertEqual(data["result"].get("success"), "True")
+        metadata = data["result"].get("metadata", {})
+        self.assertTrue(metadata.get("ocr_skipped"))
+        self.assertEqual(metadata.get("skip_reason"), "no_binary_data")
+
+    def test_process_record_binary_data_empty_string_returns_422(self):
+        self.log.info("Testing empty binary_data returns 422")
+        payload = {"binary_data": ""}
         response = self.client.post(self.ENDPOINT_PROCESS_SINGLE,
                                     content=orjson.dumps(payload),
                                     headers={"Content-Type": "application/json"})
         self.assertEqual(response.status_code, 422)
         data = response.json()
         self.assertIn("detail", data)
-        self.assertIsInstance(data["detail"], list)
+        self.assertIsInstance(data["detail"], str)
 
     def test_process_record_binary_data_missing_binary_data_returns_422(self):
         self.log.info("Testing missing binary_data returns 422")

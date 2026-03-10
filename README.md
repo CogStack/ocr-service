@@ -141,7 +141,7 @@ The service exposes:
 - *POST* `/api/process_bulk` - placeholder; returns `{"response": "Not yet implemented"}`,
 also has the extra functionality of accepting json, in case you want to process records and want to keep additional data in the footer , e.g
 
-original record payload must contain the "binary_data" key with a base64 buffer (REQUIREMENT for it to work), and the "footer", that has the other record fields:
+original record payload must contain the "binary_data" key. Use a base64 buffer when a document is present, or `null` when the record has no attachment and OCR should be skipped. The "footer" keeps the other record fields:
 
 ```json
 {
