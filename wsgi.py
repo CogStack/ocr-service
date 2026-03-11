@@ -1,11 +1,9 @@
 import re
-import sys
 
 from a2wsgi import ASGIMiddleware
 
 from ocr_service.app import create_app
 
-sys.path.append("..")
 
 asgi_app = create_app()
 asgi_middleware = ASGIMiddleware(asgi_app)  # type: ignore[arg-type]
@@ -31,3 +29,4 @@ def app(environ, start_response):
         # last-resort catch so one bad request can’t crash workers
         start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
         return [b"Internal Server Error"]
+

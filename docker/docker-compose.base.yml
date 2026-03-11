@@ -21,7 +21,7 @@ x-ocr-service-common: &ocr-service-common
   shm_size: ${OCR_SERVICE_DOCKER_SHM_SIZE:-512m}
   init: true
   tmpfs:
-    - "${OCR_TMP_DIR:-/ocr_service/tmp}:rw,size=${OCR_SERVICE_TMPFS_SIZE:-1g}"
+    - "${OCR_TMP_DIR:-/ocr_service/tmp}:rw,uid=${OCR_SERVICE_UID:-10001},gid=${OCR_SERVICE_GID:-10001},mode=1770,size=${OCR_SERVICE_TMPFS_SIZE:-1g}"
   deploy:
     resources:
       limits:

@@ -1,13 +1,10 @@
-import sys
 import time
 import traceback
 
 from ocr_service.utils.utils import sync_port_mapping
 
-sys.path.append(".")
 
-counter = 0
-
+counter: int = 0
 
 def pre_fork(server, worker):
     global counter
@@ -22,3 +19,4 @@ def post_fork(server, worker):
         time.sleep(1)
     except Exception:
         print(traceback.print_exc())
+

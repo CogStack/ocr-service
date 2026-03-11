@@ -571,3 +571,4 @@ def setup_logging(component_name: str = "config_logger", log_level: int = 20) ->
         root_logger.addHandler(log_handler)
 
     return root_logger
+

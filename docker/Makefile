@@ -24,6 +24,9 @@ endef
 
 # utility commands
 
+build:
+	docker build -f ../Dockerfile .. && docker compose -f ${COMPOSE_DEV} up --build
+
 load-env:
 	$(WITH_ENV) echo "Environment variables loaded."
 

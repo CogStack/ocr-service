@@ -23,4 +23,4 @@ services:
 
 networks:
   cognet:
-    name: cogstack-net
+    name: ocr-service-dev-net
