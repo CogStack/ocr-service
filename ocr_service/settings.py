@@ -151,7 +151,7 @@ class Settings(BaseSettings):
     @computed_field  # type: ignore[prop-decorator]
     @property
     def WORKER_PORT_MAP_FILE_PATH(self) -> str:
-        return os.path.join(self.TMP_FILE_DIR, "./worker_process_data.txt")
+        return os.path.join(self.TMP_FILE_DIR, "worker_process_data.txt")
 
     @computed_field  # type: ignore[prop-decorator]
     @property

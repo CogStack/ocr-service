@@ -9,6 +9,15 @@
 
 This is a Python replacement for the previous Tika service, aiming to resolve scalability and performance issues. It relies on Tesseract OCR without the ambiguities of the Tika framework.
 
+## Processing performance:
+
+On a 1 core cpu (M4 max 4.5 Ghz /core) and 1 GB ram (8Ghz+) machine, CPU only processing:
+ 
+ - OCR: 60 docs / min
+ - NO_OCR:  / min
+
+1 Doc used for test: ~ 475 words or 2750 characters
+
 ## Asking questions
 
 Feel free to ask questions on the github issue tracker or on our [discourse website](https://discourse.cogstack.org) which is frequently used by our development team!  
