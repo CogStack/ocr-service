@@ -27,6 +27,10 @@ from PIL import Image
 
 from ocr_service.settings import settings
 
+logger = logging.getLogger(__name__)
+
+PRINTABLE = set(bytes(string.printable, "ascii")) | {9, 10, 13}
+
 INPUT_FILTERS: dict[str, str] = {
     # ── Writer / text ──
     ".odt":   "writer8",
@@ -174,8 +178,6 @@ def delete_tmp_files(file_paths: list[str]) -> None:
         if os.path.exists(file_path):
             os.remove(file_path)
 
-PRINTABLE = set(bytes(string.printable, "ascii")) | {9, 10, 13}
-
 def is_file_content_plain_text(stream: bytes, threshold: float = 0.95) -> bool:
     """Heuristic to determine whether a byte stream is likely plain text.
 
@@ -225,7 +227,7 @@ def is_file_type_xml(stream: bytes) -> bool:
         xml.sax.parseString(stream, xml.sax.ContentHandler())
         return True
     except Exception:
-        logging.warning("Could not determine if file is XML.")
+        logger.warning("Could not determine if file is XML.")
     return False
 
 def is_file_type_rtf(stream: bytes) -> bool:
@@ -329,7 +331,7 @@ def detect_file_type(stream: bytes) -> object | None:
     try:
         file_type = filetype.guess(stream)
     except Exception:
-        logging.error("Could not determine file Type")
+        logger.error("Could not determine file Type")
     return file_type
 
 
@@ -382,13 +384,13 @@ def terminate_hanging_process(process_id: int) -> None:
     """
 
     if not process_id:
-        logging.warning("No process ID given or process ID is empty")
+        logger.warning("No process ID given or process ID is empty")
         return
 
     try:
         parent = psutil.Process(process_id)
     except psutil.NoSuchProcess:
-        logging.warning(f"Process {process_id} does not exist")
+        logger.warning(f"Process {process_id} does not exist")
         return
 
     children = parent.children(recursive=True)
@@ -405,7 +407,7 @@ def terminate_hanging_process(process_id: int) -> None:
         with contextlib.suppress(Exception):
             p.kill()
 
-    logging.warning(
+    logger.warning(
         "Killed process tree rooted at pid=%s (children=%s)",
         process_id,
         [c.pid for c in children],
@@ -442,10 +444,16 @@ def cleanup_stale_lo_profiles(tmp_dir: str = settings.TMP_FILE_DIR) -> None:
         tmp_dir: Base directory containing LibreOffice profile folders.
     """
     base = Path(tmp_dir)
+
+    logger.debug("checking for active lo profiles in: " + str(base))
+
     if not base.exists():
+        logger.debug("dir does not exist" + str(base))
         return
 
     active_profiles = _active_lo_profiles()
+
+    logger.debug("active lo profiles: " + str(active_profiles))
 
     for profile_dir in base.glob("lo_profile_*"):
         try:
@@ -454,9 +462,9 @@ def cleanup_stale_lo_profiles(tmp_dir: str = settings.TMP_FILE_DIR) -> None:
                 continue
             if profile_dir.is_dir():
                 shutil.rmtree(profile_dir, ignore_errors=True)
-                logging.info("Removed stale LibreOffice profile: %s", profile_dir)
+                logger.info("Removed stale LibreOffice profile: %s", profile_dir)
         except Exception as exc:
-            logging.warning("Failed to remove stale LibreOffice profile %s: %s", profile_dir, exc)
+            logger.warning("Failed to remove stale LibreOffice profile %s: %s", profile_dir, exc)
 
 
 def get_process_id_by_process_name(process_name: str = "") -> int:
@@ -509,13 +517,34 @@ def sync_port_mapping(worker_id: int = -1, worker_pid: int = -1):
         if len(text) > 0:
             port_mapping = json.loads(text)
 
+        logger.debug("reaading: " + str(settings.WORKER_PORT_MAP_FILE_PATH) + "....")
+        logger.debug("found ports: " + str(port_mapping))
+
         port_mapping[str(settings.LIBRE_OFFICE_LISTENER_PORT_RANGE[0] + worker_id)] = str(worker_pid)
+
         output = json.dumps(port_mapping, indent=1)
+        
         f.seek(0)
         f.truncate(0)
         f.write(output)
         fcntl.lockf(f, fcntl.LOCK_UN)
 
+def is_file_locked(path: str) -> bool:
+
+    file_path = Path(path)
+    
+    if not file_path.exists():
+        return False
+
+    f = open(file_path, "a+b")
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        return False
+    except OSError:
+        return True
+    finally:
+        f.close()
 
 def get_assigned_port(current_worker_pid: int) -> int:
     """Return the LibreOffice port previously assigned to a worker PID.
@@ -542,33 +571,37 @@ def get_assigned_port(current_worker_pid: int) -> int:
     return int(settings.LIBRE_OFFICE_LISTENER_PORT_RANGE[0])
 
 
-def setup_logging(component_name: str = "config_logger", log_level: int = 20) -> logging.Logger:
-    """Configure a logger that writes to stdout with a consistent format.
+def setup_logging(
+    component_name: str = "config_logger",
+    log_level: int = 10,
+    configure_root: bool = False,
+) -> logging.Logger:
+    """Optionally configure root logging, then return a named logger.
 
     Args:
-        component_name: Logger name to configure.
-        log_level: Logging level to set on the logger and handler.
+        component_name: Logger name to return.
+        log_level: Logging level to set on the logger tree. Falls back to env/default when omitted.
+        configure_root: Whether to configure the process root logger.
 
     Returns:
         logging.Logger: Configured logger instance.
     """
-    root_logger = logging.getLogger(component_name)
-    log_format = '[%(asctime)s] [%(levelname)s] %(name)s: %(message)s'
-    log_handler = logging.StreamHandler(sys.stdout)
-    log_handler.setFormatter(logging.Formatter(fmt=log_format))
-    log_handler.setLevel(level=log_level)
-    root_logger.setLevel(level=log_level)
-    root_logger.propagate = False
 
-    # only add the handler if a previous one does not exists
-    handler_exists = False
-    for h in root_logger.handlers:
-        if isinstance(h, logging.StreamHandler) and h.level is log_handler.level:
-            handler_exists = True
-            break
+    if configure_root:
+        root_logger = logging.getLogger()
+        gunicorn_error_logger = logging.getLogger("gunicorn.error")
 
-    if not handler_exists:
-        root_logger.addHandler(log_handler)
+        if gunicorn_error_logger.handlers:
+            root_logger.handlers = gunicorn_error_logger.handlers[:]
+        elif not root_logger.handlers:
+            log_format = "[%(asctime)s] [%(levelname)s] %(name)s: %(message)s"
+            log_handler = logging.StreamHandler(sys.stdout)
+            log_handler.setFormatter(logging.Formatter(fmt=log_format))
+            root_logger.addHandler(log_handler)
 
-    return root_logger
+        root_logger.setLevel(level=log_level)
+
+    named_logger = logging.getLogger(component_name)
+    named_logger.setLevel(level=log_level)
+    return named_logger
 

@@ -72,19 +72,22 @@ def start_office_converter_servers() -> dict[str, Any]:
 
     loffice_processes: dict[str, Any] = {}
     assigned_port = get_assigned_port(os.getpid())
-    _port = str(assigned_port)
+    
+    logging.debug("PORT RANGE: " + str(settings.LIBRE_OFFICE_LISTENER_PORT_RANGE))
+    logging.debug("ASSIGNED PORT: " + str(assigned_port))
 
     for port_num in settings.LIBRE_OFFICE_LISTENER_PORT_RANGE:
         _port_num = str(port_num)
-        logging.info(
-            "STARTED WORKER ON PORT: %s PID: %s ASSIGNED PORT: %s",
-            _port_num, os.getpid(), assigned_port,
-        )
-        if port_num == assigned_port and settings.OCR_WEB_SERVICE_THREADS == 1:
+        logging.debug (f"checking port match {_port_num} - {assigned_port}")
+        if int(port_num) == assigned_port and settings.OCR_WEB_SERVICE_THREADS == 1:
+            logging.debug("assigned_port matching, starting ....")
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
+            logging.info("STARTED WORKER ON PORT: %s PID: %s ASSIGNED PORT: %s",
+            _port_num, os.getpid(), assigned_port,
+            )
             break
-        elif (settings.OCR_WEB_SERVICE_WORKERS == 1 and settings.OCR_WEB_SERVICE_THREADS > 1) or settings.DEBUG_MODE:
+        elif (settings.OCR_WEB_SERVICE_WORKERS == 1 and settings.OCR_WEB_SERVICE_THREADS > 1):
             process = start_office_server(_port_num)
             loffice_processes[_port_num] = process
             break
@@ -145,6 +148,9 @@ def create_app() -> FastAPI:
                       debug=settings.DEBUG_MODE)
         app.include_router(api)
 
+        thread_event = None
+        proc_listener_thread = None
+
         # start once per worker
         if not _started:
             _started = True
@@ -166,24 +172,25 @@ def create_app() -> FastAPI:
             )
             proc_listener_thread.start()
 
-            import atexit
+        import atexit
 
-            def cleanup():
-                thread_event.set()
-                if proc_listener_thread.is_alive():
-                    proc_listener_thread.join(timeout=5)
-                for port, proc in processor.loffice_process_list.items():
-                    p = proc["process"]
+        def cleanup():
+            thread_event.set()
+            if proc_listener_thread.is_alive():
+                proc_listener_thread.join(timeout=5)
+            for port, proc in processor.loffice_process_list.items():
+                p = proc["process"]
+                try:
+                    logging.info(f"shutting down libreoffice process on port {port}")
+                    p.terminate()
+                    p.wait(timeout=3)
+                except Exception:
                     try:
-                        logging.info(f"shutting down libreoffice process on port {port}")
-                        p.terminate()
-                        p.wait(timeout=3)
-                    except Exception:
-                        try:
-                            terminate_hanging_process(p.pid)
-                        except Exception as e:
-                            logging.error("error in when shutting down libreoffice process: " + str(e))
-            atexit.register(cleanup)
+                        terminate_hanging_process(p.pid)
+                    except Exception as e:
+                        logging.error("error in when shutting down libreoffice process: " + str(e))
+        
+        atexit.register(cleanup)
 
     except Exception:
         raise

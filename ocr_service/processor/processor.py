@@ -16,7 +16,7 @@ class Processor:
     """Orchestrates document conversion and OCR processing via converter and OCR engine helpers."""
 
     def __init__(self):
-        self.log = setup_logging(component_name="processor", log_level=settings.LOG_LEVEL)
+        self.log = setup_logging(component_name=__name__, log_level=settings.LOG_LEVEL)
         self.log.debug("log level set to : " + str(settings.LOG_LEVEL))
         self.loffice_process_list = {}
         self.converter = DocumentConverter(self.log, self.loffice_process_list)

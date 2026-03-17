@@ -18,7 +18,7 @@ from ocr_service.settings import settings
 from ocr_service.utils.utils import build_response, setup_logging
 
 process_api = APIRouter(prefix="/api")
-log = setup_logging("api", log_level=settings.LOG_LEVEL)
+log = setup_logging(__name__, log_level=settings.LOG_LEVEL)
 
 
 @process_api.post("/process", response_model=ProcessResponse, response_class=ORJSONResponse)

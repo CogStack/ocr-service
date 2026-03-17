@@ -2,6 +2,11 @@ import re
 
 from a2wsgi import ASGIMiddleware
 
+from ocr_service.utils.utils import setup_logging
+
+
+logger = setup_logging(component_name="ocr_service", configure_root=True)
+
 from ocr_service.app import create_app
 
 
@@ -27,6 +32,7 @@ def app(environ, start_response):
 
     except Exception:
         # last-resort catch so one bad request can’t crash workers
+        logger.exception("Unhandled error in WSGI app")
         start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
         return [b"Internal Server Error"]
 
