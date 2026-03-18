@@ -30,6 +30,14 @@ class DocumentConverter:
         self.loffice_process_list = loffice_process_list
 
     @staticmethod
+    def _build_conversion_paths(file_name: str, uid: str | None = None) -> tuple[str, str]:
+        uid = uid or uuid.uuid4().hex
+        doc_file_path = os.path.join(settings.TMP_FILE_DIR, f"{uid}_{file_name}")
+        doc_root, _ = os.path.splitext(doc_file_path)
+        pdf_file_path = f"{doc_root}.pdf"
+        return doc_file_path, pdf_file_path
+
+    @staticmethod
     def resolve_content_type(file_type: object | None) -> str:
         if file_type is not None:
             return str(file_type.mime)  # type: ignore
@@ -168,11 +176,7 @@ class DocumentConverter:
         input_filter = INPUT_FILTERS.get(ext)
 
         try:
-            # generate unique id
-            uid = uuid.uuid4().hex
-
-            doc_file_path = os.path.join(settings.TMP_FILE_DIR, str(uid) + "_" + file_name)
-            pdf_file_path = doc_file_path[:-len(ext)] + ".pdf"
+            doc_file_path, pdf_file_path = self._build_conversion_paths(file_name)
 
             with open(file=doc_file_path, mode="wb") as tmp_doc_file:
                 tmp_doc_file.write(stream)

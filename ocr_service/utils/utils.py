@@ -340,7 +340,8 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
 
     LibreOffice relies on a reasonable filename with an extension to select
     conversion filters. This helper preserves any provided extension and
-    falls back to content-based detection when missing.
+    falls back to content-based detection when missing. Unknown binary
+    payloads remain extensionless so they are not mislabeled as plain text.
 
     Args:
         file_name: Original file name (may be empty or extension-less).
@@ -373,8 +374,12 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     if is_file_type_rtf(stream):
         return base + ".rtf"
 
-    # last resort
-    return base + ".txt"
+    # 4) only tag as plain text when the content actually looks like text
+    if is_file_content_plain_text(stream):
+        return base + ".txt"
+
+    # last resort: preserve extensionless names for unknown/binary content
+    return base
 
 def terminate_hanging_process(process_id: int) -> None:
     """Terminate a process tree by PID.
@@ -604,4 +609,3 @@ def setup_logging(
     named_logger = logging.getLogger(component_name)
     named_logger.setLevel(level=log_level)
     return named_logger
-
