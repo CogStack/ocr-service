@@ -251,27 +251,31 @@ class DocumentConverter:
                     if loffice_subprocess and loffice_subprocess.poll() is None:
                         loffice_subprocess.kill()
 
-                    if os.path.isfile(pdf_file_path):
+                    if os.path.isfile(pdf_file_path) and os.path.getsize(pdf_file_path) > 0:
                         with open(file=pdf_file_path, mode="rb") as tmp_pdf_file:
                             os.fsync(tmp_pdf_file.fileno())
                             pdf_stream = tmp_pdf_file.read()
+                            
+                            if b"%PDF-" not in pdf_stream[:64]:
+                                self.log.warning("invalid pdf header for file %s", pdf_file_path)
+                                pdf_stream = b""
                     else:
                         self.log.info("libre office did not produce any output for file: " +
                                       str(pdf_file_path) + " | port:" + str(used_port_num))
 
             else:
-                raise Exception("could not find libre office server process on port:" + str(used_port_num))
+                self.log.error("could not find libre office server process on port:" + str(used_port_num))
 
             conversion_time_end = time.time()
             self.log.info("doc conversion to PDF finished | Elapsed : " +
                           str(conversion_time_end - conversion_time_start) + " seconds")
 
-        except Exception as exception:
-            raise Exception("doc name:" + str(file_name)
-                            + " | tmp_file internal name: "
-                            + str(doc_file_path)
-                            + " | preprocessing_doc exception: "
-                            + str(traceback.format_exc())) from exception
+        except Exception:
+            self.log.exception(
+                "doc name: %s | tmp_file internal name: %s | preprocessing_doc failed",
+                file_name,
+                doc_file_path,
+            )
 
         finally:
             if used_port_num:
