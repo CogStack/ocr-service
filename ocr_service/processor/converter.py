@@ -247,7 +247,6 @@ class DocumentConverter:
                             stdout.decode("utf-8", "ignore"),
                             stderr.decode("utf-8", "ignore"),
                         )
-                        self.loffice_process_list[used_port_num]["unhealthy"] = True
 
                 finally:
                     loffice_timer.cancel()
