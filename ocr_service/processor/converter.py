@@ -48,7 +48,11 @@ class DocumentConverter:
         output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
         return str(output_text).encode("utf-8", errors="replace").decode("utf-8")
 
-    def _extract_text_fallback(self, stream: bytes, *, is_html: bool, is_xml: bool, is_rtf: bool) -> str:
+    def _extract_text_fallback(self, 
+                               stream: bytes, *,
+                               is_html: bool = False,
+                               is_xml: bool = False, 
+                               is_rtf: bool = False) -> str:
         """Best-effort text extraction when LO conversion fails."""
         text = ""
 
@@ -327,6 +331,26 @@ class DocumentConverter:
 
         ctx.metadata["pages"] = 1
         return [image]
+    
+    def _xml_to_text(self, ctx: ProcessContext) -> str:
+        
+        import xml.etree.ElementTree as ET
+
+        root = ET.fromstring(ctx.stream)
+        parts = []
+        for elem in root.iter():
+            if elem.text and elem.text.strip():
+                parts.append(elem.text.strip())
+
+            for value in elem.attrib.values():
+                if value and value.strip():
+                    parts.append(value.strip())
+
+            if elem.tail and elem.tail.strip():
+                parts.append(elem.tail.strip())
+
+        return " ".join(parts)
+
 
     def _handle_pdf_stream(self, ctx: ProcessContext) -> None:
         if settings.OPERATION_MODE == "OCR":
@@ -339,26 +363,49 @@ class DocumentConverter:
     def prepare(self, ctx: ProcessContext) -> None:
         self.log.info("Checking file type for doc id: " + ctx.file_name)
 
-        if type(ctx.file_type) is archive.Pdf:
+        _is_pdf = type(ctx.file_type) is archive.Pdf
+        _is_rtf = (type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf()) 
+        _is_xml = ctx.checks.is_xml() and not ctx.checks.is_html()
+        _is_html = ctx.checks.is_html()
+        _is_plain = ctx.checks.is_plain_text()
+
+        if _is_pdf:
             ctx.pdf_stream = ctx.stream
-        elif ctx.file_type in DOCUMENT or type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf():
-            ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
+        elif ctx.file_type in DOCUMENT or _is_rtf:
+            if settings.OPERATION_MODE == "NO_OCR" and _is_rtf:
+                ctx.output_text = self._extract_text_fallback(ctx.stream, is_rtf=True)
+                ctx.metadata["pages"] = 1
+            else:
+                ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
         elif ctx.file_type in IMAGE:
             ctx.images = self._handle_image_stream(ctx)
-        elif ctx.checks.is_xml() and not ctx.checks.is_html():
-            self.log.info("Detected XML content; converting to pdf")
+        elif _is_xml:
             ctx.metadata["content-type"] = "text/xml"
-            ctx.pdf_stream = self._preprocess_xml_to_pdf(ctx.stream, file_name=ctx.file_name)
+            if settings.OPERATION_MODE == "NO_OCR":
+                ctx.output_text = self._xml_to_text(ctx)
+                ctx.metadata["pages"] = 1
+            else:
+            # OCR_PATHWAY: XML -> PDF -> Text (pyxml2pdf)
+            #                  if PDF conv fail -> LO conv to PDF -> Text (pypdf) 
+                self.log.info("Detected XML content; converting to pdf...")
+                ctx.pdf_stream = self._preprocess_xml_to_pdf(ctx.stream, file_name=ctx.file_name)
             # if we get no content still then just run it through libreoffice converter
-            if not ctx.pdf_stream:
+                if not ctx.pdf_stream:
+                    ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
+        elif _is_html:
+            ctx.metadata["content-type"] = "text/html"
+            if settings.OPERATION_MODE == "NO_OCR":
+                ctx.metadata["pages"] = 1
+                self.log.info("Detected HTML content, handling via fallback, NO_OCR mode")
+                ctx.output_text = self._extract_text_fallback(ctx.stream, is_html=True)
+            else:
+                self.log.info("Detected HTML content; converting to pdf via unoserver/LO")
                 ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
-        elif ctx.checks.is_html():
-            self.log.info("Detected HTML content; converting to pdf via unoserver/LO")
-            ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
-        elif ctx.checks.is_plain_text():
+        elif _is_plain:
             self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")
             ctx.output_text = ctx.stream.decode("utf-8", "ignore")
             ctx.metadata["pages"] = 1
+            ctx.metadata["content-type"] = "text/plain"
         else:
             self.log.info("Unknown file type; attempting to convert to pdf via unoserver/LO ")
             ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
@@ -371,9 +418,9 @@ class DocumentConverter:
             )
             ctx.output_text = self._extract_text_fallback(
                 ctx.stream,
-                is_html=ctx.checks.is_html(),
-                is_xml=ctx.checks.is_xml(),
-                is_rtf=ctx.checks.is_rtf(),
+                is_html=_is_html,
+                is_xml=_is_xml,
+                is_rtf=_is_rtf,
             )
             ctx.metadata["pages"] = 1
             ctx.metadata["content-type"] = "text/plain"
