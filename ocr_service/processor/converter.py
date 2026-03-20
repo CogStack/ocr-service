@@ -260,7 +260,7 @@ class DocumentConverter:
                             os.fsync(tmp_pdf_file.fileno())
                             pdf_stream = tmp_pdf_file.read()
                             
-                            if b"%PDF-" not in pdf_stream[:64]:
+                            if not pdf_stream.startswith(b"%PDF-"):
                                 self.log.warning("invalid pdf header for file %s", pdf_file_path)
                                 pdf_stream = b""
                     else:

@@ -14,6 +14,14 @@ class TestFilenameHandling(unittest.TestCase):
         file_name = normalise_file_name_with_ext("request-id", b"\x00\x01\x02\x03")
         self.assertEqual(file_name, "request-id")
 
+    def test_detected_file_type_extension_is_used_when_name_has_no_suffix(self):
+        file_type = Mock()
+        file_type.extension = "docx"
+
+        file_name = normalise_file_name_with_ext("request-id", b"\x00\x01\x02\x03", file_type)
+
+        self.assertEqual(file_name, "request-id.docx")
+
     def test_processor_passes_extensionless_unknown_name_to_converter(self):
         processor = Processor()
         processor.converter = Mock()

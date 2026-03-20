@@ -335,7 +335,7 @@ def detect_file_type(stream: bytes) -> object | None:
     return file_type
 
 
-def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
+def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type: object | None = None) -> str:
     """Normalize filename and ensure an extension is present.
 
     LibreOffice relies on a reasonable filename with an extension to select
@@ -346,6 +346,7 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     Args:
         file_name: Original file name (may be empty or extension-less).
         stream: File content used for extension inference.
+        file_type: Optional previously detected file type descriptor.
 
     Returns:
         str: Normalized file name with an extension.
@@ -361,12 +362,17 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     if ext:
         return base + ext
 
-    # 2) let filetype guess it from content
+    # 2) prefer an already detected extension when available
+    detected_ext = getattr(file_type, "extension", None)
+    if detected_ext:
+        return f"{base}.{str(detected_ext)}"
+
+    # 3) let filetype guess it from content
     guessed_ext = filetype.guess_extension(stream)
     if guessed_ext:
         return f"{base}.{guessed_ext}"
 
-    # 3) fallbacks for texty formats our filetype may not catch
+    # 4) fallbacks for texty formats our filetype may not catch
     if is_file_type_html(stream):
         return base + ".html"
     if is_file_type_xml(stream):
@@ -374,7 +380,7 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes) -> str:
     if is_file_type_rtf(stream):
         return base + ".rtf"
 
-    # 4) only tag as plain text when the content actually looks like text
+    # 5) only tag as plain text when the content actually looks like text
     if is_file_content_plain_text(stream):
         return base + ".txt"
 

@@ -42,7 +42,7 @@ class Processor:
         """
 
         file_type = detect_file_type(stream)
-        file_name = normalise_file_name_with_ext(file_name, stream)
+        file_name = normalise_file_name_with_ext(file_name, stream, file_type)
         ctx = ProcessContext(stream=stream, file_name=file_name, file_type=file_type)
         ctx.metadata["content-type"] = self.converter.resolve_content_type(file_type)
 
