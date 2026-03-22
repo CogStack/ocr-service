@@ -359,57 +359,74 @@ class DocumentConverter:
             ctx.output_text, pdf_metadata = self._pdf_to_text(ctx.pdf_stream)
             ctx.metadata.update(pdf_metadata)
 
+
     def prepare(self, ctx: ProcessContext) -> None:
-        self.log.info("Checking file type for doc id: " + ctx.file_name)
+
+        self.log.info("Checking file type for doc id: %s", ctx.file_name)
 
         _is_pdf = type(ctx.file_type) is archive.Pdf
-        _is_rtf = (type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf()) 
-        _is_xml = ctx.checks.is_xml() and not ctx.checks.is_html()
+        _is_rtf = type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf()
         _is_html = ctx.checks.is_html()
+        _is_xml = ctx.checks.is_xml() and not _is_html
         _is_plain = ctx.checks.is_plain_text()
 
         if _is_pdf:
             ctx.pdf_stream = ctx.stream
-        elif ctx.file_type in DOCUMENT or _is_rtf:
-            if settings.OPERATION_MODE == "NO_OCR" and _is_rtf:
-                ctx.output_text = self._extract_text_fallback(ctx.stream, is_rtf=True)
-                ctx.metadata["pages"] = 1
-            else:
-                ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
-        elif ctx.file_type in IMAGE:
-            ctx.images = self._handle_image_stream(ctx)
+
         elif _is_xml:
             ctx.metadata["content-type"] = "text/xml"
             if settings.OPERATION_MODE == "NO_OCR":
                 ctx.output_text = self._xml_to_text(ctx)
                 ctx.metadata["pages"] = 1
             else:
-            # OCR_PATHWAY: XML -> PDF -> Text (pyxml2pdf)
-            #                  if PDF conv fail -> LO conv to PDF -> Text (pypdf) 
-                self.log.info("Detected XML content; converting to pdf...")
-                ctx.pdf_stream = self._preprocess_xml_to_pdf(ctx.stream, file_name=ctx.file_name)
-            # if we get no content still then just run it through libreoffice converter
+                self.log.info("Detected XML content; converting to PDF...")
+                ctx.pdf_stream = self._preprocess_xml_to_pdf(
+                    ctx.stream,
+                    file_name=ctx.file_name,
+                )
                 if not ctx.pdf_stream:
-                    ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
+                    self.log.warning(
+                        "XML->PDF conversion failed for %s; falling back to LibreOffice",
+                        ctx.file_name,
+                    )
+                    ctx.pdf_stream = self._preprocess_doc(
+                        ctx.stream,
+                        file_name=ctx.file_name,
+                    )
+
         elif _is_html:
             ctx.metadata["content-type"] = "text/html"
             if settings.OPERATION_MODE == "NO_OCR":
-                ctx.metadata["pages"] = 1
                 self.log.info("Detected HTML content, handling via fallback, NO_OCR mode")
                 ctx.output_text = self._extract_text_fallback(ctx.stream, is_html=True)
+                ctx.metadata["pages"] = 1
             else:
-                self.log.info("Detected HTML content; converting to pdf via unoserver/LO")
+                self.log.info("Detected HTML content; converting to PDF via unoserver/LO")
                 ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
+
+        elif ctx.file_type in DOCUMENT or _is_rtf:
+            if settings.OPERATION_MODE == "NO_OCR" and _is_rtf:
+                ctx.output_text = self._extract_text_fallback(ctx.stream, is_rtf=True)
+                ctx.metadata["pages"] = 1
+                ctx.metadata["content-type"] = "text/plain"
+            else:
+                ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
+
+        elif ctx.file_type in IMAGE:
+            ctx.images = self._handle_image_stream(ctx)
+
         elif _is_plain:
-            self.log.info("Unknown text-like content; treating as plain text, skipping unoserver/LO conversion")
+            self.log.info(
+                "Unknown text-like content; treating as plain text, skipping unoserver/LO conversion"
+            )
             ctx.output_text = ctx.stream.decode("utf-8", "ignore")
             ctx.metadata["pages"] = 1
             ctx.metadata["content-type"] = "text/plain"
+
         else:
-            self.log.info("Unknown file type; attempting to convert to pdf via unoserver/LO ")
+            self.log.info("Unknown file type; attempting to convert to PDF via unoserver/LO")
             ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
 
-        # ── LO fallback: no PDF, but maybe we can still return text ──
         if not ctx.pdf_stream and not ctx.output_text and ctx.checks.is_text_like():
             self.log.warning(
                 "No PDF produced for %s; falling back to plain-text extraction",
@@ -425,4 +442,4 @@ class DocumentConverter:
             ctx.metadata["content-type"] = "text/plain"
 
         if ctx.pdf_stream:
-            self._handle_pdf_stream(ctx)
+            self._handle_pdf_stream(ctx) 
