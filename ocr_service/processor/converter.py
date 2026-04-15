@@ -378,6 +378,7 @@ class DocumentConverter:
             if settings.OPERATION_MODE == "NO_OCR":
                 ctx.output_text = self._xml_to_text(ctx)
                 ctx.metadata["pages"] = 1
+                ctx.metadata["ocr_skipped"] = True
             else:
                 self.log.info("Detected XML content; converting to PDF...")
                 ctx.pdf_stream = self._preprocess_xml_to_pdf(
@@ -400,6 +401,7 @@ class DocumentConverter:
                 self.log.info("Detected HTML content, handling via fallback, NO_OCR mode")
                 ctx.output_text = self._extract_text_fallback(ctx.stream, is_html=True)
                 ctx.metadata["pages"] = 1
+                ctx.metadata["ocr_skipped"] = True
             else:
                 self.log.info("Detected HTML content; converting to PDF via unoserver/LO")
                 ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
@@ -409,6 +411,7 @@ class DocumentConverter:
                 ctx.output_text = self._extract_text_fallback(ctx.stream, is_rtf=True)
                 ctx.metadata["pages"] = 1
                 ctx.metadata["content-type"] = "text/plain"
+                ctx.metadata["ocr_skipped"] = True
             else:
                 ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
 
@@ -422,6 +425,7 @@ class DocumentConverter:
             ctx.output_text = ctx.stream.decode("utf-8", "ignore")
             ctx.metadata["pages"] = 1
             ctx.metadata["content-type"] = "text/plain"
+            ctx.metadata["ocr_skipped"] = True
 
         else:
             self.log.info("Unknown file type; attempting to convert to PDF via unoserver/LO")
