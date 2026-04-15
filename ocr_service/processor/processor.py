@@ -87,7 +87,7 @@ class Processor:
             end_time = time.time()
             elapsed_time = float(round(float(end_time - start_time), 4))
             doc_metadata["elapsed_time"] = elapsed_time
-
+            doc_metadata["text_length"] = len(output_text)
             self.log.info("Finished processing file: " + file_name + " | Elapsed time: " + str(elapsed_time)
                           + " seconds")
         except Exception:
