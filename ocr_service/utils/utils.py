@@ -195,7 +195,8 @@ def is_file_content_plain_text(stream: bytes, threshold: float = 0.95) -> bool:
 
     # If it can't be decoded as UTF-8 at all, treat as binary
     try:
-        sample.decode("utf-8")
+        # old documents have \x95 and \x96 characters. Use replace
+        sample.decode("utf-8", errors="replace")
     except UnicodeDecodeError:
         return False
 
