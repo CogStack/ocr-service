@@ -89,12 +89,14 @@ env:
   OCR_SERVICE_WORKER_CLASS: "sync"
   OCR_WEB_SERVICE_WORKERS: "1"
   OCR_SERVICE_LOG_LEVEL: "20"
+  OCR_SERVICE_DEBUG_MODE: "false"
   OCR_SERVICE_OPERATION_MODE: "OCR"
   OCR_SERVICE_CPU_THREADS: "1"
   OCR_SERVICE_CONVERTER_THREADS: "1"
   OCR_SERVICE_TESSERACT_LANG: "eng"
   OCR_SERVICE_TESSERACT_TIMEOUT: "30"
   OCR_SERVICE_TESSERACT_NICE: "-18"
+  OCR_SERVICE_TESSERACT_CUSTOM_CONFIG_FLAGS: ""
   OCR_SERVICE_IMAGE_DPI: "200"
   OCR_SERVICE_LIBRE_OFFICE_PROCESS_TIMEOUT: "20"
   OCR_SERVICE_GUNICORN_LOG_FILE_PATH: "-"
@@ -106,17 +108,12 @@ env:
   OCR_TMP_DIR: "/ocr_service/tmp"
   OMP_THREAD_LIMIT: "1"
 
-# Dynamic env-file ingestion (for repo-local ./env/*.env files).
+# Prefer standard Helm values overlays instead of passing raw `.env` files.
+# The repo `env/*.env` files are for local shell and Docker workflows, not Helm.
 # Example:
 #   helm upgrade --install ocr-service ./charts/ocr-service \
-#     --set envFiles.enabled=true \
-#     --set-file envFiles.contents[0]=./env/ocr_service.env \
-#     --set-file envFiles.contents[1]=./env/general.env
-#
-# Values from env files override keys in `env` when `enabled=true`.
-envFiles:
-  enabled: false
-  contents: []
+#     -f ./charts/ocr-service/values-text-only.yaml \
+#     -f ./my-values.yaml
 
 extraEnv: []
 extraEnvFrom: []

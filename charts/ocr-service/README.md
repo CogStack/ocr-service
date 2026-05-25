@@ -8,29 +8,50 @@ Deploys the CogStack OCR service as a Kubernetes `Deployment` + `Service`, with 
 helm install ocr-service ./charts/ocr-service
 ```
 
-### Install with repo env files (dynamic)
+Repo shortcut:
 
 ```bash
-helm upgrade --install ocr-service ./charts/ocr-service \
-  --set envFiles.enabled=true \
-  --set-file envFiles.contents[0]=./env/ocr_service.env \
-  --set-file envFiles.contents[1]=./env/general.env
+make helm-install
 ```
 
-Text-only profile (overlay on top of base):
+### Install with values overlays
 
 ```bash
 helm upgrade --install ocr-service ./charts/ocr-service \
-  --set envFiles.enabled=true \
-  --set-file envFiles.contents[0]=./env/ocr_service.env \
-  --set-file envFiles.contents[1]=./env/ocr_service_text_only.env \
-  --set-file envFiles.contents[2]=./env/general.env
+  -f ./my-values.yaml
+```
+
+Text-only profile:
+
+```bash
+helm upgrade --install ocr-service ./charts/ocr-service \
+  -f ./charts/ocr-service/values-text-only.yaml
+```
+
+Repo shortcut:
+
+```bash
+make helm-install-text-only
 ```
 
 Notes:
-- Env files are applied in order; later files override earlier ones.
-- Parsed env-file values override `values.yaml` `env` keys when `envFiles.enabled=true`.
-- Values are treated as literal strings (shell substitutions like `${VAR:-default}` are not expanded by Helm).
+- Use normal Helm value layering; later `-f` files override earlier ones.
+- Put runtime OCR settings under `env`.
+- For existing Kubernetes-managed env sources, use `extraEnvFrom` with `secretRef` or `configMapRef`.
+- The repo `env/*.env` files remain for local shell and Docker flows; the Helm chart now uses YAML values only.
+- Use `HELM_ARGS` with the make targets for namespace or values overrides, for example `make helm-install HELM_ARGS='-n ocr --create-namespace'`.
+
+Example custom overlay:
+
+```yaml
+image:
+  tag: "1.0.9"
+
+env:
+  OCR_SERVICE_TESSERACT_LANG: "eng"
+  OCR_SERVICE_CPU_THREADS: "1"
+  OCR_SERVICE_CONVERTER_THREADS: "1"
+```
 
 ## Upgrade
 
@@ -42,7 +63,7 @@ helm upgrade ocr-service ./charts/ocr-service
 
 - `image.repository` / `image.tag`: container image to run.
 - `env`: OCR service environment variables.
-- `envFiles.enabled` + `envFiles.contents`: parse one or more `.env` files at deploy time. Later files override earlier files.
+- `extraEnvFrom`: import additional env vars from a `Secret` or `ConfigMap`.
 - `tmp.*`: writable `emptyDir` mount for `/ocr_service/tmp`.
 - `probes.*`: startup/readiness/liveness probe settings.
 - `autoscaling.enabled`: enable/disable HPA.

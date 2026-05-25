@@ -1,6 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
-{{- $mergedEnv := include "ocr-service.mergedEnvMap" . | fromYaml | default dict }}
+{{- $env := .Values.env | default dict }}
 metadata:
   name: {{ include "ocr-service.fullname" . }}
   labels:
@@ -42,14 +42,16 @@ spec:
               protocol: TCP
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- if or $env .Values.extraEnv }}
           env:
-            {{- range $key, $value := $mergedEnv }}
+            {{- range $key := keys $env | sortAlpha }}
             - name: {{ $key }}
-              value: {{ $value | quote }}
+              value: {{ index $env $key | quote }}
             {{- end }}
             {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+          {{- end }}
           {{- with .Values.extraEnvFrom }}
           envFrom:
             {{- toYaml . | nindent 12 }}
