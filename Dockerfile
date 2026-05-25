@@ -1,5 +1,8 @@
 FROM ubuntu:noble
 
+ARG APP_PYTHON_VERSION=3.13
+ARG LO_PYTHON_VERSION=3.12
+
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG NO_PROXY
@@ -42,12 +45,25 @@ RUN apt-get -o Acquire::Retries=5 update -yq && \
 # add extra repos
 RUN apt-add-repository -y -n multiverse && \
     apt-add-repository -y -n universe && \
+    add-apt-repository -y -n ppa:deadsnakes/ppa && \
     add-apt-repository -y -n ppa:graphics-drivers/ppa && \
     apt-get -o Acquire::Retries=5 update -yq && \
     apt-get upgrade -y
 
 # install req packages
-RUN apt-get install -y --no-install-recommends python3-all-dev python3-dev python3.12 python3-pip libpython3.12-dev python3.12-dev python3.12-venv python3-uno
+RUN apt-get install -y --no-install-recommends \
+    python3-all-dev \
+    python3-dev \
+    python3-pip \
+    python3-uno \
+    python${LO_PYTHON_VERSION} \
+    libpython${LO_PYTHON_VERSION}-dev \
+    python${LO_PYTHON_VERSION}-dev \
+    python${LO_PYTHON_VERSION}-venv \
+    python${APP_PYTHON_VERSION} \
+    libpython${APP_PYTHON_VERSION}-dev \
+    python${APP_PYTHON_VERSION}-dev \
+    python${APP_PYTHON_VERSION}-venv
 RUN apt-get -y --no-install-recommends -o Dpkg::Options::="--force-confold" -y -o Dpkg::Options::="--force-confdef" -fuy dist-upgrade && \
     apt-get install -y --no-install-recommends \
     gnupg \
@@ -116,23 +132,27 @@ WORKDIR /ocr_service
 # and will not work in a venv
 # so we need to install unoserver globally to match the version in requirements.txt
 # this is a bit hacky but it works around the issue of unoserver not being available
-# via pip for python3.12 (as of 2025-08)
+# via pip for the system python (3.12 on Ubuntu noble)
 RUN UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true) && \
     if [ -n "$UNOSERVER_PIN" ]; then \
         echo "Installing system unoserver==$UNOSERVER_PIN"; \
-        pip3 install --no-cache-dir --break-system-packages "unoserver==$UNOSERVER_PIN"; \
+        /usr/bin/python${LO_PYTHON_VERSION} -m pip install --no-cache-dir --break-system-packages "unoserver==$UNOSERVER_PIN"; \
     else \
         echo "No exact pin found for unoserver in requirements.txt; installing latest system unoserver"; \
-        pip3 install --no-cache-dir --break-system-packages unoserver; \
+        /usr/bin/python${LO_PYTHON_VERSION} -m pip install --no-cache-dir --break-system-packages unoserver; \
     fi
 # --- end unoserver system install ---
 
 # Use a virtual environment for Python deps (single-stage build)
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+ENV LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
 
-# Install uwsgi from PyPI source using the global tools
-RUN python3.12 -m venv "$VIRTUAL_ENV" && "$VIRTUAL_ENV/bin/python" && "$VIRTUAL_ENV/bin/pip" install --no-cache-dir -r ./requirements.txt
+# Install the application into a Python 3.13 virtual environment while
+# keeping LibreOffice/UNO on the system Python.
+RUN python${APP_PYTHON_VERSION} -m venv "$VIRTUAL_ENV" && \
+    "$VIRTUAL_ENV/bin/python" && \
+    "$VIRTUAL_ENV/bin/pip" install --no-cache-dir -r ./requirements.txt
 
 # compile the python files
 # Byte-compile using venv python
