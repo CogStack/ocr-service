@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import multiprocessing
 import os
+import re
 import time
 import traceback
 import uuid
@@ -25,6 +26,10 @@ CURRENT_PDF_FILE: pdfium.PdfDocument | None = None
 
 
 class DocumentConverter:
+ 
+    MULTI_WHITESPACE = re.compile(r"[ \t]+")
+    MULTI_NEWLINES = re.compile(r"\n{3,}")
+
     def __init__(self, log, loffice_process_list: dict[str, Any]) -> None:
         self.log = log
         self.loffice_process_list = loffice_process_list
@@ -45,8 +50,15 @@ class DocumentConverter:
 
     @staticmethod
     def finalize_output_text(output_text: str) -> str:
-        output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
-        return str(output_text).encode("utf-8", errors="replace").decode("utf-8")
+
+        # normalize line endings
+        output_text = output_text.replace("\r\n", "\n").replace("\r", "\n")
+        # remove multiple whitespaces
+        output_text = DocumentConverter.MULTI_WHITESPACE.sub(" ", output_text)
+        # remove multiple new-lines
+        output_text = DocumentConverter.MULTI_NEWLINES.sub("\n\n", output_text)
+
+        return output_text.encode("utf-8", errors="replace").decode("utf-8").strip()
 
     def _extract_text_fallback(self, 
                                stream: bytes, *,
@@ -57,7 +69,7 @@ class DocumentConverter:
         text = ""
 
         if is_html or is_xml:
-            parser = "html.parser" if is_html else "xml"
+            parser = "html.parser" if is_html else "lxml-xml"
             try:
                 soup = BeautifulSoup(stream, parser)
             except Exception:
@@ -70,6 +82,11 @@ class DocumentConverter:
             else:
                 text = soup.get_text(separator="\n")
 
+            # remove XML-ish self-closing tags
+            text = re.sub(r"<[^>]+/>", "", text)
+            # remove empty XML tags
+            text = re.sub(r"</?[\w:.-]+>", "", text)        
+
         if not text and is_rtf:
             try:
                 text = rtf_to_text(stream.decode("utf-8", "ignore"))
@@ -79,7 +96,7 @@ class DocumentConverter:
         if not text:
             text = stream.decode("utf-8", "ignore")
 
-        return text.strip()
+        return text
 
     @staticmethod
     def initialize_pdf_worker(stream: bytes) -> None:
