@@ -13,12 +13,12 @@ fastapi==0.116.1
 orjson==3.11.6
 a2wsgi==1.10.10
 pydantic==2.12.5
-pydantic-settings==2.12.0
+pydantic-settings==2.14.2
 httpx==0.28.1
 beautifulsoup4==4.12.3
 striprtf==0.0.29
-python-multipart==0.0.27
 lxml==6.1.1
+python-multipart==0.0.31
 
 # Pillow package dependencies
 defusedxml==0.7.1
