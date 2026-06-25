@@ -168,5 +168,4 @@ RUN groupadd --system --gid "$OCR_SERVICE_GID" ocrsvc && \
 ENV HOME=/home/ocrsvc
 USER ocrsvc
 
-# Now run the simple api
-CMD ["/bin/bash", "start_service_production.sh"]
+CMD ["./start_service_production.sh"]
