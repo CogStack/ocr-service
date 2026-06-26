@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 import logging
 import time
 import traceback
@@ -11,10 +12,15 @@ from ocr_service.dto.process_context import ProcessContext
 from ocr_service.settings import settings
 
 
+class OcrPipeline(str, Enum):
+    TESSERACT = "tesseract"
+    VLM = "vlm"
+    MIXED = "mixed"
+
+
 class OcrEngine:
     def __init__(self, log: logging.Logger) -> None:
         self.log = log
-
 
     def _init_tesseract_api_worker(self) -> PyTessBaseAPI:
         tesseract_api = PyTessBaseAPI(path=settings.TESSDATA_PREFIX, lang=settings.TESSERACT_LANGUAGE)  # type: ignore

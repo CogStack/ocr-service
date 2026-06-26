@@ -7,10 +7,12 @@ import re
 import time
 import traceback
 import uuid
+from enum import IntEnum
 from io import BytesIO
 from subprocess import PIPE, Popen
 from threading import Timer
 from typing import Any, cast
+from html import unescape
 
 import pypdfium2 as pdfium
 from bs4 import BeautifulSoup
@@ -29,6 +31,14 @@ class DocumentConverter:
  
     MULTI_WHITESPACE = re.compile(r"[ \t]+")
     MULTI_NEWLINES = re.compile(r"\n{3,}")
+
+    class PdfObjectType(IntEnum): 
+        UKNOWN = pdfium.raw.FPDF_PAGEOBJ_UKNOWN
+        TEXT = pdfium.raw.FPDF_PAGEOBJ_TEXT
+        PATH = pdfium.raw.FPDF_PAGEOBJ_PATH
+        IMAGE = pdfium.raw.FPDF_PAGEOBJ_IMAGE
+        SHADING = pdfium.raw.FPDF_PAGEOBJ_SHADING
+        FORM = pdfium.raw.FPDF_PAGEOBJ_FORM
 
     def __init__(self, log, loffice_process_list: dict[str, Any]) -> None:
         self.log = log
@@ -94,9 +104,9 @@ class DocumentConverter:
                 self.log.warning("Failed to parse RTF during fallback; using raw decode")
 
         if not text:
-            text = stream.decode("utf-8", "ignore")
+            text = stream.decode("utf-8", "ignore") 
 
-        return text
+        return unescape(text)
 
     @staticmethod
     def initialize_pdf_worker(stream: bytes) -> None:
@@ -128,16 +138,37 @@ class DocumentConverter:
             crop=(0, 0, 0, 0),
             grayscale=settings.OCR_CONVERT_GRAYSCALE_IMAGES,
         ).to_pil()
+
+
         page.close()
 
         return img
 
     def _pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
+
         pdf_image_pages = []
         doc_metadata: dict[str, Any] = {}
 
         pdf = pdfium.PdfDocument(stream)
         page_count = len(pdf)
+        #pdf.close()
+
+        ###########################
+        
+        pages = pdf.get_page(1)
+        
+
+         
+
+        print("YES")
+        
+        
+
+
+
+
+        ###########################
+
         pdf.close()
 
         doc_metadata["pages"] = page_count

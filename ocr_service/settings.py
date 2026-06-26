@@ -1,6 +1,7 @@
 # mypy: disable-error-code=prop-decorator
 
 import ast
+from enum import Enum
 import logging
 import multiprocessing
 import os
