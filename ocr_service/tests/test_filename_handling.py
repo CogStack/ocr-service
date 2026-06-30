@@ -71,3 +71,54 @@ class TestFilenameHandling(unittest.TestCase):
         converter._preprocess_doc.assert_not_called()
         self.assertTrue(ctx.metadata["encrypted"])
         self.assertEqual(ctx.metadata["unsupported_reason"], "encrypted_office_document")
+
+    def test_rtf_falls_back_to_text_when_converted_pdf_handling_fails(self):
+        converter = DocumentConverter(Mock(), {})
+        converter._preprocess_doc = Mock(return_value=b"%PDF-1.7\nnot usable")  # type: ignore[method-assign]
+        converter._handle_pdf_stream = Mock(side_effect=RuntimeError("bad converted pdf"))  # type: ignore[method-assign]
+        ctx = ProcessContext(stream=b"{\\rtf1\\ansi fallback text}", file_name="request-id.rtf", file_type=None)
+
+        converter.prepare(ctx)
+
+        self.assertIn("fallback text", ctx.output_text)
+        self.assertEqual(ctx.pdf_stream, b"")
+        self.assertEqual(ctx.metadata["fallback_reason"], "converted_pdf_handling_failed")
+
+    def test_xml_falls_back_to_text_when_converted_pdf_handling_fails(self):
+        converter = DocumentConverter(Mock(), {})
+        converter._preprocess_xml_to_pdf = Mock(return_value=b"")  # type: ignore[method-assign]
+        converter._preprocess_doc = Mock(return_value=b"%PDF-1.7\nnot usable")  # type: ignore[method-assign]
+        converter._handle_pdf_stream = Mock(side_effect=RuntimeError("bad converted pdf"))  # type: ignore[method-assign]
+        ctx = ProcessContext(
+            stream=b'<?xml version="1.0"?><root><note>fallback text</note></root>',
+            file_name="request-id.xml",
+            file_type=None,
+        )
+
+        converter.prepare(ctx)
+
+        self.assertIn("fallback text", ctx.output_text)
+        self.assertEqual(ctx.pdf_stream, b"")
+        self.assertEqual(ctx.metadata["fallback_reason"], "converted_pdf_handling_failed")
+
+    def test_docx_falls_back_to_document_xml_when_libreoffice_produces_no_pdf(self):
+        stream = (TEST_RESOURCES / "docs/generic/pat_id_1.docx").read_bytes()
+        converter = DocumentConverter(Mock(), {})
+        converter._preprocess_doc = Mock(return_value=b"")  # type: ignore[method-assign]
+        ctx = ProcessContext(stream=stream, file_name="request-id.docx", file_type=None)
+
+        converter.prepare(ctx)
+
+        self.assertIn("Bart Davidson", ctx.output_text)
+        self.assertEqual(ctx.metadata["fallback_reason"], "no_pdf_produced")
+
+    def test_odt_falls_back_to_content_xml_when_libreoffice_produces_no_pdf(self):
+        stream = (TEST_RESOURCES / "docs/generic/pat_id_1.odt").read_bytes()
+        converter = DocumentConverter(Mock(), {})
+        converter._preprocess_doc = Mock(return_value=b"")  # type: ignore[method-assign]
+        ctx = ProcessContext(stream=stream, file_name="request-id.odt", file_type=None)
+
+        converter.prepare(ctx)
+
+        self.assertIn("Bart Davidson", ctx.output_text)
+        self.assertEqual(ctx.metadata["fallback_reason"], "no_pdf_produced")

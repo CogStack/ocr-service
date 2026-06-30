@@ -7,6 +7,7 @@ import re
 import time
 import traceback
 import uuid
+import zipfile
 from html import unescape
 from io import BytesIO
 from subprocess import PIPE, Popen
@@ -103,6 +104,19 @@ class DocumentConverter:
             text = stream.decode("utf-8", "ignore") 
 
         return unescape(text)
+
+    def _extract_office_zip_text_fallback(self, stream: bytes, file_name: str) -> str:
+        ext = os.path.splitext(file_name)[1].lower()
+        xml_path = {".docx": "word/document.xml", ".odt": "content.xml"}.get(ext)
+        if not xml_path:
+            return ""
+
+        try:
+            with zipfile.ZipFile(BytesIO(stream)) as archive:
+                return self._extract_text_fallback(archive.read(xml_path), is_xml=True)
+        except Exception:
+            self.log.warning("Failed to extract %s from %s during fallback", xml_path, file_name)
+            return ""
 
     @staticmethod
     def initialize_pdf_worker(stream: bytes) -> None:
@@ -377,6 +391,35 @@ class DocumentConverter:
         return " ".join(parts)
 
 
+    def _apply_text_fallback(
+        self,
+        ctx: ProcessContext,
+        *,
+        is_html: bool = False,
+        is_xml: bool = False,
+        is_rtf: bool = False,
+        reason: str,
+    ) -> None:
+        self.log.warning(
+            "Falling back to text extraction for %s after %s",
+            ctx.file_name,
+            reason,
+        )
+        ctx.pdf_stream = b""
+        ctx.images = []
+        ctx.output_text = self._extract_office_zip_text_fallback(ctx.stream, ctx.file_name)
+        if not ctx.output_text:
+            ctx.output_text = self._extract_text_fallback(
+                ctx.stream,
+                is_html=is_html,
+                is_xml=is_xml,
+                is_rtf=is_rtf,
+            )
+        ctx.metadata["pages"] = 1
+        ctx.metadata["content-type"] = "text/plain"
+        ctx.metadata["fallback_reason"] = reason
+
+
     def _handle_pdf_stream(self, ctx: ProcessContext) -> None:
         if settings.OPERATION_MODE == "OCR":
             ctx.images, pdf_metadata = self._preprocess_pdf_to_img(ctx.pdf_stream)
@@ -406,6 +449,8 @@ class DocumentConverter:
         _is_html = ctx.checks.is_html()
         _is_xml = ctx.checks.is_xml() and not _is_html
         _is_plain = ctx.checks.is_plain_text()
+        _has_office_zip_fallback = os.path.splitext(ctx.file_name)[1].lower() in {".docx", ".odt"}
+        text_fallback_allowed = _is_xml or _is_rtf or _has_office_zip_fallback
 
         if _is_pdf:
             ctx.pdf_stream = ctx.stream
@@ -464,19 +509,38 @@ class DocumentConverter:
             self.log.info("Unknown file type; attempting to convert to PDF via unoserver/LO")
             ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
 
-        if not ctx.pdf_stream and not ctx.output_text and ctx.checks.is_text_like():
-            self.log.warning(
-                "No PDF produced for %s; falling back to plain-text extraction",
-                ctx.file_name,
-            )
-            ctx.output_text = self._extract_text_fallback(
-                ctx.stream,
+        if not ctx.pdf_stream and not ctx.output_text and (ctx.checks.is_text_like() or _has_office_zip_fallback):
+            self._apply_text_fallback(
+                ctx,
                 is_html=_is_html,
                 is_xml=_is_xml,
                 is_rtf=_is_rtf,
+                reason="no_pdf_produced",
             )
-            ctx.metadata["pages"] = 1
-            ctx.metadata["content-type"] = "text/plain"
 
         if ctx.pdf_stream:
-            self._handle_pdf_stream(ctx) 
+            try:
+                self._handle_pdf_stream(ctx)
+            except Exception:
+                if not text_fallback_allowed:
+                    raise
+                self.log.exception(
+                    "Converted PDF handling failed for %s; trying text fallback",
+                    ctx.file_name,
+                )
+                self._apply_text_fallback(
+                    ctx,
+                    is_html=_is_html,
+                    is_xml=_is_xml,
+                    is_rtf=_is_rtf,
+                    reason="converted_pdf_handling_failed",
+                )
+            else:
+                if text_fallback_allowed and not ctx.output_text and not ctx.images:
+                    self._apply_text_fallback(
+                        ctx,
+                        is_html=_is_html,
+                        is_xml=_is_xml,
+                        is_rtf=_is_rtf,
+                        reason="converted_pdf_handling_failed",
+                    )
