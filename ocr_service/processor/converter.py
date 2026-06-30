@@ -7,12 +7,11 @@ import re
 import time
 import traceback
 import uuid
-from enum import IntEnum
+from html import unescape
 from io import BytesIO
 from subprocess import PIPE, Popen
 from threading import Timer
 from typing import Any, cast
-from html import unescape
 
 import pypdfium2 as pdfium
 from bs4 import BeautifulSoup
@@ -22,7 +21,12 @@ from striprtf.striprtf import rtf_to_text
 
 from ocr_service.dto.process_context import ProcessContext
 from ocr_service.settings import settings
-from ocr_service.utils.utils import INPUT_FILTERS, delete_tmp_files, terminate_hanging_process
+from ocr_service.utils.utils import (
+    INPUT_FILTERS,
+    delete_tmp_files,
+    is_encrypted_office_document,
+    terminate_hanging_process,
+)
 
 CURRENT_PDF_FILE: pdfium.PdfDocument | None = None
 
@@ -31,14 +35,6 @@ class DocumentConverter:
  
     MULTI_WHITESPACE = re.compile(r"[ \t]+")
     MULTI_NEWLINES = re.compile(r"\n{3,}")
-
-    class PdfObjectType(IntEnum): 
-        UKNOWN = pdfium.raw.FPDF_PAGEOBJ_UKNOWN
-        TEXT = pdfium.raw.FPDF_PAGEOBJ_TEXT
-        PATH = pdfium.raw.FPDF_PAGEOBJ_PATH
-        IMAGE = pdfium.raw.FPDF_PAGEOBJ_IMAGE
-        SHADING = pdfium.raw.FPDF_PAGEOBJ_SHADING
-        FORM = pdfium.raw.FPDF_PAGEOBJ_FORM
 
     def __init__(self, log, loffice_process_list: dict[str, Any]) -> None:
         self.log = log
@@ -151,24 +147,6 @@ class DocumentConverter:
 
         pdf = pdfium.PdfDocument(stream)
         page_count = len(pdf)
-        #pdf.close()
-
-        ###########################
-        
-        pages = pdf.get_page(1)
-        
-
-         
-
-        print("YES")
-        
-        
-
-
-
-
-        ###########################
-
         pdf.close()
 
         doc_metadata["pages"] = page_count
@@ -411,6 +389,17 @@ class DocumentConverter:
     def prepare(self, ctx: ProcessContext) -> None:
 
         self.log.info("Checking file type for doc id: %s", ctx.file_name)
+
+        if is_encrypted_office_document(ctx.stream):
+            self.log.warning(
+                "Encrypted Office document detected for %s; skipping LibreOffice conversion",
+                ctx.file_name,
+            )
+            ctx.metadata["content-type"] = "application/vnd.openxmlformats-officedocument"
+            ctx.metadata["encrypted"] = True
+            ctx.metadata["unsupported_reason"] = "encrypted_office_document"
+            ctx.metadata["pages"] = 0
+            return
 
         _is_pdf = type(ctx.file_type) is archive.Pdf
         _is_rtf = type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf()
