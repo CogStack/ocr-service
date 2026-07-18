@@ -141,7 +141,7 @@ def create_app() -> FastAPI:
     global _started
 
     try:
-        app = FastAPI(title="OCR Service",
+        app = FastAPI(title="OCR_Service",
                       description="OCR Service API",
                       version=settings.OCR_SERVICE_VERSION,
                       default_response_class=ORJSONResponse,

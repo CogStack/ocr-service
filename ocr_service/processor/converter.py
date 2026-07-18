@@ -3,9 +3,12 @@ from __future__ import annotations
 import atexit
 import multiprocessing
 import os
+import re
 import time
 import traceback
 import uuid
+import zipfile
+from html import unescape
 from io import BytesIO
 from subprocess import PIPE, Popen
 from threading import Timer
@@ -19,12 +22,21 @@ from striprtf.striprtf import rtf_to_text
 
 from ocr_service.dto.process_context import ProcessContext
 from ocr_service.settings import settings
-from ocr_service.utils.utils import INPUT_FILTERS, delete_tmp_files, terminate_hanging_process
+from ocr_service.utils.utils import (
+    INPUT_FILTERS,
+    delete_tmp_files,
+    is_encrypted_office_document,
+    terminate_hanging_process,
+)
 
 CURRENT_PDF_FILE: pdfium.PdfDocument | None = None
 
 
 class DocumentConverter:
+ 
+    MULTI_WHITESPACE = re.compile(r"[ \t]+")
+    MULTI_NEWLINES = re.compile(r"\n{3,}")
+
     def __init__(self, log, loffice_process_list: dict[str, Any]) -> None:
         self.log = log
         self.loffice_process_list = loffice_process_list
@@ -45,8 +57,15 @@ class DocumentConverter:
 
     @staticmethod
     def finalize_output_text(output_text: str) -> str:
-        output_text = output_text.translate({'\\n': '', '\\t': '', '\n\n': '\n'})  # type: ignore
-        return str(output_text).encode("utf-8", errors="replace").decode("utf-8")
+
+        # normalize line endings
+        output_text = output_text.replace("\r\n", "\n").replace("\r", "\n")
+        # remove multiple whitespaces
+        output_text = DocumentConverter.MULTI_WHITESPACE.sub(" ", output_text)
+        # remove multiple new-lines
+        output_text = DocumentConverter.MULTI_NEWLINES.sub("\n\n", output_text)
+
+        return output_text.encode("utf-8", errors="replace").decode("utf-8").strip()
 
     def _extract_text_fallback(self, 
                                stream: bytes, *,
@@ -57,7 +76,7 @@ class DocumentConverter:
         text = ""
 
         if is_html or is_xml:
-            parser = "html.parser" if is_html else "xml"
+            parser = "html.parser" if is_html else "lxml-xml"
             try:
                 soup = BeautifulSoup(stream, parser)
             except Exception:
@@ -70,6 +89,11 @@ class DocumentConverter:
             else:
                 text = soup.get_text(separator="\n")
 
+            # remove XML-ish self-closing tags
+            text = re.sub(r"<[^>]+/>", "", text)
+            # remove empty XML tags
+            text = re.sub(r"</?[\w:.-]+>", "", text)        
+
         if not text and is_rtf:
             try:
                 text = rtf_to_text(stream.decode("utf-8", "ignore"))
@@ -77,9 +101,22 @@ class DocumentConverter:
                 self.log.warning("Failed to parse RTF during fallback; using raw decode")
 
         if not text:
-            text = stream.decode("utf-8", "ignore")
+            text = stream.decode("utf-8", "ignore") 
 
-        return text.strip()
+        return unescape(text)
+
+    def _extract_office_zip_text_fallback(self, stream: bytes, file_name: str) -> str:
+        ext = os.path.splitext(file_name)[1].lower()
+        xml_path = {".docx": "word/document.xml", ".odt": "content.xml"}.get(ext)
+        if not xml_path:
+            return ""
+
+        try:
+            with zipfile.ZipFile(BytesIO(stream)) as archive:
+                return self._extract_text_fallback(archive.read(xml_path), is_xml=True)
+        except Exception:
+            self.log.warning("Failed to extract %s from %s during fallback", xml_path, file_name)
+            return ""
 
     @staticmethod
     def initialize_pdf_worker(stream: bytes) -> None:
@@ -111,11 +148,14 @@ class DocumentConverter:
             crop=(0, 0, 0, 0),
             grayscale=settings.OCR_CONVERT_GRAYSCALE_IMAGES,
         ).to_pil()
+
+
         page.close()
 
         return img
 
     def _pdf_to_img(self, stream: bytes) -> tuple[list[Image.Image], dict]:
+
         pdf_image_pages = []
         doc_metadata: dict[str, Any] = {}
 
@@ -351,6 +391,35 @@ class DocumentConverter:
         return " ".join(parts)
 
 
+    def _apply_text_fallback(
+        self,
+        ctx: ProcessContext,
+        *,
+        is_html: bool = False,
+        is_xml: bool = False,
+        is_rtf: bool = False,
+        reason: str,
+    ) -> None:
+        self.log.warning(
+            "Falling back to text extraction for %s after %s",
+            ctx.file_name,
+            reason,
+        )
+        ctx.pdf_stream = b""
+        ctx.images = []
+        ctx.output_text = self._extract_office_zip_text_fallback(ctx.stream, ctx.file_name)
+        if not ctx.output_text:
+            ctx.output_text = self._extract_text_fallback(
+                ctx.stream,
+                is_html=is_html,
+                is_xml=is_xml,
+                is_rtf=is_rtf,
+            )
+        ctx.metadata["pages"] = 1
+        ctx.metadata["content-type"] = "text/plain"
+        ctx.metadata["fallback_reason"] = reason
+
+
     def _handle_pdf_stream(self, ctx: ProcessContext) -> None:
         if settings.OPERATION_MODE == "OCR":
             ctx.images, pdf_metadata = self._preprocess_pdf_to_img(ctx.pdf_stream)
@@ -364,11 +433,24 @@ class DocumentConverter:
 
         self.log.info("Checking file type for doc id: %s", ctx.file_name)
 
+        if is_encrypted_office_document(ctx.stream):
+            self.log.warning(
+                "Encrypted Office document detected for %s; skipping LibreOffice conversion",
+                ctx.file_name,
+            )
+            ctx.metadata["content-type"] = "application/vnd.openxmlformats-officedocument"
+            ctx.metadata["encrypted"] = True
+            ctx.metadata["unsupported_reason"] = "encrypted_office_document"
+            ctx.metadata["pages"] = 0
+            return
+
         _is_pdf = type(ctx.file_type) is archive.Pdf
         _is_rtf = type(ctx.file_type) is archive.Rtf or ctx.checks.is_rtf()
         _is_html = ctx.checks.is_html()
         _is_xml = ctx.checks.is_xml() and not _is_html
         _is_plain = ctx.checks.is_plain_text()
+        _has_office_zip_fallback = os.path.splitext(ctx.file_name)[1].lower() in {".docx", ".odt"}
+        text_fallback_allowed = _is_xml or _is_rtf or _has_office_zip_fallback
 
         if _is_pdf:
             ctx.pdf_stream = ctx.stream
@@ -427,19 +509,38 @@ class DocumentConverter:
             self.log.info("Unknown file type; attempting to convert to PDF via unoserver/LO")
             ctx.pdf_stream = self._preprocess_doc(ctx.stream, file_name=ctx.file_name)
 
-        if not ctx.pdf_stream and not ctx.output_text and ctx.checks.is_text_like():
-            self.log.warning(
-                "No PDF produced for %s; falling back to plain-text extraction",
-                ctx.file_name,
-            )
-            ctx.output_text = self._extract_text_fallback(
-                ctx.stream,
+        if not ctx.pdf_stream and not ctx.output_text and (ctx.checks.is_text_like() or _has_office_zip_fallback):
+            self._apply_text_fallback(
+                ctx,
                 is_html=_is_html,
                 is_xml=_is_xml,
                 is_rtf=_is_rtf,
+                reason="no_pdf_produced",
             )
-            ctx.metadata["pages"] = 1
-            ctx.metadata["content-type"] = "text/plain"
 
         if ctx.pdf_stream:
-            self._handle_pdf_stream(ctx) 
+            try:
+                self._handle_pdf_stream(ctx)
+            except Exception:
+                if not text_fallback_allowed:
+                    raise
+                self.log.exception(
+                    "Converted PDF handling failed for %s; trying text fallback",
+                    ctx.file_name,
+                )
+                self._apply_text_fallback(
+                    ctx,
+                    is_html=_is_html,
+                    is_xml=_is_xml,
+                    is_rtf=_is_rtf,
+                    reason="converted_pdf_handling_failed",
+                )
+            else:
+                if text_fallback_allowed and not ctx.output_text and not ctx.images:
+                    self._apply_text_fallback(
+                        ctx,
+                        is_html=_is_html,
+                        is_xml=_is_xml,
+                        is_rtf=_is_rtf,
+                        reason="converted_pdf_handling_failed",
+                    )

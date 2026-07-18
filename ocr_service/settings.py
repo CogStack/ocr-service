@@ -1,6 +1,7 @@
 # mypy: disable-error-code=prop-decorator
 
 import ast
+from enum import Enum
 import logging
 import multiprocessing
 import os
@@ -89,6 +90,10 @@ class Settings(BaseSettings):
         return value
 
     def model_post_init(self, __context: Any) -> None:
+        """
+            Performs additional actions after the model is instantiated and all field validators are applied.
+        """
+
         default_lo_python = "/Applications/LibreOffice.app/Contents/Resources/python"
         default_lo_exec = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
         tessdata_prefix = self.OCR_TESSDATA_PREFIX

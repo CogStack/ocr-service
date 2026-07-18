@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 
 # set default config values
 if [[ -f ./env/ocr_service.env ]]; then
