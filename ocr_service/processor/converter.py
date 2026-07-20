@@ -145,11 +145,28 @@ class DocumentConverter:
         output_text = ""
 
         pdf = pdfium.PdfDocument(stream)
+        _page_number = -1
 
-        doc_metadata["pages"] = len(pdf)
-        for page in pdf:
-            textpage = page.get_textpage()
-            output_text += textpage.get_text_bounded()
+        try:
+            doc_metadata["pages"] = len(pdf)
+
+            for _page_number, page in enumerate(pdf):
+                textpage: Any | None = None
+                try:
+                    textpage = page.get_textpage()
+                    output_text += textpage.get_text_bounded()
+                finally:
+                    try:
+                        if textpage is not None:
+                            textpage.close()
+                    finally:
+                        page.close()
+        except Exception:
+            failed_page = _page_number + 1 if _page_number >= 0 else "unknown"
+            self.log.exception("PDF text extraction failed on page %s", failed_page)
+            raise
+        finally:
+            pdf.close()
 
         return output_text, doc_metadata
 
