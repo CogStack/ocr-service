@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<office:document
+ xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0"
+ xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0"
+ xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0"
+ xmlns:xlink="http://www.w3.org/1999/xlink"
+ xmlns:dc="http://purl.org/dc/elements/1.1/"
+ office:version="1.2">
+
+ <office:meta>
+  <dc:title>Clinical Test Document</dc:title>
+  <dc:creator>OpenAI Synthetic Generator</dc:creator>
+  <dc:description>Example NHS-like clinical XML document for OCR/NLP testing</dc:description>
+ </office:meta>
+
+ <office:body>
+  <office:text>
+
+   <text:h text:outline-level="1">
+    Example NHS Foundation Trust
+   </text:h>
+
+   <text:p text:style-name="Heading">
+    Community Mental Health Team
+   </text:p>
+
+   <text:p>
+    Document Type:
+    <text:span text:style-name="Bold">Outpatient Review Letter</text:span>
+   </text:p>
+
+   <text:p>
+    Date Created:
+    <text:date text:date-value="2026-05-28">28 May 2026</text:date>
+   </text:p>
+
+   <text:bookmark-start text:name="PATIENT_SECTION"/>
+
+   <text:h text:outline-level="2">
+    Patient Demographics
+   </text:h>
+
+   <text:p>
+    NHS Number:
+    <text:span text:style-name="NHSNumber">485 777 3456</text:span>
+   </text:p>
+
+   <text:p>
+    Hospital Number:
+    <text:span>HN0092847</text:span>
+   </text:p>
+
+   <text:p>
+    The patient’s name is
+    <text:span text:style-name="PatientName">
+      Bart Davidson
+    </text:span>.
+   </text:p>
+
+   <text:p>
+    Date of Birth:
+    <text:span>14 February 1978</text:span>
+   </text:p>
+
+   <text:p>
+    Gender:
+    <text:span>Male</text:span>
+   </text:p>
+
+   <text:p>
+    His telephone number is
+    <text:span text:style-name="Telephone">
+      07754828992
+    </text:span>
+   </text:p>
+
+   <text:h text:outline-level="2">
+    Address
+   </text:h>
+
+   <text:p>
+    His Address is:
+   </text:p>
+
+   <text:list>
+    <text:list-item>
+      <text:p>61 Basildon Way</text:p>
+    </text:list-item>
+    <text:list-item>
+      <text:p>East Croyhurst</text:p>
+    </text:list-item>
+    <text:list-item>
+      <text:p>Angelton</text:p>
+    </text:list-item>
+    <text:list-item>
+      <text:p>AL64 9HT</text:p>
+    </text:list-item>
+   </text:list>
+
+   <text:h text:outline-level="2">
+    Family and Carer Information
+   </text:h>
+
+   <text:p>
+    His mother’s name is
+    <text:span text:style-name="RelativeName">
+      Pauline Smith
+    </text:span>.
+   </text:p>
+
+   <text:p>
+    His carer’s Name is
+    <text:span text:style-name="CarerName">
+      Paul Wayne
+    </text:span>.
+   </text:p>
+
+   <text:p>
+    Relationship to patient:
+    <text:span>Primary Carer</text:span>
+   </text:p>
+
+   <text:h text:outline-level="2">
+    Clinical Summary
+   </text:h>
+
+   <text:p>
+    This is an example of a clinical document.
+   </text:p>
+
+   <text:p>
+    Bart Davidson attended clinic today for a routine follow-up review.
+   </text:p>
+
+   <text:p>
+    Mood appeared stable and no acute distress was observed.
+   </text:p>
+
+   <text:p>
+    The patient denied suicidal ideation or recent self-harm.
+   </text:p>
+
+   <text:p>
+    Sleep pattern described as variable with intermittent insomnia.
+   </text:p>
+
+   <text:p>
+    Appetite reported as normal.
+   </text:p>
+
+   <text:p>
+    No visual or auditory hallucinations reported during assessment.
+   </text:p>
+
+   <text:h text:outline-level="2">
+    Medication
+   </text:h>
+
+   <text:p>
+    He is on
+    <text:span text:style-name="MedicationDose">100mg</text:span>
+    <text:span text:style-name="MedicationName">Paracetamol</text:span>,
+    and
+    <text:span text:style-name="MedicationDose">20 milligrams</text:span>
+    <text:span text:style-name="MedicationName">clozapine</text:span>.
+   </text:p>
+
+   <table:table table:name="MedicationTable">
+
+    <table:table-row>
+      <table:table-cell office:value-type="string">
+        <text:p>Medication</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>Dose</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>Frequency</text:p>
+      </table:table-cell>
+    </table:table-row>
+
+    <table:table-row>
+      <table:table-cell office:value-type="string">
+        <text:p>Paracetamol</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>100mg</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>PRN</text:p>
+      </table:table-cell>
+    </table:table-row>
+
+    <table:table-row>
+      <table:table-cell office:value-type="string">
+        <text:p>Clozapine</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>20mg</text:p>
+      </table:table-cell>
+
+      <table:table-cell office:value-type="string">
+        <text:p>OD</text:p>
+      </table:table-cell>
+    </table:table-row>
+
+   </table:table>
+
+   <text:h text:outline-level="2">
+    Risk Assessment
+   </text:h>
+
+   <text:list>
+    <text:list-item>
+      <text:p>Risk to self: Low</text:p>
+    </text:list-item>
+
+    <text:list-item>
+      <text:p>Risk to others: Low</text:p>
+    </text:list-item>
+
+    <text:list-item>
+      <text:p>Safeguarding concerns: None identified</text:p>
+    </text:list-item>
+   </text:list>
+
+   <text:h text:outline-level="2">
+    Plan
+   </text:h>
+
+   <text:p>
+    Continue current medication regime.
+   </text:p>
+
+   <text:p>
+    Arrange routine blood monitoring for clozapine.
+   </text:p>
+
+   <text:p>
+    Follow-up appointment in 4 weeks.
+   </text:p>
+
+   <text:note text:id="ftn1" text:note-class="footnote">
+    <text:note-body>
+      <text:p>
+        This is a synthetic note for XML parsing tests.
+      </text:p>
+    </text:note-body>
+   </text:note>
+
+   <text:h text:outline-level="2">
+    NLP / OCR Structured Entities
+   </text:h>
+
+   <text:p>
+    &lt;patient&gt;
+    &lt;name&gt;Bart Davidson&lt;/name&gt;
+    &lt;dob&gt;1978-02-14&lt;/dob&gt;
+    &lt;nhs_number&gt;4857773456&lt;/nhs_number&gt;
+    &lt;/patient&gt;
+   </text:p>
+
+   <text:p>
+    &lt;carer&gt;
+    &lt;name&gt;Paul Wayne&lt;/name&gt;
+    &lt;relationship&gt;Primary Carer&lt;/relationship&gt;
+    &lt;/carer&gt;
+   </text:p>
+
+   <text:p>
+    &lt;medication name="Paracetamol" dose="100mg" frequency="PRN" /&gt;
+   </text:p>
+
+   <text:p>
+    &lt;medication name="Clozapine" dose="20mg" frequency="OD" /&gt;
+   </text:p>
+
+   <text:p>
+    &lt;address postcode="AL64 9HT"&gt;
+    61 Basildon Way, East Croyhurst, Angelton
+    &lt;/address&gt;
+   </text:p>
+
+   <text:h text:outline-level="2">
+    Additional XML Features
+   </text:h>
+
+   <text:p>
+    <text:s text:c="5"/>
+    Extra spacing test.
+   </text:p>
+
+   <text:p>
+    Line break test
+    <text:line-break/>
+    second line
+    <text:line-break/>
+    third line.
+   </text:p>
+
+   <text:p>
+    Hyperlink test:
+    <text:a
+      xlink:href="https://www.nhs.uk"
+      xlink:type="simple">
+      NHS Website
+    </text:a>
+   </text:p>
+
+   <text:p>
+    Timestamp:
+    <text:time text:time-value="14:32:00">14:32</text:time>
+   </text:p>
+
+   <text:bookmark-end text:name="PATIENT_SECTION"/>
+
+   <text:h text:outline-level="2">
+    Confidentiality Notice
+   </text:h>
+
+   <text:p>
+    This document contains confidential clinical information intended
+    for authorised healthcare professionals only.
+   </text:p>
+
+  </office:text>
+ </office:body>
+
+</office:document>

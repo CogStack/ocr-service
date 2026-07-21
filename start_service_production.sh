@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 # if ran manually execute "export_env_vars.sh"
-
 export OCR_SERVICE_HOST="${OCR_SERVICE_HOST:-0.0.0.0}"
 export OCR_SERVICE_PORT="${OCR_SERVICE_PORT:-8090}"
 export OCR_SERVICE_WORKER_CLASS="${OCR_SERVICE_WORKER_CLASS:-sync}"

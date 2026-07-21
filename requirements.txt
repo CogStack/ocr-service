@@ -6,7 +6,7 @@ Pillow==12.2.0
 html2image==2.0.7
 tesserocr==2.9.2
 gunicorn==23.0.0
-pypdfium2==5.2.0
+pypdfium2==5.9.0
 opencv-python-headless==4.12.0.88
 pyxml2pdf==0.3.4
 fastapi==0.116.1
@@ -17,6 +17,7 @@ pydantic-settings==2.14.2
 httpx==0.28.1
 beautifulsoup4==4.12.3
 striprtf==0.0.29
+lxml==6.1.1
 python-multipart==0.0.31
 
 # Pillow package dependencies
@@ -24,4 +25,4 @@ defusedxml==0.7.1
 olefile==0.47
 
 # unoserver>=3 switched to the unoconvert client CLI; tested with 3.6
-unoserver==3.6
+unoserver==3.7

@@ -15,12 +15,15 @@ import shutil
 import string
 import sys
 import xml.sax
+import zipfile
 from datetime import datetime
+from io import BytesIO
 from pathlib import Path
 from sys import platform
 from typing import Any
 
 import filetype
+import olefile
 import psutil
 from html2image import Html2Image
 from PIL import Image
@@ -30,6 +33,32 @@ from ocr_service.settings import settings
 logger = logging.getLogger(__name__)
 
 PRINTABLE = set(bytes(string.printable, "ascii")) | {9, 10, 13}
+OLE_SIGNATURE = b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1"
+
+ODF_MIME_EXTENSIONS: dict[str, str] = {
+    "application/vnd.oasis.opendocument.text": "odt",
+    "application/vnd.oasis.opendocument.text-template": "ott",
+    "application/vnd.oasis.opendocument.spreadsheet": "ods",
+    "application/vnd.oasis.opendocument.spreadsheet-template": "ots",
+    "application/vnd.oasis.opendocument.presentation": "odp",
+    "application/vnd.oasis.opendocument.presentation-template": "otp",
+    "application/vnd.oasis.opendocument.graphics": "odg",
+    "application/vnd.oasis.opendocument.formula": "odf",
+}
+
+OOXML_PATH_EXTENSIONS: tuple[tuple[str, str], ...] = (
+    ("word/document.xml", "docx"),
+    ("xl/workbook.xml", "xlsx"),
+    ("ppt/presentation.xml", "pptx"),
+)
+
+OLE_STREAM_EXTENSIONS: tuple[tuple[str, str], ...] = (
+    ("worddocument", "doc"),
+    ("workbook", "xls"),
+    ("book", "xls"),
+    ("powerpoint document", "ppt"),
+)
+ENCRYPTED_OOXML_STREAMS = {"encryptedpackage", "encryptioninfo"}
 
 INPUT_FILTERS: dict[str, str] = {
     # ── Writer / text ──
@@ -227,7 +256,7 @@ def is_file_type_xml(stream: bytes) -> bool:
         xml.sax.parseString(stream, xml.sax.ContentHandler())
         return True
     except Exception:
-        logger.warning("Could not determine if file is XML.")
+        logger.debug("Could not determine if file is XML.")
     return False
 
 def is_file_type_rtf(stream: bytes) -> bool:
@@ -241,6 +270,77 @@ def is_file_type_rtf(stream: bytes) -> bool:
     """
     head = stream[:32].lstrip()
     return head.startswith(b"{\\rtf")
+
+
+def _infer_zip_office_extension(stream: bytes) -> str | None:
+    try:
+        with zipfile.ZipFile(BytesIO(stream)) as archive:
+            names = set(archive.namelist())
+
+            if "mimetype" in names:
+                mimetype = archive.read("mimetype").decode("ascii", "ignore").strip()
+                extension = ODF_MIME_EXTENSIONS.get(mimetype)
+                if extension:
+                    return extension
+
+            for marker_path, extension in OOXML_PATH_EXTENSIONS:
+                if marker_path in names:
+                    return extension
+
+            lowered_names = {name.lower() for name in names}
+            if any(name.startswith("word/") for name in lowered_names):
+                return "docx"
+            if any(name.startswith("xl/") for name in lowered_names):
+                return "xlsx"
+            if any(name.startswith("ppt/") for name in lowered_names):
+                return "pptx"
+    except Exception:
+        logger.debug("Could not infer Office extension from ZIP container.")
+
+    return None
+
+
+def _ole_stream_names(stream: bytes) -> set[str]:
+    try:
+        with olefile.OleFileIO(BytesIO(stream)) as ole:
+            return {"/".join(path).lower() for path in ole.listdir()}
+    except Exception:
+        logger.debug("Could not inspect OLE streams.")
+
+    return set()
+
+
+def is_encrypted_office_document(stream: bytes) -> bool:
+    """Return True for encrypted OOXML packages stored in an OLE container."""
+    if not stream.startswith(OLE_SIGNATURE):
+        return False
+
+    return ENCRYPTED_OOXML_STREAMS.issubset(_ole_stream_names(stream))
+
+
+def _infer_ole_office_extension(stream: bytes) -> str | None:
+    stream_names = _ole_stream_names(stream)
+    leaf_names = {name.rsplit("/", 1)[-1] for name in stream_names}
+
+    if ENCRYPTED_OOXML_STREAMS.issubset(stream_names):
+        return "docx"
+
+    for stream_name, extension in OLE_STREAM_EXTENSIONS:
+        if stream_name in leaf_names:
+            return extension
+
+    return None
+
+
+def infer_office_extension_from_content(stream: bytes) -> str | None:
+    """Infer Office extensions for containers that generic file sniffing misses."""
+    if stream.startswith(b"PK"):
+        return _infer_zip_office_extension(stream)
+
+    if stream.startswith(OLE_SIGNATURE):
+        return _infer_ole_office_extension(stream)
+
+    return None
 
 
 class TextChecks:
@@ -364,15 +464,26 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type: objec
 
     # 2) prefer an already detected extension when available
     detected_ext = getattr(file_type, "extension", None)
+    if detected_ext and detected_ext != "zip":
+        return f"{base}.{str(detected_ext)}"
+
+    # 3) inspect Office containers that generic file sniffing may miss
+    office_ext = infer_office_extension_from_content(stream)
+    if office_ext:
+        return f"{base}.{office_ext}"
+
     if detected_ext:
         return f"{base}.{str(detected_ext)}"
 
-    # 3) let filetype guess it from content
+    # 4) let filetype guess it from content
     guessed_ext = filetype.guess_extension(stream)
+    if guessed_ext and guessed_ext != "zip":
+        return f"{base}.{guessed_ext}"
+
     if guessed_ext:
         return f"{base}.{guessed_ext}"
 
-    # 4) fallbacks for texty formats our filetype may not catch
+    # 5) fallbacks for texty formats our filetype may not catch
     if is_file_type_html(stream):
         return base + ".html"
     if is_file_type_xml(stream):
@@ -380,7 +491,7 @@ def normalise_file_name_with_ext(file_name: str, stream: bytes, file_type: objec
     if is_file_type_rtf(stream):
         return base + ".rtf"
 
-    # 5) only tag as plain text when the content actually looks like text
+    # 6) only tag as plain text when the content actually looks like text
     if is_file_content_plain_text(stream):
         return base + ".txt"
 
@@ -547,15 +658,13 @@ def is_file_locked(path: str) -> bool:
     if not file_path.exists():
         return False
 
-    f = open(file_path, "a+b")
-    try:
-        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-        return False
-    except OSError:
-        return True
-    finally:
-        f.close()
+    with open(file_path, "a+b") as f:
+        try:
+            fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+            return False
+        except OSError:
+            return True
 
 def get_assigned_port(current_worker_pid: int) -> int:
     """Return the LibreOffice port previously assigned to a worker PID.
