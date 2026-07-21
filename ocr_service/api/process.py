@@ -1,4 +1,5 @@
 import base64
+import binascii
 import logging
 import traceback
 import uuid
@@ -83,10 +84,9 @@ def process(request: Request, file: UploadFile | None = File(default=None)) -> O
                 try:
                     stream = base64.b64decode(encoded, validate=True)
                     log.info("binary_data successfully base64-decoded")
-                except Exception:
-                    log.warning("binary_data is not valid base64; forcing bytes")
-                    stream = bytes(encoded) if isinstance(encoded, bytes | bytearray) \
-                            else str(encoded).encode("utf-8")
+                except (binascii.Error, ValueError):
+                    log.warning("binary_data is not valid base64; treating it as raw UTF-8 text")
+                    stream = encoded.encode("utf-8")
 
         except Exception:
             log.warning("Stream does not contain valid JSON." + str(traceback.format_exc()))

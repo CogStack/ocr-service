@@ -212,6 +212,12 @@ class TestOcrServiceProcessor(unittest.TestCase):
        payload: bytes = get_file("payloads/sample_base64_record_nifi.json")
        self._test_json_payload_json_b64_binary_data(payload=payload.decode())
 
+    def test_process_record_binary_data_json_plain_text_fallback(self):
+        self.log.info("Testing plain-text binary_data fallback")
+        payload = get_file("docs/generic/pat_id_1.html").decode("utf-8")
+        record = orjson.dumps({"binary_data": payload})
+        self._test_json_payload_json_b64_binary_data(payload=record)
+
     def test_process_record_binary_data_null_payload_skips_ocr(self):
         self.log.info("Testing null binary_data skips OCR")
         payload = {"binary_data": None}
