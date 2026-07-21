@@ -1,7 +1,7 @@
-FROM ubuntu:noble
+FROM ubuntu:26.04
 
-ARG APP_PYTHON_VERSION=3.13
-ARG LO_PYTHON_VERSION=3.12
+ARG APP_PYTHON_VERSION=3.14
+ARG LO_PYTHON_VERSION=3.14
 
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
@@ -45,7 +45,6 @@ RUN apt-get -o Acquire::Retries=5 update -yq && \
 # add extra repos
 RUN apt-add-repository -y -n multiverse && \
     apt-add-repository -y -n universe && \
-    add-apt-repository -y -n ppa:deadsnakes/ppa && \
     add-apt-repository -y -n ppa:graphics-drivers/ppa && \
     apt-get -o Acquire::Retries=5 update -yq && \
     apt-get upgrade -y
@@ -88,9 +87,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends fontconfig ttf-
     libsm6 libxext6 gstreamer1.0-libav fonts-deva fonts-dejavu fonts-gfs-didot fonts-gfs-didot-classic fonts-junicode fonts-ebgaramond fonts-noto-cjk fonts-takao-gothic fonts-vlgothic \
     ghostscript ghostscript-x gsfonts gsfonts-other gsfonts-x11 fonts-croscore fonts-crosextra-caladea fonts-crosextra-carlito fonts-liberation fonts-open-sans fonts-noto-core fonts-ibm-plex fonts-urw-base35 \
     fonts-noto fonts-noto-cjk fonts-noto-extra xfonts-terminus fonts-font-awesome fonts-hack fonts-inconsolata fonts-liberation2 fonts-mononoki \
-    libpcre3 libpcre3-dev libxml2 libxml2-dev libxslt1.1 libxslt-dev \
+    libpcre2-8-0 libpcre2-dev libxml2-16 libxml2-dev libxslt1.1 libxslt-dev \
     mesa-opencl-icd pocl-opencl-icd libvips-tools libvips libvips-dev \
-    imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev liblept5
+    imagemagick libcairo2-dev tesseract-ocr tesseract-ocr-all libtesseract5 libtesseract-dev libleptonica-dev libleptonica6
 
 # tessaract language packages
 RUN apt-get install -y --no-install-recommends --fix-missing tesseract-ocr-osd tesseract-ocr-lat \
@@ -127,12 +126,12 @@ COPY ./ /ocr_service
 WORKDIR /ocr_service
 
 # --- Install system-wide unoserver to match requirements.txt (for UNO/system Python) ---
-# BEFORE creating the venv so /usr/bin/python3.12 can run unoserver
+# BEFORE creating the venv so the distro Python can run unoserver
 # the reason for this is that the uno python bindings are tied to the system python
 # and will not work in a venv
 # so we need to install unoserver globally to match the version in requirements.txt
 # this is a bit hacky but it works around the issue of unoserver not being available
-# via pip for the system python (3.12 on Ubuntu noble)
+# via pip for the system Python used by LibreOffice/UNO
 RUN UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.txt || true) && \
     if [ -n "$UNOSERVER_PIN" ]; then \
         echo "Installing system unoserver==$UNOSERVER_PIN"; \
@@ -146,9 +145,9 @@ RUN UNOSERVER_PIN=$(awk -F'==' '/^unoserver==/ {print $2; exit}' requirements.tx
 # Use a virtual environment for Python deps (single-stage build)
 ENV VIRTUAL_ENV=/opt/venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
-ENV LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python3.12
+ENV LIBRE_OFFICE_PYTHON_PATH=/usr/bin/python${LO_PYTHON_VERSION}
 
-# Install the application into a Python 3.13 virtual environment while
+# Install the application into a separate virtual environment while
 # keeping LibreOffice/UNO on the system Python.
 RUN python${APP_PYTHON_VERSION} -m venv "$VIRTUAL_ENV" && \
     "$VIRTUAL_ENV/bin/python" && \
@@ -164,6 +163,7 @@ ARG OCR_SERVICE_GID=10001
 RUN groupadd --system --gid "$OCR_SERVICE_GID" ocrsvc && \
     useradd --system --uid "$OCR_SERVICE_UID" --gid "$OCR_SERVICE_GID" --create-home --home-dir /home/ocrsvc --shell /usr/sbin/nologin ocrsvc && \
     mkdir -p /ocr_service/tmp /ocr_service/log && \
+    chmod -R a+rX /ocr_service && \
     chown -R ocrsvc:ocrsvc /ocr_service/tmp /ocr_service/log /home/ocrsvc
 ENV HOME=/home/ocrsvc
 USER ocrsvc

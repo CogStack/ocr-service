@@ -100,7 +100,7 @@ class Settings(BaseSettings):
 
         if platform in ("linux", "linux2"):
             default_lo_exec = "/usr/bin/soffice"
-            default_lo_python = "/usr/bin/python3.12"
+            default_lo_python = "/usr/bin/python3"
             tessdata_prefix = "/usr/share/tesseract-ocr/5/tessdata"
 
             if not os.path.exists(tessdata_prefix):

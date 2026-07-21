@@ -43,14 +43,16 @@ echo "==========================================================================
 
 python_version=python3
 
-if command -v python3.11 &>/dev/null; then
-  python_version=python3.11
-elif command -v python3.12 &>/dev/null; then
-  python_version=python3.12
+if command -v python3.14 &>/dev/null; then
+  python_version=python3.14
 elif command -v python3.13 &>/dev/null; then
   python_version=python3.13
+elif command -v python3.12 &>/dev/null; then
+  python_version=python3.12
+elif command -v python3.11 &>/dev/null; then
+  python_version=python3.11
 else
-  echo "Python 3.11, 3.12, or 3.13 is required. Please install one of them."
+  echo "Python 3.11, 3.12, 3.13, or 3.14 is required. Please install one of them."
   exit 1
 fi
 

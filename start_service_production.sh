@@ -40,12 +40,14 @@ if [[ -x "$VIRTUAL_ENV/bin/gunicorn" ]]; then
 else
   # Fallback to system python if venv missing
   python_cmd=python3
-  if command -v python3.12 &>/dev/null; then
+  if command -v python3.14 &>/dev/null; then
+    python_cmd=python3.14
+  elif command -v python3.13 &>/dev/null; then
+    python_cmd=python3.13
+  elif command -v python3.12 &>/dev/null; then
     python_cmd=python3.12
   elif command -v python3.11 &>/dev/null; then
     python_cmd=python3.11
-  elif command -v python3.13 &>/dev/null; then
-    python_cmd=python3.13
   fi
   gunicorn_cmd=("$python_cmd" "-m" "gunicorn")
 fi
@@ -60,4 +62,3 @@ exec "${gunicorn_cmd[@]}" wsgi:app --worker-class "$OCR_SERVICE_WORKER_CLASS" \
                                    --max-requests-jitter "$OCR_SERVICE_GUNICORN_MAX_REQUESTS_JITTER" \
                                    --timeout "$OCR_SERVICE_GUNICORN_TIMEOUT" \
                                    --graceful-timeout "$OCR_SERVICE_GUNICORN_GRACEFUL_TIMEOUT"
-
