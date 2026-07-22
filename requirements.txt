@@ -1,4 +1,4 @@
-setuptools==80.9.0
+setuptools==83.0.0
 wheel==0.46.2
 psutil==6.1.1
 filetype==1.2.0
