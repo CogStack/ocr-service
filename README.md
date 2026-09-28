@@ -1,3 +1,18 @@
+  # ⚠️ This Project Has Moved Repository
+
+<div align="center">
+
+[![Project Moved](https://img.shields.io/badge/🚀-Project%20Moved-brightgreen)](https://github.com/CogStack/cogstack-platform)
+
+👉 Please visit the new repository here:
+**[https://github.com/CogStack/cogstack-platform](https://github.com/CogStack/cogstack-platform/tree/main/apps/ocr-service)**
+
+[<img src="https://avatars.githubusercontent.com/u/28688163" width="45" />](https://github.com/CogStack/cogstack-platform)
+
+</div>
+
+---
+
 # OCR-Service
 
 [![docker-ocr-service](https://github.com/CogStack/ocr-service/actions/workflows/docker_build.yml/badge.svg)](https://github.com/CogStack/ocr-service/actions/workflows/docker_build.yml)
