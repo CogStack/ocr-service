@@ -113,7 +113,9 @@ def process(request: Request, file: UploadFile | None = File(default=None)) -> O
     log.debug(f"Stream size: {len(stream)} bytes")
 
     ocr_skipped = bool(doc_metadata.get("ocr_skipped"))
-    code = 200 if len(output_text) > 0 or not stream or ocr_skipped else 500
+    text_length = doc_metadata.get("text_length")
+
+    code = 200 if text_length > 0 or not stream or ocr_skipped else 500
 
     response: dict[Any, Any] = {
         "result": build_response(
